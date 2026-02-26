@@ -1,0 +1,420 @@
+{
+  "annotations": { "list": [] },
+  "description": "How much is this costing me? Token usage, cache efficiency, session breakdown.",
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "id": 1,
+      "title": "Total Cost",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum(increase(shepherd_claude_code_cost_usage_USD_total{model=~\"$model\"}[$__range]))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "green" },
+          "unit": "currencyUSD",
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 5 },
+              { "color": "red", "value": 20 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 2,
+      "title": "Input Tokens",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 5, "x": 6, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"input\",model=~\"$model\"}[$__range]))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "blue" },
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 3,
+      "title": "Output Tokens",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 5, "x": 11, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"output\",model=~\"$model\"}[$__range]))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "orange" },
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "orange", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 4,
+      "title": "Cache Efficiency",
+      "type": "gauge",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"cacheRead\",model=~\"$model\"}[$__range])) / (sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"cacheRead\",model=~\"$model\"}[$__range])) + sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"input\",model=~\"$model\"}[$__range])))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 0.3 },
+              { "color": "green", "value": 0.6 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      }
+    },
+    {
+      "id": 5,
+      "title": "Sessions",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum(increase(shepherd_claude_code_session_count_total[$__range]))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "purple" },
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "purple", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 6,
+      "title": "Cost Over Time by Model",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum by (model) (increase(shepherd_claude_code_cost_usage_USD_total{model=~\"$model\",model!=\"\"}[5m]))",
+          "legendFormat": "{{model}}",
+          "queryType": "range",
+          "refId": "A",
+          "interval": "1m"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "stacking": { "mode": "normal", "group": "A" },
+            "lineWidth": 0,
+            "showPoints": "never"
+          },
+          "unit": "currencyUSD",
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["sum"] }
+      }
+    },
+    {
+      "id": 7,
+      "title": "Cost by Model",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum by (model) (increase(shepherd_claude_code_cost_usage_USD_total{model!=\"\"}[$__range]))",
+          "legendFormat": "{{model}}",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "legend": { "displayMode": "list", "placement": "right", "values": ["percent", "value"] },
+        "pieType": "donut",
+        "tooltip": { "mode": "single" }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Cache Economics",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"cacheCreation\",model=~\"$model\"}[5m]))",
+          "legendFormat": "Cache Write",
+          "queryType": "range",
+          "refId": "A",
+          "interval": "1m"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"cacheRead\",model=~\"$model\"}[5m]))",
+          "legendFormat": "Cache Read",
+          "queryType": "range",
+          "refId": "B",
+          "interval": "1m"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "stacking": { "mode": "normal", "group": "A" },
+            "lineWidth": 0,
+            "showPoints": "never"
+          },
+          "unit": "short",
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": [
+          { "matcher": { "id": "byFrameRefID", "options": "A" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }] },
+          { "matcher": { "id": "byFrameRefID", "options": "B" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }] }
+        ]
+      },
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["sum"] }
+      }
+    },
+    {
+      "id": 9,
+      "title": "Token Usage Over Time",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"input\",model=~\"$model\"}[5m]))",
+          "legendFormat": "Input",
+          "queryType": "range",
+          "refId": "A",
+          "interval": "1m"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"output\",model=~\"$model\"}[5m]))",
+          "legendFormat": "Output",
+          "queryType": "range",
+          "refId": "B",
+          "interval": "1m"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"cacheRead\",model=~\"$model\"}[5m]))",
+          "legendFormat": "Cache Read",
+          "queryType": "range",
+          "refId": "C",
+          "interval": "1m"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "stacking": { "mode": "normal", "group": "A" },
+            "lineWidth": 0,
+            "showPoints": "never"
+          },
+          "unit": "short",
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["sum"] }
+      }
+    },
+    {
+      "id": 10,
+      "title": "Token Distribution",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum by (type) (increase(shepherd_claude_code_token_usage_tokens_total{model=~\"$model\"}[$__range]))",
+          "legendFormat": "{{type}}",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "legend": { "displayMode": "list", "placement": "right", "values": ["percent", "value"] },
+        "pieType": "donut",
+        "tooltip": { "mode": "single" }
+      }
+    },
+    {
+      "id": 11,
+      "title": "Session Log",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 20 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "loki" },
+          "editorMode": "code",
+          "expr": "{job=~\"claude-code|codex_cli_rs|gemini-cli\"} |= \"api_request\" or |= \"session\" | json",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "sortBy": [{ "displayName": "Time", "desc": true }]
+      }
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["shepherd", "cost"],
+  "templating": {
+    "list": [
+      {
+        "current": { "selected": true, "text": ["All"], "value": ["$__all"] },
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "definition": "label_values(shepherd_claude_code_cost_usage_USD_total, model)",
+        "includeAll": true,
+        "multi": true,
+        "name": "model",
+        "query": "label_values(shepherd_claude_code_cost_usage_USD_total, model)",
+        "refresh": 2,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": { "from": "now-24h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Shepherd / Cost",
+  "uid": "shepherd-cost",
+  "version": 3
+}
