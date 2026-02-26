@@ -1,22 +1,30 @@
 {
   "annotations": { "list": [] },
-  "description": "How well is the system working? Session quality, token efficiency, cache performance, active time.",
+  "description": "How well is the system working? Session quality, token efficiency, cache performance, active time across providers.",
   "editable": true,
   "graphTooltip": 1,
   "id": null,
   "links": [],
   "panels": [
     {
+      "id": 100,
+      "title": "KPIs",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "panels": []
+    },
+    {
       "id": 1,
       "title": "Sessions",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 5, "x": 0, "y": 0 },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_claude_code_session_count_total[$__range]))",
+          "expr": "(max_over_time(shepherd_claude_code_session_count_total[$__range]) or vector(0))\n+ (max_over_time(shepherd_gemini_cli_session_count_total[$__range]) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:sessions:1m[$__range])) or vector(0))",
           "queryType": "instant",
           "refId": "A"
         }
@@ -39,8 +47,9 @@
     {
       "id": 2,
       "title": "Active Time (CLI)",
+      "description": "Claude Code only",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 5, "x": 5, "y": 0 },
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
@@ -69,8 +78,9 @@
     {
       "id": 3,
       "title": "Active Time (You)",
+      "description": "Claude Code only",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 10, "y": 0 },
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
@@ -100,13 +110,13 @@
       "id": 4,
       "title": "Cache Efficiency",
       "type": "gauge",
-      "gridPos": { "h": 4, "w": 5, "x": 14, "y": 0 },
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"cacheRead\",model=~\"$model\"}[$__range])) / (sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"cacheRead\",model=~\"$model\"}[$__range])) + sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"input\",model=~\"$model\"}[$__range])))",
+          "expr": "(\n  (sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"cacheRead\"}[$__range])) or vector(0))\n  + (sum(increase(shepherd_gemini_cli_token_usage_total{type=\"cache\"}[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_cached:1m[$__range])) or vector(0))\n)\n/\n(\n  (sum(increase(shepherd_claude_code_token_usage_tokens_total[$__range])) or vector(0))\n  + (sum(increase(shepherd_gemini_cli_token_usage_total[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_input:1m[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_output:1m[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_cached:1m[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_reasoning:1m[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_tool:1m[$__range])) or vector(0))\n)",
           "queryType": "instant",
           "refId": "A"
         }
@@ -136,21 +146,22 @@
     {
       "id": 5,
       "title": "Cost/1K Output",
+      "description": "Claude Code only",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 5, "x": 19, "y": 0 },
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_claude_code_cost_usage_USD_total{model=~\"$model\"}[$__range])) / sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"output\",model=~\"$model\"}[$__range])) * 1000",
+          "expr": "sum(increase(shepherd_claude_code_cost_usage_USD_total[$__range])) / (sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"output\"}[$__range])) / 1000)",
           "queryType": "instant",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "fixed", "fixedColor": "green" },
+          "color": { "mode": "thresholds" },
           "unit": "currencyUSD",
           "decimals": 4,
           "thresholds": {
@@ -166,58 +177,70 @@
       },
       "options": {
         "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "colorMode": "background",
+        "colorMode": "value",
         "graphMode": "none",
         "textMode": "auto"
       }
     },
     {
       "id": 6,
-      "title": "Productivity Ratio Over Time",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "title": "Avg API Latency",
+      "description": "Gemini CLI only — only provider with latency histogram",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum(rate(shepherd_claude_code_active_time_seconds_total{type=\"cli\"}[5m])) / sum(rate(shepherd_claude_code_active_time_seconds_total{type=\"user\"}[5m]))",
-          "legendFormat": "CLI/User Ratio",
-          "queryType": "range",
-          "refId": "A",
-          "interval": "1m"
+          "expr": "(sum(increase(shepherd_gen_ai_client_operation_duration_seconds_sum[$__range])) or vector(0))\n/ (sum(increase(shepherd_gen_ai_client_operation_duration_seconds_count[$__range])) or vector(0))",
+          "queryType": "instant",
+          "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineWidth": 2,
-            "showPoints": "never"
-          },
-          "unit": "x",
-          "color": { "mode": "palette-classic" }
+          "color": { "mode": "thresholds" },
+          "unit": "s",
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 5 },
+              { "color": "red", "value": 15 }
+            ]
+          }
         },
         "overrides": []
       },
       "options": {
-        "tooltip": { "mode": "multi", "sort": "desc" },
-        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] }
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "auto"
       }
     },
     {
+      "id": 101,
+      "title": "Efficiency Trends",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "panels": []
+    },
+    {
       "id": 7,
-      "title": "Token Efficiency",
+      "title": "Token Efficiency Over Time",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum(rate(shepherd_claude_code_token_usage_tokens_total{type=\"input\",model=~\"$model\"}[5m]))",
-          "legendFormat": "Input rate",
+          "expr": "sum(rate(shepherd_claude_code_token_usage_tokens_total[5m]))",
+          "legendFormat": "Claude",
           "queryType": "range",
           "refId": "A",
           "interval": "1m"
@@ -225,10 +248,19 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum(rate(shepherd_claude_code_token_usage_tokens_total{type=\"output\",model=~\"$model\"}[5m]))",
-          "legendFormat": "Output rate",
+          "expr": "sum(rate(shepherd_gemini_cli_token_usage_total[5m]))",
+          "legendFormat": "Gemini",
           "queryType": "range",
           "refId": "B",
+          "interval": "1m"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum(shepherd:codex:tokens_input:1m + shepherd:codex:tokens_output:1m + shepherd:codex:tokens_cached:1m + shepherd:codex:tokens_reasoning:1m + shepherd:codex:tokens_tool:1m)",
+          "legendFormat": "Codex",
+          "queryType": "range",
+          "refId": "C",
           "interval": "1m"
         }
       ],
@@ -236,9 +268,11 @@
         "defaults": {
           "custom": {
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 20,
             "lineWidth": 2,
-            "showPoints": "never"
+            "showPoints": "auto",
+            "gradientMode": "scheme",
+            "stacking": { "mode": "none" }
           },
           "unit": "short",
           "color": { "mode": "palette-classic" }
@@ -252,9 +286,73 @@
     },
     {
       "id": 8,
+      "title": "Cache Hit Rate Over Time",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum(rate(shepherd_claude_code_token_usage_tokens_total{type=\"cacheRead\"}[5m]))\n/ (\n  sum(rate(shepherd_claude_code_token_usage_tokens_total{type=\"cacheRead\"}[5m]))\n  + sum(rate(shepherd_claude_code_token_usage_tokens_total{type=\"input\"}[5m]))\n)",
+          "legendFormat": "Claude",
+          "queryType": "range",
+          "refId": "A",
+          "interval": "1m"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum(shepherd:codex:tokens_cached:1m)\n/ (\n  sum(shepherd:codex:tokens_cached:1m)\n  + sum(shepherd:codex:tokens_input:1m)\n)",
+          "legendFormat": "Codex",
+          "queryType": "range",
+          "refId": "B",
+          "interval": "1m"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 2,
+            "showPoints": "never",
+            "gradientMode": "scheme"
+          },
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "color": { "mode": "palette-classic" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 0.3 },
+              { "color": "green", "value": 0.6 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      }
+    },
+    {
+      "id": 102,
+      "title": "Breakdowns",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
+      "panels": []
+    },
+    {
+      "id": 9,
       "title": "Active Time Distribution",
+      "description": "Claude Code only",
       "type": "piechart",
-      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 12 },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 15 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
@@ -281,75 +379,95 @@
       }
     },
     {
-      "id": 9,
-      "title": "Cache Hit Rate Over Time",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 16, "x": 8, "y": 12 },
+      "id": 10,
+      "title": "Sessions by Provider",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 15 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum(rate(shepherd_claude_code_token_usage_tokens_total{type=\"cacheRead\",model=~\"$model\"}[5m])) / (sum(rate(shepherd_claude_code_token_usage_tokens_total{type=\"cacheRead\",model=~\"$model\"}[5m])) + sum(rate(shepherd_claude_code_token_usage_tokens_total{type=\"input\",model=~\"$model\"}[5m]))) * 100",
-          "legendFormat": "Cache Hit %",
-          "queryType": "range",
-          "refId": "A",
-          "interval": "1m"
+          "expr": "max(max_over_time(shepherd_claude_code_session_count_total[$__range]))",
+          "legendFormat": "Claude",
+          "queryType": "instant",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "max(max_over_time(shepherd_gemini_cli_session_count_total[$__range]))",
+          "legendFormat": "Gemini",
+          "queryType": "instant",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum(sum_over_time(shepherd:codex:sessions:1m[$__range]))",
+          "legendFormat": "Codex",
+          "queryType": "instant",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" } },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "legend": { "displayMode": "list", "placement": "right", "values": ["percent", "value"] },
+        "pieType": "donut",
+        "tooltip": { "mode": "single" }
+      }
+    },
+    {
+      "id": 11,
+      "title": "Productivity Ratio",
+      "description": "Claude Code only — CLI active time / total active time",
+      "type": "gauge",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 15 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum(increase(shepherd_claude_code_active_time_seconds_total{type=\"cli\"}[$__range]))\n/ sum(increase(shepherd_claude_code_active_time_seconds_total[$__range]))",
+          "queryType": "instant",
+          "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 20,
-            "lineWidth": 2,
-            "showPoints": "never",
-            "gradientMode": "scheme"
-          },
-          "unit": "percent",
+          "unit": "percentunit",
           "min": 0,
-          "max": 100,
-          "color": { "mode": "palette-classic" },
+          "max": 1,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               { "color": "red", "value": null },
-              { "color": "yellow", "value": 30 },
-              { "color": "green", "value": 60 }
+              { "color": "yellow", "value": 0.4 },
+              { "color": "green", "value": 0.7 }
             ]
           }
         },
         "overrides": []
       },
       "options": {
-        "tooltip": { "mode": "multi", "sort": "desc" },
-        "legend": { "displayMode": "list", "placement": "bottom" }
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
       }
     }
   ],
   "refresh": "30s",
   "schemaVersion": 39,
   "tags": ["shepherd", "quality"],
-  "templating": {
-    "list": [
-      {
-        "current": { "selected": true, "text": ["All"], "value": ["$__all"] },
-        "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "definition": "label_values(shepherd_claude_code_cost_usage_USD_total, model)",
-        "includeAll": true,
-        "multi": true,
-        "name": "model",
-        "query": "label_values(shepherd_claude_code_cost_usage_USD_total, model)",
-        "refresh": 2,
-        "sort": 1,
-        "type": "query"
-      }
-    ]
-  },
+  "templating": { "list": [] },
   "time": { "from": "now-24h", "to": "now" },
   "timepicker": {},
   "timezone": "browser",
   "title": "Shepherd / Quality",
   "uid": "shepherd-quality",
-  "version": 3
+  "version": 4
 }

@@ -514,14 +514,18 @@
       },
       "targets": [
         {
-          "datasource": {
-            "type": "loki",
-            "uid": "loki"
-          },
+          "datasource": { "type": "loki", "uid": "loki" },
           "editorMode": "code",
-          "expr": "{job=~\"claude-code|codex_cli_rs|gemini-cli\"} |= \"tool_result\" or |= \"tool\" | json",
+          "expr": "{service_name=~\"claude-code|gemini-cli\"} |= \"tool\"",
           "queryType": "range",
           "refId": "A"
+        },
+        {
+          "datasource": { "type": "loki", "uid": "loki" },
+          "editorMode": "code",
+          "expr": "{service_name=\"codex_cli_rs\"} | event_name=~\"codex.tool_result|codex.tool_decision\"",
+          "queryType": "range",
+          "refId": "B"
         }
       ],
       "options": {

@@ -213,7 +213,7 @@
         {
           "datasource": { "type": "loki", "uid": "loki" },
           "editorMode": "code",
-          "expr": "{job=~\"claude-code|codex_cli_rs|gemini-cli\"} | json",
+          "expr": "{service_name=~\"claude-code|codex_cli_rs|gemini-cli\"}",
           "queryType": "range",
           "refId": "A"
         }

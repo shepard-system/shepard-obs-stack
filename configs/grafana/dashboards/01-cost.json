@@ -1,29 +1,38 @@
 {
   "annotations": { "list": [] },
-  "description": "How much is this costing me? Token usage, cache efficiency, session breakdown.",
+  "description": "How much is this costing me? Token usage, cost breakdown, cache efficiency across all providers.",
   "editable": true,
   "graphTooltip": 1,
   "id": null,
   "links": [],
   "panels": [
     {
+      "id": 100,
+      "title": "Overview",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "panels": []
+    },
+    {
       "id": 1,
       "title": "Total Cost",
+      "description": "Claude Code only — other providers don't emit cost metrics",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_claude_code_cost_usage_USD_total{model=~\"$model\"}[$__range]))",
+          "expr": "sum(increase(shepherd_claude_code_cost_usage_USD_total[$__range]))",
           "queryType": "instant",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "fixed", "fixedColor": "green" },
+          "color": { "mode": "thresholds" },
           "unit": "currencyUSD",
           "decimals": 2,
           "thresholds": {
@@ -39,22 +48,22 @@
       },
       "options": {
         "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "colorMode": "background",
-        "graphMode": "none",
+        "colorMode": "value",
+        "graphMode": "area",
         "textMode": "auto"
       }
     },
     {
       "id": 2,
-      "title": "Input Tokens",
+      "title": "Total Tokens",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 5, "x": 6, "y": 0 },
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"input\",model=~\"$model\"}[$__range]))",
+          "expr": "(sum(increase(shepherd_claude_code_token_usage_tokens_total[$__range])) or vector(0))\n+ (sum(increase(shepherd_gemini_cli_token_usage_total[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_input:1m[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_output:1m[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_cached:1m[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_reasoning:1m[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_tool:1m[$__range])) or vector(0))",
           "queryType": "instant",
           "refId": "A"
         }
@@ -76,15 +85,75 @@
     },
     {
       "id": 3,
-      "title": "Output Tokens",
+      "title": "Sessions",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 5, "x": 11, "y": 0 },
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"output\",model=~\"$model\"}[$__range]))",
+          "expr": "(max_over_time(shepherd_claude_code_session_count_total[$__range]) or vector(0))\n+ (max_over_time(shepherd_gemini_cli_session_count_total[$__range]) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:sessions:1m[$__range])) or vector(0))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "purple" },
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "purple", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 4,
+      "title": "Input Tokens",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "(sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"input\"}[$__range])) or vector(0))\n+ (sum(increase(shepherd_gemini_cli_token_usage_total{type=\"input\"}[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_input:1m[$__range])) or vector(0))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "blue" },
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 5,
+      "title": "Output Tokens",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "(sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"output\"}[$__range])) or vector(0))\n+ (sum(increase(shepherd_gemini_cli_token_usage_total{type=\"output\"}[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_output:1m[$__range])) or vector(0))",
           "queryType": "instant",
           "refId": "A"
         }
@@ -105,16 +174,16 @@
       }
     },
     {
-      "id": 4,
+      "id": 6,
       "title": "Cache Efficiency",
       "type": "gauge",
-      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"cacheRead\",model=~\"$model\"}[$__range])) / (sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"cacheRead\",model=~\"$model\"}[$__range])) + sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"input\",model=~\"$model\"}[$__range])))",
+          "expr": "(\n  (sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"cacheRead\"}[$__range])) or vector(0))\n  + (sum(increase(shepherd_gemini_cli_token_usage_total{type=\"cache\"}[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_cached:1m[$__range])) or vector(0))\n)\n/\n(\n  (sum(increase(shepherd_claude_code_token_usage_tokens_total[$__range])) or vector(0))\n  + (sum(increase(shepherd_gemini_cli_token_usage_total[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_input:1m[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_output:1m[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_cached:1m[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_reasoning:1m[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_tool:1m[$__range])) or vector(0))\n)",
           "queryType": "instant",
           "refId": "A"
         }
@@ -142,46 +211,25 @@
       }
     },
     {
-      "id": 5,
-      "title": "Sessions",
-      "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "editorMode": "code",
-          "expr": "sum(increase(shepherd_claude_code_session_count_total[$__range]))",
-          "queryType": "instant",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "fixed", "fixedColor": "purple" },
-          "unit": "short",
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "purple", "value": null }] }
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "colorMode": "background",
-        "graphMode": "none",
-        "textMode": "auto"
-      }
+      "id": 101,
+      "title": "Cost & Sessions",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "panels": []
     },
     {
-      "id": 6,
-      "title": "Cost Over Time by Model",
+      "id": 7,
+      "title": "Cost Over Time",
+      "description": "Claude Code only",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum by (model) (increase(shepherd_claude_code_cost_usage_USD_total{model=~\"$model\",model!=\"\"}[5m]))",
+          "expr": "sum by (model) (increase(shepherd_claude_code_cost_usage_USD_total{model!=\"\"}[5m]))",
           "legendFormat": "{{model}}",
           "queryType": "range",
           "refId": "A",
@@ -208,10 +256,11 @@
       }
     },
     {
-      "id": 7,
+      "id": 8,
       "title": "Cost by Model",
+      "description": "Claude Code only",
       "type": "piechart",
-      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 4 },
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 6 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
@@ -224,9 +273,7 @@
         }
       ],
       "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" }
-        },
+        "defaults": { "color": { "mode": "palette-classic" } },
         "overrides": []
       },
       "options": {
@@ -237,17 +284,68 @@
       }
     },
     {
-      "id": 8,
-      "title": "Cache Economics",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 4 },
+      "id": 9,
+      "title": "Sessions by Provider",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 6 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"cacheCreation\",model=~\"$model\"}[5m]))",
-          "legendFormat": "Cache Write",
+          "expr": "max(max_over_time(shepherd_claude_code_session_count_total[$__range]))",
+          "legendFormat": "Claude",
+          "queryType": "instant",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "max(max_over_time(shepherd_gemini_cli_session_count_total[$__range]))",
+          "legendFormat": "Gemini",
+          "queryType": "instant",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum(sum_over_time(shepherd:codex:sessions:1m[$__range]))",
+          "legendFormat": "Codex",
+          "queryType": "instant",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" } },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "legend": { "displayMode": "list", "placement": "right", "values": ["percent", "value"] },
+        "pieType": "donut",
+        "tooltip": { "mode": "single" }
+      }
+    },
+    {
+      "id": 102,
+      "title": "Tokens",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
+      "panels": []
+    },
+    {
+      "id": 10,
+      "title": "Token Usage by Provider",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum(increase(shepherd_claude_code_token_usage_tokens_total[5m]))",
+          "legendFormat": "Claude",
           "queryType": "range",
           "refId": "A",
           "interval": "1m"
@@ -255,8 +353,123 @@
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"cacheRead\",model=~\"$model\"}[5m]))",
+          "expr": "sum(increase(shepherd_gemini_cli_token_usage_total[5m]))",
+          "legendFormat": "Gemini",
+          "queryType": "range",
+          "refId": "B",
+          "interval": "1m"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum(shepherd:codex:tokens_input:1m + shepherd:codex:tokens_output:1m + shepherd:codex:tokens_cached:1m + shepherd:codex:tokens_reasoning:1m + shepherd:codex:tokens_tool:1m)",
+          "legendFormat": "Codex",
+          "queryType": "range",
+          "refId": "C",
+          "interval": "1m"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 2,
+            "showPoints": "auto",
+            "gradientMode": "scheme",
+            "stacking": { "mode": "none" }
+          },
+          "unit": "short",
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["sum"] }
+      }
+    },
+    {
+      "id": 11,
+      "title": "Token Distribution",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 15 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "(sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"input\"}[$__range])) or vector(0))\n+ (sum(increase(shepherd_gemini_cli_token_usage_total{type=\"input\"}[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_input:1m[$__range])) or vector(0))",
+          "legendFormat": "Input",
+          "queryType": "instant",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "(sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"output\"}[$__range])) or vector(0))\n+ (sum(increase(shepherd_gemini_cli_token_usage_total{type=\"output\"}[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_output:1m[$__range])) or vector(0))",
+          "legendFormat": "Output",
+          "queryType": "instant",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "(sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"cacheRead\"}[$__range])) or vector(0))\n+ (sum(increase(shepherd_gemini_cli_token_usage_total{type=\"cache\"}[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_cached:1m[$__range])) or vector(0))",
+          "legendFormat": "Cache",
+          "queryType": "instant",
+          "refId": "C"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "(sum(increase(shepherd_gemini_cli_token_usage_total{type=\"thought\"}[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_reasoning:1m[$__range])) or vector(0))",
+          "legendFormat": "Reasoning",
+          "queryType": "instant",
+          "refId": "D"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "(sum(increase(shepherd_gemini_cli_token_usage_total{type=\"tool\"}[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_tool:1m[$__range])) or vector(0))",
+          "legendFormat": "Tool",
+          "queryType": "instant",
+          "refId": "E"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" } },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "legend": { "displayMode": "list", "placement": "right", "values": ["percent", "value"] },
+        "pieType": "donut",
+        "tooltip": { "mode": "single" }
+      }
+    },
+    {
+      "id": 12,
+      "title": "Cache Economics",
+      "description": "Claude Code only — cache read vs creation",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 15 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"cacheRead\"}[5m]))",
           "legendFormat": "Cache Read",
+          "queryType": "range",
+          "refId": "A",
+          "interval": "1m"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"cacheCreation\"}[5m]))",
+          "legendFormat": "Cache Write",
           "queryType": "range",
           "refId": "B",
           "interval": "1m"
@@ -275,8 +488,8 @@
           "color": { "mode": "palette-classic" }
         },
         "overrides": [
-          { "matcher": { "id": "byFrameRefID", "options": "A" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }] },
-          { "matcher": { "id": "byFrameRefID", "options": "B" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }] }
+          { "matcher": { "id": "byFrameRefID", "options": "A" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }] },
+          { "matcher": { "id": "byFrameRefID", "options": "B" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }] }
         ]
       },
       "options": {
@@ -285,136 +498,48 @@
       }
     },
     {
-      "id": 9,
-      "title": "Token Usage Over Time",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 12 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "editorMode": "code",
-          "expr": "sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"input\",model=~\"$model\"}[5m]))",
-          "legendFormat": "Input",
-          "queryType": "range",
-          "refId": "A",
-          "interval": "1m"
-        },
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "editorMode": "code",
-          "expr": "sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"output\",model=~\"$model\"}[5m]))",
-          "legendFormat": "Output",
-          "queryType": "range",
-          "refId": "B",
-          "interval": "1m"
-        },
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "editorMode": "code",
-          "expr": "sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"cacheRead\",model=~\"$model\"}[5m]))",
-          "legendFormat": "Cache Read",
-          "queryType": "range",
-          "refId": "C",
-          "interval": "1m"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "drawStyle": "bars",
-            "fillOpacity": 80,
-            "stacking": { "mode": "normal", "group": "A" },
-            "lineWidth": 0,
-            "showPoints": "never"
-          },
-          "unit": "short",
-          "color": { "mode": "palette-classic" }
-        },
-        "overrides": []
-      },
-      "options": {
-        "tooltip": { "mode": "multi", "sort": "desc" },
-        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["sum"] }
-      }
+      "id": 103,
+      "title": "Logs",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 },
+      "panels": []
     },
     {
-      "id": 10,
-      "title": "Token Distribution",
-      "type": "piechart",
-      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 12 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "editorMode": "code",
-          "expr": "sum by (type) (increase(shepherd_claude_code_token_usage_tokens_total{model=~\"$model\"}[$__range]))",
-          "legendFormat": "{{type}}",
-          "queryType": "instant",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" }
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "legend": { "displayMode": "list", "placement": "right", "values": ["percent", "value"] },
-        "pieType": "donut",
-        "tooltip": { "mode": "single" }
-      }
-    },
-    {
-      "id": 11,
+      "id": 13,
       "title": "Session Log",
-      "type": "table",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 20 },
+      "type": "logs",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "loki" },
           "editorMode": "code",
-          "expr": "{job=~\"claude-code|codex_cli_rs|gemini-cli\"} |= \"api_request\" or |= \"session\" | json",
+          "expr": "{service_name=~\"claude-code|codex_cli_rs|gemini-cli\"}",
           "queryType": "range",
           "refId": "A"
         }
       ],
-      "fieldConfig": {
-        "defaults": {},
-        "overrides": []
-      },
       "options": {
-        "showHeader": true,
-        "sortBy": [{ "displayName": "Time", "desc": true }]
+        "showTime": true,
+        "showLabels": true,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none"
       }
     }
   ],
   "refresh": "30s",
   "schemaVersion": 39,
   "tags": ["shepherd", "cost"],
-  "templating": {
-    "list": [
-      {
-        "current": { "selected": true, "text": ["All"], "value": ["$__all"] },
-        "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "definition": "label_values(shepherd_claude_code_cost_usage_USD_total, model)",
-        "includeAll": true,
-        "multi": true,
-        "name": "model",
-        "query": "label_values(shepherd_claude_code_cost_usage_USD_total, model)",
-        "refresh": 2,
-        "sort": 1,
-        "type": "query"
-      }
-    ]
-  },
+  "templating": { "list": [] },
   "time": { "from": "now-24h", "to": "now" },
   "timepicker": {},
   "timezone": "browser",
   "title": "Shepherd / Cost",
   "uid": "shepherd-cost",
-  "version": 3
+  "version": 4
 }
