@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 # scripts/test-signal.sh — send test metrics and verify the pipeline
 #
-# Sends test OTLP metrics (hook counters only),
-# waits briefly, then queries Prometheus and Loki to confirm ingestion.
-# 5 checks: 2 Prometheus (hook metrics) + 3 Loki (native OTel presence).
+# Sends test OTLP metrics (hook counters),
+# waits briefly, then runs 8 checks across Prometheus and Loki.
+#
+# Checks:
+#   1-2  Hook metrics in Prometheus (tool_calls, events)
+#   3-5  Native OTel metrics in Prometheus (Claude, Gemini, Codex recording rules)
+#   6-8  Native OTel logs in Loki (Claude, Codex, Gemini)
 
 set -euo pipefail
 
@@ -17,53 +21,65 @@ green()  { printf '\033[32m%s\033[0m\n' "$1"; }
 red()    { printf '\033[31m%s\033[0m\n' "$1"; }
 yellow() { printf '\033[33m%s\033[0m\n' "$1"; }
 
+PASS=0
+FAIL=0
+WARN=0
+
 # ── Preflight ────────────────────────────────────────────────────────
 
-echo "Testing signal pipeline → Prometheus (hooks) + Loki (native OTel)"
+echo "Testing signal pipeline"
+echo "  Prometheus: ${PROMETHEUS_URL}"
+echo "  Loki:       ${LOKI_URL}"
+echo "  OTel:       ${OTEL_HTTP_URL}"
 echo ""
 
-# Check Loki is up
-if ! curl -sf "${LOKI_URL}/ready" >/dev/null 2>&1; then
-  red "Loki is not ready at ${LOKI_URL}. Is the stack running?"
-  echo "  docker compose up -d"
-  exit 1
-fi
+check_ready() {
+  local name="$1" url="$2"
+  if ! curl -sf "$url" >/dev/null 2>&1; then
+    red "${name} is not ready. Is the stack running?"
+    echo "  docker compose up -d"
+    exit 1
+  fi
+}
 
-green "Loki is ready"
+check_ready "Loki"           "${LOKI_URL}/ready"
+check_ready "Prometheus"     "${PROMETHEUS_URL}/-/healthy"
+check_ready_post() {
+  local name="$1" url="$2"
+  if ! curl -sf -X POST -H "Content-Type: application/json" -d '{}' "$url" >/dev/null 2>&1; then
+    red "${name} is not ready. Is the stack running?"
+    echo "  docker compose up -d"
+    exit 1
+  fi
+}
+check_ready_post "OTel Collector" "${OTEL_HTTP_URL}/v1/metrics"
+green "All services ready"
 
 # ── Send test hook metrics ─────────────────────────────────────────
 
 source "${HOOKS_DIR}/lib/metrics.sh"
 
+echo ""
 echo "Sending test hook metrics (OTLP → OTel Collector → Prometheus)..."
 
-# Disable errexit for background emit jobs
 set +e
 
-# Hook metrics only: tool_calls + events
-emit_counter "tool_calls"  "1"  '{"source":"claude-code","tool":"Bash","tool_status":"success","git_repo":"shepard-obs-stack"}'
-emit_counter "tool_calls"  "1"  '{"source":"claude-code","tool":"Read","tool_status":"success","git_repo":"shepard-obs-stack"}'
-emit_counter "events"      "1"  '{"source":"claude-code","event_type":"tool_use","git_repo":"shepard-obs-stack"}'
-emit_counter "events"      "1"  '{"source":"claude-code","event_type":"session_end","git_repo":"shepard-obs-stack"}'
+emit_counter "tool_calls" "1" '{"source":"claude-code","tool":"Bash","tool_status":"success","git_repo":"shepard-obs-stack"}'
+emit_counter "tool_calls" "1" '{"source":"claude-code","tool":"Read","tool_status":"success","git_repo":"shepard-obs-stack"}'
+emit_counter "events"     "1" '{"source":"claude-code","event_type":"tool_use","git_repo":"shepard-obs-stack"}'
+emit_counter "events"     "1" '{"source":"claude-code","event_type":"session_end","git_repo":"shepard-obs-stack"}'
 
-# Wait for background curls to finish + ingestion
 wait 2>/dev/null || true
-sleep 3
+sleep 5  # Wait for delta-to-cumulative conversion + Prometheus scrape
 
-# Re-enable errexit for verification phase
 set -e
 
-# ── Verify Prometheus ────────────────────────────────────────────────
-
-echo ""
-echo "Querying Prometheus (${PROMETHEUS_URL})..."
-
-PASS=0
-FAIL=0
+# ── Check helpers ──────────────────────────────────────────────────
 
 check_prometheus() {
   local label="$1"
   local query="$2"
+  local required="${3:-true}"  # true = fail, false = warn
 
   local result
   result=$(curl -sfG "${PROMETHEUS_URL}/api/v1/query" \
@@ -75,30 +91,29 @@ check_prometheus() {
   if [[ "$count" -gt 0 ]]; then
     green "  ✓ ${label}"
     PASS=$((PASS + 1))
-  else
+  elif [[ "$required" == "true" ]]; then
     red "  ✗ ${label}"
     FAIL=$((FAIL + 1))
+  else
+    yellow "  ~ ${label} (no data yet — start a CLI session to populate)"
+    WARN=$((WARN + 1))
   fi
 }
 
-check_prometheus "shepherd_tool_calls_total metric" \
-  'shepherd_tool_calls_total{source="claude-code"}'
-
-check_prometheus "shepherd_events_total metric" \
-  'shepherd_events_total{source="claude-code"}'
-
-# ── Verify native OTel presence in Loki ──────────────────────────────
-
-echo ""
-echo "Querying Loki for native OTel log labels..."
-
-check_loki_label() {
+check_loki() {
   local label="$1"
   local query="$2"
 
+  local now end start
+  now=$(date +%s)
+  end="${now}000000000"
+  start="$(( now - 3600 ))000000000"
+
   local result
-  result=$(curl -sfG "${LOKI_URL}/loki/api/v1/query" \
+  result=$(curl -sfG "${LOKI_URL}/loki/api/v1/query_range" \
     --data-urlencode "query=${query}" \
+    --data-urlencode "start=${start}" \
+    --data-urlencode "end=${end}" \
     --data-urlencode "limit=1" 2>/dev/null || echo '{"data":{"result":[]}}')
 
   local count
@@ -109,33 +124,69 @@ check_loki_label() {
     PASS=$((PASS + 1))
   else
     yellow "  ~ ${label} (no data yet — start a CLI session to populate)"
-    PASS=$((PASS + 1))  # Don't fail — native OTel data appears only after real CLI use
+    WARN=$((WARN + 1))
   fi
 }
 
-check_loki_label "claude-code native OTel logs" \
-  '{job="claude-code"}'
+# ── 1. Hook metrics in Prometheus ──────────────────────────────────
 
-check_loki_label "codex native OTel logs" \
-  '{job="codex_cli_rs"}'
+echo ""
+echo "Hook metrics (Prometheus):"
 
-check_loki_label "gemini native OTel logs" \
-  '{job="gemini-cli"}'
+check_prometheus "shepherd_tool_calls_total" \
+  'shepherd_tool_calls_total{source="claude-code"}' true
+
+check_prometheus "shepherd_events_total" \
+  'shepherd_events_total{source="claude-code"}' true
+
+# ── 2. Native OTel metrics in Prometheus ───────────────────────────
+
+echo ""
+echo "Native OTel metrics (Prometheus):"
+
+check_prometheus "Claude native metrics (claude_code_*)" \
+  'shepherd_claude_code_token_usage_tokens_total' false
+
+check_prometheus "Gemini native metrics (gemini_cli_*)" \
+  'shepherd_gemini_cli_token_usage_total' false
+
+check_prometheus "Codex recording rules (shepherd:codex:*)" \
+  '{__name__=~"shepherd:codex:.+"}' false
+
+# ── 3. Native OTel logs in Loki ───────────────────────────────────
+
+echo ""
+echo "Native OTel logs (Loki):"
+
+check_loki "Claude logs (service_name=claude-code)" \
+  '{service_name="claude-code"}'
+
+check_loki "Codex logs (service_name=codex_cli_rs)" \
+  '{service_name="codex_cli_rs"}'
+
+check_loki "Gemini logs (service_name=gemini-cli)" \
+  '{service_name="gemini-cli"}'
 
 # ── Summary ──────────────────────────────────────────────────────────
 
 echo ""
-echo "Results: ${PASS} passed, ${FAIL} failed"
+TOTAL=$((PASS + FAIL + WARN))
+echo "Results: ${PASS} passed, ${WARN} waiting for data, ${FAIL} failed (${TOTAL} checks)"
 
 if [[ $FAIL -gt 0 ]]; then
-  yellow "Some signals did not arrive. Check that the stack is running:"
-  echo "  docker compose logs otel-collector"
+  echo ""
+  red "Hook metrics did not arrive. Debug:"
+  echo "  docker compose logs otel-collector --tail=20"
+  echo "  curl -s http://localhost:8889/metrics | grep shepherd_"
+  echo "  curl -s http://localhost:9090/api/v1/targets | jq '.data.activeTargets[] | {job: .labels.job, health}'"
   exit 1
 fi
 
-green "All signals verified. Pipeline is working."
+echo ""
+green "Pipeline is working."
 echo ""
 echo "View in Grafana: http://localhost:3000"
-echo "  Hook metrics:  Prometheus → shepherd_tool_calls_total, shepherd_events_total"
-echo "  Native OTel:   Prometheus → shepherd_claude_code_* metrics"
-echo "  Native logs:   Loki → {job=\"claude-code\"} | json"
+echo "  Hook metrics:    Prometheus → shepherd_tool_calls_total, shepherd_events_total"
+echo "  Native metrics:  Prometheus → shepherd_claude_code_*, shepherd_gemini_cli_*"
+echo "  Recording rules: Prometheus → shepherd:codex:*:1m"
+echo "  Native logs:     Loki → {service_name=\"claude-code\"}"

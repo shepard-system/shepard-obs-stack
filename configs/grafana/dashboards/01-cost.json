@@ -499,17 +499,112 @@
     },
     {
       "id": 103,
-      "title": "Logs",
+      "title": "Reasoning",
       "type": "row",
       "collapsed": false,
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 },
       "panels": []
     },
     {
+      "id": 14,
+      "title": "Reasoning Tokens Over Time",
+      "description": "Gemini thought tokens + Codex reasoning tokens. Claude does not distinguish reasoning from output.",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum(increase(shepherd_gemini_cli_token_usage_total{type=\"thought\"}[5m]))",
+          "legendFormat": "Gemini (thought)",
+          "queryType": "range",
+          "refId": "A",
+          "interval": "1m"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum(shepherd:codex:tokens_reasoning:1m)",
+          "legendFormat": "Codex (reasoning)",
+          "queryType": "range",
+          "refId": "B",
+          "interval": "1m"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "stacking": { "mode": "normal", "group": "A" },
+            "lineWidth": 0,
+            "showPoints": "never"
+          },
+          "unit": "short",
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": [
+          { "matcher": { "id": "byFrameRefID", "options": "A" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "purple" } }] },
+          { "matcher": { "id": "byFrameRefID", "options": "B" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "blue" } }] }
+        ]
+      },
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["sum"] }
+      }
+    },
+    {
+      "id": 15,
+      "title": "Reasoning Ratio",
+      "description": "Reasoning tokens / total output tokens (Gemini + Codex only)",
+      "type": "gauge",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "(\n  (sum(increase(shepherd_gemini_cli_token_usage_total{type=\"thought\"}[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_reasoning:1m[$__range])) or vector(0))\n)\n/\n(\n  (sum(increase(shepherd_gemini_cli_token_usage_total{type=\"output\"}[$__range])) or vector(0))\n  + (sum(increase(shepherd_gemini_cli_token_usage_total{type=\"thought\"}[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_output:1m[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_reasoning:1m[$__range])) or vector(0))\n)",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.5 },
+              { "color": "red", "value": 0.8 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      }
+    },
+    {
+      "id": 104,
+      "title": "Logs",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 32 },
+      "panels": []
+    },
+    {
       "id": 13,
       "title": "Session Log",
       "type": "logs",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 33 },
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
