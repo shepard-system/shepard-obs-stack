@@ -3,16 +3,126 @@
 [![Grafana](https://img.shields.io/badge/Grafana-12.4.0-F46800?logo=grafana&logoColor=white)](https://grafana.com/)
 [![Prometheus](https://img.shields.io/badge/Prometheus-v3.9.1-E6522C?logo=prometheus&logoColor=white)](https://prometheus.io/)
 [![Loki](https://img.shields.io/badge/Loki-3.6.7-2C3239?logo=grafana&logoColor=white)](https://grafana.com/oss/loki/)
-[![Tempo](https://img.shields.io/badge/Tempo-2.10.1-2C3239?logo=grafana&logoColor=white)](https://grafana.com/oss/tempo/)
 [![OTel Collector](https://img.shields.io/badge/OTel_Collector-0.146.0-4B44CE?logo=opentelemetry&logoColor=white)](https://opentelemetry.io/docs/collector/)
-[![Alertmanager](https://img.shields.io/badge/Alertmanager-v0.30.1-E6522C?logo=prometheus&logoColor=white)](https://prometheus.io/docs/alerting/latest/alertmanager/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: Elastic-2.0](https://img.shields.io/badge/License-Elastic--2.0-blue.svg)](LICENSE)
 
-**The Eye** — observability infrastructure for AI coding assistants.
+**The Eye** — self-hosted observability for AI coding assistants.
 
-A cloneable repo. A `docker compose` you can run. Seven dashboards you can see in ten minutes.
+You use Claude Code, Codex, or Gemini CLI every day. You have no idea how much they cost, which tools they call, or whether they're actually helping. This fixes that.
+
+## Highlights
+
+- **One command** to start: `./scripts/init.sh` — 6 services, 7 dashboards, under a minute
+- **Three CLIs supported**: Claude Code, Codex, Gemini CLI — hooks + native OpenTelemetry
+- **Seven Grafana dashboards** auto-provisioned: cost, tools, operations, quality, and per-provider deep dives
+- **Zero dependencies** beyond Docker — no Python, no Node, no cloud accounts
+- **Works offline** — everything runs on localhost, your data stays on your machine
+
+## Quick Start
+
+**Prerequisites:** Docker (with Compose v2) and at least one AI CLI installed.
+
+```bash
+git clone https://github.com/shepard-system/shepard-obs-stack.git
+cd shepard-obs-stack
+./scripts/init.sh          # starts stack + health check
+./hooks/install.sh         # injects hooks into your CLI configs
+```
+
+Open [localhost:3000](http://localhost:3000) (admin / shepherd). Use your CLI as usual — data appears in dashboards within seconds.
+
+```bash
+./scripts/test-signal.sh   # verify the full pipeline (8 checks)
+```
+
+## Dashboards
+
+### Unified (cross-provider)
+
+| Dashboard      | Question it answers                     |
+|----------------|-----------------------------------------|
+| **Cost**       | How much is this costing me?            |
+| **Tools**      | Who is performing and who is wandering? |
+| **Operations** | What is happening right now?            |
+| **Quality**    | How well is the system working?         |
+
+### Deep Dive (per-provider)
+
+| Dashboard            | What you see                                          |
+|----------------------|-------------------------------------------------------|
+| **Claude Code**      | Token usage, cost by model, tool decisions, active time |
+| **Codex**            | Sessions, API latency percentiles, reasoning tokens    |
+| **Gemini CLI**       | Token breakdown, latency heatmap, tool call routing    |
+
+All dashboards support `$source` and `$git_repo` template variables for filtering.
+
+## How It Works
+
+AI CLIs emit telemetry through two channels:
+
+```
+AI CLI (Claude Code / Codex / Gemini)
+    │
+    ├── bash hooks → OTLP metrics (tool calls, events, git context)
+    │                 └─→ OTel Collector :4318
+    │
+    └── native OTel → gRPC (tokens, cost, logs, traces)
+                       └─→ OTel Collector :4317
+                             │
+                             ├── metrics → Prometheus :9090
+                             ├── logs → Loki :3100
+                             └── traces → Tempo :3200
+                                           │
+Loki recording rules ──── remote_write ───→ Prometheus
+                                           │
+Grafana :3000 ←── PromQL + LogQL ──────────┘
+```
+
+**Hooks** provide what native OTel cannot: git repo context and labeled tool/event counters. Everything else (tokens, cost, sessions) comes from native OTel export.
+
+## Hook Setup
+
+```bash
+./hooks/install.sh              # all detected CLIs
+./hooks/install.sh claude       # specific CLI
+./hooks/install.sh codex gemini # selective
+./hooks/uninstall.sh            # clean removal
+```
+
+The installer auto-detects installed CLIs and merges hook configuration into their config files (creating backups first).
+
+| CLI         | Hooks                                  | Native OTel signals          |
+|-------------|----------------------------------------|------------------------------|
+| Claude Code | `PostToolUse`, `Stop`                  | metrics + logs               |
+| Codex CLI   | `agent-turn-complete`                  | logs                         |
+| Gemini CLI  | `AfterTool`, `AfterAgent`, `SessionEnd`| metrics + logs + traces      |
+
+## Alerting
+
+Alertmanager runs on :9093 with alert rules for infrastructure, pipeline health, and service quality. Native Telegram and Slack receivers are included — uncomment and configure in `configs/alertmanager/alertmanager.yaml`:
+
+```yaml
+# telegram_configs:
+#   - bot_token: 'YOUR_BOT_TOKEN'
+#     chat_id: YOUR_CHAT_ID
+#     send_resolved: true
+```
+
+## Services
+
+| Service        | Port | Purpose                   |
+|----------------|------|---------------------------|
+| Grafana        | 3000 | Dashboards & explore      |
+| Prometheus     | 9090 | Metrics & alerts          |
+| Loki           | 3100 | Log aggregation           |
+| Tempo          | 3200 | Distributed tracing       |
+| Alertmanager   | 9093 | Alert routing             |
+| OTel Collector | 4317/4318 | OTLP gRPC + HTTP     |
 
 ## Architecture
+
+<details>
+<summary>C4 diagrams (click to expand)</summary>
 
 ### System Context
 
@@ -22,92 +132,7 @@ A cloneable repo. A `docker compose` you can run. Seven dashboards you can see i
 
 ![C2 Container](docs/c4/c2-container.svg)
 
-## Quick Start
-
-```bash
-git clone https://github.com/shepard-system/shepard-obs-stack.git
-cd shepard-obs-stack
-./scripts/init.sh
-```
-
-Open [http://localhost:3000](http://localhost:3000) (admin / shepherd) — 7 dashboards in the **Shepherd** folder.
-
-## Data Flow
-
-Hooks emit **OTLP metrics** (git context + labeled counters). Logs and traces come from **native OTel export**.
-
-```
-AI CLI (Claude Code / Codex / Gemini)
-    ├── hooks/*.sh → OTel Collector :4318 (OTLP metrics)
-    └── native OTel → OTel Collector :4317 (gRPC)
-        ├── metrics → Prometheus
-        ├── logs → Loki
-        └── traces → Tempo
-    ▼
-Loki recording rules → Prometheus (Codex metrics, 15 rules, 1m)
-    ▼
-Grafana: PromQL + LogQL → 7 dashboards
-    ▲
-Prometheus → Alertmanager → webhook
-```
-
-## Dashboards
-
-### Unified (01–04)
-
-Aggregate across all providers. `$source` and `$git_repo` template variables.
-
-| Dashboard      | Question it answers                     |
-|----------------|-----------------------------------------|
-| **Cost**       | How much is this costing me?            |
-| **Tools**      | Who is performing and who is wandering? |
-| **Operations** | What is happening right now?            |
-| **Quality**    | How well is the system working?         |
-
-### Deep-Dive (10–12)
-
-Provider-specific dashboards using **native OTel telemetry**.
-
-| Dashboard                 | Data Source                         |
-|---------------------------|-------------------------------------|
-| **Claude Code Deep Dive** | Prometheus + Loki                   |
-| **Codex Deep Dive**       | Prometheus (recording rules) + Loki |
-| **Gemini CLI Deep Dive**  | Prometheus + Loki                   |
-
-All 7 dashboards auto-provision on `docker compose up`.
-
-## Hook Setup
-
-```bash
-./hooks/install.sh              # all detected CLIs
-./hooks/install.sh claude       # specific provider
-./hooks/install.sh codex gemini # selective
-```
-
-Detects installed CLIs and injects hook configuration + native OTel export:
-
-| CLI         | Hook Events                                           | Config File               |
-|-------------|-------------------------------------------------------|---------------------------|
-| Claude Code | `PostToolUse`, `Stop` + native OTel via `"env"` block | `~/.claude/settings.json` |
-| Codex CLI   | `agent-turn-complete` + `[otel]` gRPC export          | `~/.codex/config.toml`    |
-| Gemini CLI  | `AfterTool`, `AfterAgent`, `AfterModel`, `SessionEnd` + telemetry | `~/.gemini/settings.json` |
-
-```bash
-./hooks/uninstall.sh            # remove all hooks + native OTel
-./scripts/test-signal.sh        # verify pipeline
-```
-
-## Services
-
-| Service        | Port | Purpose                   |
-|----------------|------|---------------------------|
-| Grafana        | 3000 | Dashboards & explore      |
-| Loki           | 3100 | Log aggregation (LogQL)   |
-| Prometheus     | 9090 | Metrics & alerts (PromQL) |
-| Alertmanager   | 9093 | Alert routing & webhooks  |
-| Tempo          | 3200 | Distributed tracing       |
-| OTel Collector | 4317 | OTLP gRPC receiver        |
-| OTel Collector | 4318 | OTLP HTTP receiver        |
+</details>
 
 ## Project Structure
 
@@ -116,32 +141,36 @@ shepard-obs-stack/
 ├── docker-compose.yaml
 ├── .env.example
 ├── hooks/
-│   ├── lib/
-│   │   ├── git-context.sh   ← Extract git repo + branch from cwd
-│   │   └── metrics.sh       ← OTLP metric emission via OTel Collector
-│   ├── claude/              ← PostToolUse + Stop handlers
-│   ├── codex/               ← agent-turn-complete handler
-│   ├── gemini/              ← AfterTool + AfterAgent + AfterModel + SessionEnd
-│   ├── install.sh           ← Auto-detect CLIs + inject configs
-│   └── uninstall.sh         ← Remove hooks from CLI configs
+│   ├── lib/                   # shared: git context, OTLP emission
+│   ├── claude/                # PostToolUse + Stop
+│   ├── codex/                 # agent-turn-complete
+│   ├── gemini/                # AfterTool + AfterAgent + SessionEnd
+│   ├── install.sh             # auto-detect + inject
+│   └── uninstall.sh           # clean removal
 ├── scripts/
-│   ├── init.sh              ← Bootstrap: env, docker compose up, health check
-│   ├── test-signal.sh       ← Verify pipeline
-│   └── render-c4.sh         ← Render C4 diagrams to SVG (requires Docker)
+│   ├── init.sh                # bootstrap
+│   ├── test-signal.sh         # pipeline verification (8 checks)
+│   └── render-c4.sh           # render PlantUML → SVG
 ├── configs/
-│   ├── otel-collector/      ← OTLP receivers → deltatocumulative → batch → exporters
-│   ├── prometheus/          ← Scrape targets + alert rules
-│   ├── alertmanager/        ← Alert routing, webhook receiver, inhibit rules
-│   ├── loki/                ← Log storage, 7d retention, recording rules
-│   ├── tempo/               ← Trace storage, 7d retention
-│   └── grafana/
-│       ├── provisioning/    ← Datasources + dashboard provider
-│       └── dashboards/      ← 7 JSON dashboards (4 unified + 3 deep-dive)
-└── docs/c4/                 ← C4 architecture diagrams (.puml + .svg)
+│   ├── otel-collector/        # receivers → processors → exporters
+│   ├── prometheus/             # scrape targets + alert rules
+│   ├── alertmanager/           # routing, Telegram/Slack receivers
+│   ├── loki/                   # storage + 15 recording rules
+│   ├── tempo/                  # trace storage, 7d retention
+│   └── grafana/                # provisioning + 7 dashboard JSONs
+└── docs/c4/                    # architecture diagrams
+```
+
+## Contributing
+
+Issues and pull requests are welcome. Before submitting changes, run the test pipeline:
+
+```bash
+./scripts/test-signal.sh    # should pass 7/8 checks (Codex recording rules need live data)
 ```
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+[Elastic License 2.0](LICENSE) — free to use, modify, and distribute. Cannot be offered as a hosted or managed service.
 
 Part of the [Shepard System](https://github.com/shepard-system).
