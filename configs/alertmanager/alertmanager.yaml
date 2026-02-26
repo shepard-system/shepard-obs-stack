@@ -1,0 +1,39 @@
+# configs/alertmanager/alertmanager.yaml — Shepherd alert routing
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: 'default'
+  group_by: ['alertname', 'source']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+  routes:
+    - match:
+        severity: critical
+      receiver: 'webhook'
+      repeat_interval: 1h
+
+receivers:
+  - name: 'default'
+    # Silently store alerts — visible in Alertmanager UI at :9093
+
+  - name: 'webhook'
+    webhook_configs:
+      # Replace with your Telegram/Slack/Discord webhook URL
+      # Telegram example: https://api.telegram.org/bot<TOKEN>/sendMessage
+      # Slack example: https://hooks.slack.com/services/xxx/yyy/zzz
+      # Set ALERTMANAGER_WEBHOOK_URL in .env or replace this URL directly
+      # Telegram: https://api.telegram.org/bot<TOKEN>/sendMessage
+      # Slack:    https://hooks.slack.com/services/xxx/yyy/zzz
+      - url: 'http://localhost:9999/webhook'
+        send_resolved: true
+
+# Inhibit noisy alerts when the whole pipeline is down
+inhibit_rules:
+  - source_match:
+      alertname: 'LokiDown'
+    target_match_re:
+      alertname: 'NoEventsReceived|HighTokenBurn'
+    equal: ['cluster']

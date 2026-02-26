@@ -1,0 +1,12 @@
+# Default reviewers
+*                       @shepard-system/maintainers
+
+# Hooks and scripts
+/hooks/                 @shepard-system/core-devs
+/scripts/               @shepard-system/core-devs
+
+# Configs
+/configs/               @shepard-system/core-devs
+
+# CI/CD — owner only
+/.github/workflows/     @digitalashes

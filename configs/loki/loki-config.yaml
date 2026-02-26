@@ -1,0 +1,120 @@
+# configs/loki/loki-config.yaml
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+
+common:
+  path_prefix: /loki
+  storage:
+    filesystem:
+      chunks_directory: /loki/chunks
+      rules_directory: /loki/rules
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+
+schema_config:
+  configs:
+    - from: 2024-01-01
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+storage_config:
+  tsdb_shipper:
+    active_index_directory: /loki/tsdb-index
+    cache_location: /loki/tsdb-cache
+
+# In-memory chunk cache
+chunk_store_config:
+  chunk_cache_config:
+    embedded_cache:
+      enabled: true
+      max_size_mb: 256
+
+# Results cache + parallel shardable queries
+query_range:
+  results_cache:
+    cache:
+      embedded_cache:
+        enabled: true
+        max_size_mb: 128
+  parallelise_shardable_queries: true
+
+# Retention and compaction
+compactor:
+  working_directory: /loki/compactor
+  delete_request_store: filesystem
+  compaction_interval: 10m
+  retention_enabled: true
+  retention_delete_delay: 2h
+  retention_delete_worker_count: 150
+
+# Limits configuration
+limits_config:
+  retention_period: 168h
+  max_query_length: 721h  # 30 days
+  max_query_lookback: 0   # no limit
+  max_streams_per_user: 10000
+  max_global_streams_per_user: 50000
+  ingestion_rate_mb: 10
+  ingestion_burst_size_mb: 20
+  per_stream_rate_limit: 3MB
+  per_stream_rate_limit_burst: 15MB
+  max_label_name_length: 1024
+  max_label_value_length: 2048
+  max_label_names_per_series: 30
+  allow_structured_metadata: true
+  max_structured_metadata_size: 2097152
+  max_structured_metadata_entries_count: 1024
+  max_query_series: 5000
+
+# Ingester configuration
+ingester:
+  chunk_idle_period: 1h
+  max_chunk_age: 2h
+  chunk_target_size: 1536000
+  chunk_encoding: snappy
+
+# Query optimization
+query_scheduler:
+  max_outstanding_requests_per_tenant: 2048
+
+querier:
+  max_concurrent: 16
+
+# Frontend configuration
+frontend:
+  max_outstanding_per_tenant: 2048
+  compress_responses: true
+  encoding: protobuf
+
+# Recording rules → remote_write to Prometheus
+ruler:
+  enable_api: true
+  storage:
+    type: local
+    local:
+      directory: /loki/rules
+  rule_path: /tmp/loki/scratch
+  evaluation_interval: 1m
+  alertmanager_url: http://alertmanager:9093
+  ring:
+    kvstore:
+      store: inmemory
+  wal:
+    dir: /tmp/loki/ruler-wal
+  remote_write:
+    enabled: true
+    clients:
+      prometheus:
+        url: http://prometheus:9090/api/v1/write
+
+analytics:
+  reporting_enabled: false

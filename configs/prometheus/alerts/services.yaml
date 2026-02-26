@@ -1,0 +1,42 @@
+groups:
+  - name: services
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum by (service_name, team, project) (rate(shepherd_http_server_request_duration_seconds_count{http_status_code=~"5.."}[5m]))
+            /
+            sum by (service_name, team, project) (rate(shepherd_http_server_request_duration_seconds_count[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate for {{ $labels.service_name }}"
+          description: "Service {{ $labels.service_name }} (team={{ $labels.team }}, project={{ $labels.project }}) has >5% error rate. Current: {{ $value | humanizePercentage }}"
+
+      - alert: HighLatencyP99
+        expr: |
+          histogram_quantile(0.99,
+            sum by (le, service_name, team, project) (
+              rate(shepherd_http_server_request_duration_seconds_bucket[5m])
+            )
+          ) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High P99 latency for {{ $labels.service_name }}"
+          description: "Service {{ $labels.service_name }} P99 latency is above 5s. Current: {{ $value }}s"
+
+      - alert: NoTelemetryReceived
+        expr: |
+          sum by (receiver) (rate(otelcol_receiver_accepted_spans{transport="grpc"}[10m])) == 0
+          and
+          sum by (receiver) (rate(otelcol_receiver_accepted_metric_points{transport="grpc"}[10m])) == 0
+        for: 10m
+        labels:
+          severity: info
+        annotations:
+          summary: "No telemetry received on {{ $labels.receiver }}"
+          description: "No spans or metrics received on receiver {{ $labels.receiver }} for 10 minutes."

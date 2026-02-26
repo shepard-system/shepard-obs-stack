@@ -1,0 +1,11 @@
+# OS
+.DS_Store
+
+# Editor
+.idea/
+*.swp
+*.swo
+.env
+
+# Private notes (not for repo)
+private/

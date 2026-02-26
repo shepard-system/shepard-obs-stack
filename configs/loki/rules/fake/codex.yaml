@@ -1,0 +1,145 @@
+# Loki recording rules for Codex Deep Dive dashboard
+# Pre-computes expensive LogQL → Prometheus via remote_write
+#
+# NOTE: model, tool_name, success, decision are structured metadata.
+# "sum by (model)" may not preserve structured metadata as output labels.
+# If broken → remove dimensions and use totals only.
+
+groups:
+  # ─────────────────────────────────────────────────────────────
+  # Group 1: Event counts
+  # ─────────────────────────────────────────────────────────────
+  - name: codex_counts
+    interval: 1m
+    rules:
+      - record: shepherd:codex:sessions:1m
+        expr: |
+          sum by (model) (
+            count_over_time(
+              {service_name="codex_cli_rs"} | event_name="codex.conversation_starts" [1m]
+            )
+          )
+
+      - record: shepherd:codex:api_requests:1m
+        expr: |
+          sum by (model) (
+            count_over_time(
+              {service_name="codex_cli_rs"} | event_name="codex.api_request" [1m]
+            )
+          )
+
+      - record: shepherd:codex:model_calls:1m
+        expr: |
+          sum by (model) (
+            count_over_time(
+              {service_name="codex_cli_rs"} | event_name="codex.sse_event" [1m]
+            )
+          )
+
+      - record: shepherd:codex:tool_results:1m
+        expr: |
+          sum by (model, success) (
+            count_over_time(
+              {service_name="codex_cli_rs"} | event_name="codex.tool_result" [1m]
+            )
+          )
+
+      - record: shepherd:codex:tool_calls_by_tool:1m
+        expr: |
+          sum by (tool_name) (
+            count_over_time(
+              {service_name="codex_cli_rs"} | event_name="codex.tool_result" [1m]
+            )
+          )
+
+      - record: shepherd:codex:tool_decisions:1m
+        expr: |
+          sum by (decision) (
+            count_over_time(
+              {service_name="codex_cli_rs"} | event_name="codex.tool_decision" [1m]
+            )
+          )
+
+  # ─────────────────────────────────────────────────────────────
+  # Group 2: Token sums (from codex.sse_event)
+  # ─────────────────────────────────────────────────────────────
+  - name: codex_tokens
+    interval: 1m
+    rules:
+      - record: shepherd:codex:tokens_input:1m
+        expr: |
+          sum by (model) (
+            sum_over_time(
+              {service_name="codex_cli_rs"} | event_name="codex.sse_event" | unwrap input_token_count [1m]
+            )
+          )
+
+      - record: shepherd:codex:tokens_output:1m
+        expr: |
+          sum by (model) (
+            sum_over_time(
+              {service_name="codex_cli_rs"} | event_name="codex.sse_event" | unwrap output_token_count [1m]
+            )
+          )
+
+      - record: shepherd:codex:tokens_cached:1m
+        expr: |
+          sum by (model) (
+            sum_over_time(
+              {service_name="codex_cli_rs"} | event_name="codex.sse_event" | unwrap cached_token_count [1m]
+            )
+          )
+
+      - record: shepherd:codex:tokens_reasoning:1m
+        expr: |
+          sum by (model) (
+            sum_over_time(
+              {service_name="codex_cli_rs"} | event_name="codex.sse_event" | unwrap reasoning_token_count [1m]
+            )
+          )
+
+      - record: shepherd:codex:tokens_tool:1m
+        expr: |
+          sum by (model) (
+            sum_over_time(
+              {service_name="codex_cli_rs"} | event_name="codex.sse_event" | unwrap tool_token_count [1m]
+            )
+          )
+
+  # ─────────────────────────────────────────────────────────────
+  # Group 3: API latency (from codex.api_request)
+  # ─────────────────────────────────────────────────────────────
+  - name: codex_latency
+    interval: 1m
+    rules:
+      - record: shepherd:codex:api_latency_ms_sum:1m
+        expr: |
+          sum by (model) (
+            sum_over_time(
+              {service_name="codex_cli_rs"} | event_name="codex.api_request" | unwrap duration_ms [1m]
+            )
+          )
+
+      - record: shepherd:codex:api_latency_ms_count:1m
+        expr: |
+          sum by (model) (
+            count_over_time(
+              {service_name="codex_cli_rs"} | event_name="codex.api_request" [1m]
+            )
+          )
+
+      - record: shepherd:codex:api_latency_ms_p50:1m
+        expr: |
+          avg(
+            quantile_over_time(0.50,
+              {service_name="codex_cli_rs"} | event_name="codex.api_request" | unwrap duration_ms [1m]
+            )
+          )
+
+      - record: shepherd:codex:api_latency_ms_p95:1m
+        expr: |
+          max(
+            quantile_over_time(0.95,
+              {service_name="codex_cli_rs"} | event_name="codex.api_request" | unwrap duration_ms [1m]
+            )
+          )

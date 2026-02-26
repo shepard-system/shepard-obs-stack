@@ -1,0 +1,162 @@
+# docker-compose.yaml
+services:
+  # ═══════════════════════════════════════════════════════════════
+  # COLLECTOR - single entry point for all telemetry
+  # ═══════════════════════════════════════════════════════════════
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.146.0
+    command: [ "--config=/etc/otel-collector-config.yaml" ]
+    environment:
+      - ENV=${ENV:-local}
+    volumes:
+      - ./configs/otel-collector/config.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "8888:8888"   # Collector metrics
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    depends_on:
+      prometheus:
+        condition: service_healthy
+      loki:
+        condition: service_started
+      tempo:
+        condition: service_started
+
+  # ═══════════════════════════════════════════════════════════════
+  # METRICS
+  # ═══════════════════════════════════════════════════════════════
+  prometheus:
+    image: prom/prometheus:v3.9.1
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yaml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.enable-lifecycle'
+      - '--web.enable-remote-write-receiver'
+    volumes:
+      - ./configs/prometheus:/etc/prometheus:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9090/-/healthy || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # ═══════════════════════════════════════════════════════════════
+  # LOGS
+  # ═══════════════════════════════════════════════════════════════
+  loki:
+    image: grafana/loki:3.6.7
+    command: -config.file=/etc/loki/loki-config.yaml
+    volumes:
+      - ./configs/loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+      - ./configs/loki/rules:/loki/rules:ro
+      - loki_data:/loki
+    ports:
+      - "3100:3100"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+  # ═══════════════════════════════════════════════════════════════
+  # TRACES
+  # ═══════════════════════════════════════════════════════════════
+  tempo:
+    image: grafana/tempo:2.10.1
+    command: [ "-config.file=/etc/tempo/tempo-config.yaml" ]
+    volumes:
+      - ./configs/tempo/tempo-config.yaml:/etc/tempo/tempo-config.yaml:ro
+      - tempo_data:/var/tempo
+    ports:
+      - "3200:3200"   # Tempo API
+      - "9095:9095"   # Tempo gRPC
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+  # ═══════════════════════════════════════════════════════════════
+  # VISUALIZATION
+  # ═══════════════════════════════════════════════════════════════
+  grafana:
+    image: grafana/grafana:12.4.0
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-shepherd}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      - GF_USERS_ALLOW_ORG_CREATE=false
+      - GF_AUTH_ANONYMOUS_ORG_NAME=Main Org.
+    volumes:
+      - ./configs/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./configs/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    depends_on:
+      prometheus:
+        condition: service_healthy
+      loki:
+        condition: service_started
+      tempo:
+        condition: service_started
+
+  # ═══════════════════════════════════════════════════════════════
+  # ALERTING
+  # ═══════════════════════════════════════════════════════════════
+  alertmanager:
+    image: prom/alertmanager:v0.30.1
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yaml'
+      - '--storage.path=/alertmanager'
+    volumes:
+      - ./configs/alertmanager/alertmanager.yaml:/etc/alertmanager/alertmanager.yaml:ro
+      - alertmanager_data:/alertmanager
+    ports:
+      - "9093:9093"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9093/-/healthy || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  prometheus_data:
+  loki_data:
+  tempo_data:
+  grafana_data:
+  alertmanager_data:

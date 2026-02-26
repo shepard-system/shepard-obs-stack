@@ -1,0 +1,43 @@
+# configs/prometheus/alerts/pipeline.yaml — Shepherd hook pipeline alerts
+groups:
+  - name: shepherd-pipeline
+    rules:
+      # No events from any hook in the last hour
+      # NOTE: This requires Loki ruler or a recording rule via OTel Collector.
+      # For Prometheus, we use the OTel Collector metrics exporter.
+      - alert: OtelCollectorDown
+        expr: up{job="otel-collector"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "OTel Collector is down"
+          description: "The OpenTelemetry Collector has been unreachable for 5 minutes."
+
+      - alert: LokiDown
+        expr: up{job="shepherd-services"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Loki exporter endpoint is down"
+          description: "The Loki metrics endpoint exposed via OTel Collector is unreachable."
+
+      - alert: PrometheusTargetDown
+        expr: up == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Scrape target {{ $labels.job }} is down"
+          description: "Prometheus cannot scrape {{ $labels.instance }} for job {{ $labels.job }}."
+
+      # High memory usage on OTel Collector
+      - alert: CollectorHighMemory
+        expr: process_resident_memory_bytes{job="otel-collector"} > 400 * 1024 * 1024
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "OTel Collector memory > 400MB"
+          description: "Collector memory usage is {{ $value | humanize1024 }}. Limit is 512MB."

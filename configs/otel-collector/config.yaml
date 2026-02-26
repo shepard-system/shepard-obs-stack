@@ -1,0 +1,62 @@
+# configs/otel-collector/config.yaml
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 5s
+    send_batch_size: 1000
+
+  # Convert DELTA sums (from hooks) to cumulative counters for Prometheus
+  deltatocumulative:
+    max_stale: 10m
+
+  # Add deployment environment attribute
+  resource:
+    attributes:
+      - key: deployment.environment
+        value: ${env:ENV}
+        action: upsert
+
+exporters:
+  # Metrics → Prometheus
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    namespace: shepherd
+
+  # Logs → Loki
+  otlphttp/loki:
+    endpoint: http://loki:3100/otlp
+
+  # Traces → Tempo
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+
+service:
+  extensions: [health_check]
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [deltatocumulative, batch, resource]
+      exporters: [prometheus]
+
+    logs:
+      receivers: [otlp]
+      processors: [batch, resource]
+      exporters: [otlphttp/loki]
+
+    traces:
+      receivers: [otlp]
+      processors: [batch, resource]
+      exporters: [otlp/tempo]

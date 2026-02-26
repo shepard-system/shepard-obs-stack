@@ -1,0 +1,56 @@
+groups:
+  - name: infra
+    rules:
+      - alert: OTelCollectorDown
+        expr: up{job="otel-collector"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "OTel Collector is down"
+          description: "OTel Collector target has been down for more than 2 minutes."
+
+      - alert: CollectorExportFailedSpans
+        expr: rate(otelcol_exporter_send_failed_spans[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Collector is failing to export spans"
+          description: "OTel Collector has been failing to export spans for 5 minutes. Current rate: {{ $value }}/s"
+
+      - alert: CollectorExportFailedMetrics
+        expr: rate(otelcol_exporter_send_failed_metric_points[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Collector is failing to export metrics"
+          description: "OTel Collector has been failing to export metric points for 5 minutes. Current rate: {{ $value }}/s"
+
+      - alert: CollectorExportFailedLogs
+        expr: rate(otelcol_exporter_send_failed_log_records[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Collector is failing to export logs"
+          description: "OTel Collector has been failing to export log records for 5 minutes. Current rate: {{ $value }}/s"
+
+      - alert: CollectorHighMemory
+        expr: process_resident_memory_bytes{job="otel-collector"} > 1e9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "OTel Collector high memory usage"
+          description: "OTel Collector memory usage is above 1GB for 5 minutes. Current: {{ $value | humanize1024 }}B"
+
+      - alert: PrometheusHighMemory
+        expr: process_resident_memory_bytes{job="prometheus"} > 2e9
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Prometheus high memory usage"
+          description: "Prometheus memory usage is above 2GB for 10 minutes."
