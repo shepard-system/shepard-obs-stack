@@ -1,0 +1,75 @@
+@startuml c3-hooks-components
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+' ── Dark theme (GitHub #0d1117) ──
+skinparam backgroundColor #0d1117
+skinparam defaultFontColor #e6edf3
+skinparam ArrowColor #8b949e
+skinparam ArrowFontColor #8b949e
+skinparam titleFontColor #e6edf3
+skinparam legendBackgroundColor #161b22
+skinparam legendBorderColor #30363d
+skinparam legendFontColor #e6edf3
+
+UpdateElementStyle("person", $bgColor="#1f6feb", $fontColor="#ffffff", $borderColor="#388bfd")
+UpdateElementStyle("system", $bgColor="#1f6feb", $fontColor="#ffffff", $borderColor="#388bfd")
+UpdateElementStyle("external_system", $bgColor="#30363d", $fontColor="#e6edf3", $borderColor="#484f58")
+UpdateElementStyle("container", $bgColor="#1f6feb", $fontColor="#ffffff", $borderColor="#388bfd")
+UpdateElementStyle("component", $bgColor="#238636", $fontColor="#ffffff", $borderColor="#2ea043")
+UpdateElementStyle("system_boundary", $fontColor="#8b949e", $borderColor="#30363d")
+
+LAYOUT_WITH_LEGEND()
+
+title Component Diagram — Hooks Runtime (shepard-obs-stack)
+
+System_Ext(claude, "Claude Code", "Hook events: PostToolUse, Stop")
+System_Ext(codex, "Codex CLI", "notify event: agent-turn-complete")
+System_Ext(gemini, "Gemini CLI", "Hook events: AfterTool, AfterAgent, AfterModel, SessionEnd")
+
+Container_Ext(loki, "Loki", "Structured event logs")
+Container_Ext(collector, "OTel Collector", "OTLP traces + metrics ingress")
+Container_Ext(tempo, "Tempo", "Trace storage")
+Container_Ext(prometheus, "Prometheus", "Metric storage")
+
+System_Boundary(hooks_runtime, "Hooks Runtime") {
+    Component(adapter_claude, "Claude Adapter", "bash + jq", "Parses Claude hook payloads and transcript stats")
+    Component(adapter_codex, "Codex Adapter", "bash + jq", "Parses notify payload and token usage")
+    Component(adapter_gemini, "Gemini Adapter", "bash + jq", "Parses event payloads + transcript for session totals")
+
+    Component(enricher, "Context Enricher", "hooks/lib/git-context.sh", "Adds git_repo, git_branch, cwd context")
+    Component(cost, "Cost Estimator", "hooks/lib/cost.sh", "Normalizes model pricing to estimated USD")
+    Component(emit_logs, "Log Emitter", "hooks/lib/emit.sh", "Pushes JSON events to Loki")
+    Component(emit_traces, "Trace Emitter", "hooks/lib/trace.sh", "Builds OTLP spans and posts to Collector")
+    Component(emit_metrics, "Metrics Emitter", "hooks/lib/metrics.sh", "Builds OTLP Sum metrics and posts to Collector")
+}
+
+Rel(claude, adapter_claude, "stdin JSON")
+Rel(codex, adapter_codex, "notify payload argument")
+Rel(gemini, adapter_gemini, "stdin JSON + env vars")
+
+Rel(adapter_claude, enricher, "resolve git context")
+Rel(adapter_codex, enricher, "resolve git context")
+Rel(adapter_gemini, enricher, "resolve git context")
+
+Rel(adapter_claude, cost, "estimate session/tool cost")
+Rel(adapter_codex, cost, "estimate turn cost")
+Rel(adapter_gemini, cost, "estimate session/model cost")
+
+Rel(adapter_claude, emit_logs, "emit event JSON")
+Rel(adapter_codex, emit_logs, "emit event JSON")
+Rel(adapter_gemini, emit_logs, "emit event JSON")
+
+Rel(adapter_claude, emit_traces, "emit spans")
+Rel(adapter_gemini, emit_traces, "emit spans")
+
+Rel(adapter_claude, emit_metrics, "emit counters")
+Rel(adapter_codex, emit_metrics, "emit counters")
+Rel(adapter_gemini, emit_metrics, "emit counters")
+
+Rel(emit_logs, loki, "HTTP push /loki/api/v1/push")
+Rel(emit_traces, collector, "OTLP HTTP /v1/traces")
+Rel(emit_metrics, collector, "OTLP HTTP /v1/metrics")
+Rel(collector, tempo, "trace export")
+Rel(collector, prometheus, "metric export")
+
+@enduml

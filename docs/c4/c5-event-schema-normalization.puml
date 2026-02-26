@@ -1,0 +1,62 @@
+@startuml c5-event-schema-normalization
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+' ── Dark theme (GitHub #0d1117) ──
+skinparam backgroundColor #0d1117
+skinparam defaultFontColor #e6edf3
+skinparam ArrowColor #8b949e
+skinparam ArrowFontColor #8b949e
+skinparam titleFontColor #e6edf3
+skinparam legendBackgroundColor #161b22
+skinparam legendBorderColor #30363d
+skinparam legendFontColor #e6edf3
+
+UpdateElementStyle("external_system", $bgColor="#30363d", $fontColor="#e6edf3", $borderColor="#484f58")
+UpdateElementStyle("container", $bgColor="#1f6feb", $fontColor="#ffffff", $borderColor="#388bfd")
+UpdateElementStyle("component", $bgColor="#238636", $fontColor="#ffffff", $borderColor="#2ea043")
+UpdateElementStyle("database", $bgColor="#8250df", $fontColor="#ffffff", $borderColor="#a371f7")
+UpdateElementStyle("system_boundary", $fontColor="#8b949e", $borderColor="#30363d")
+
+LAYOUT_WITH_LEGEND()
+
+title Component Diagram — Cross-CLI Event Schema Normalization
+
+System_Ext(claude_raw, "Claude Raw Events", "PostToolUse / Stop payloads + transcript")
+System_Ext(codex_raw, "Codex Raw Events", "agent-turn-complete notify payload")
+System_Ext(gemini_raw, "Gemini Raw Events", "AfterTool / AfterModel / SessionEnd payloads")
+
+System_Boundary(norm, "Normalization Layer (hooks runtime)") {
+    Component(input_adapters, "Input Adapters", "bash + jq", "Read raw JSON from each CLI hook")
+    Component(field_mapper, "Field Mapper", "mapping rules", "Map snake_case/kebab-case and vendor-specific names")
+    Component(identity, "Identity Resolver", "normalizer", "Resolve canonical ids: session_id, turn_id, trace_id")
+    Component(usage, "Usage Extractor", "normalizer", "Extract tokens_* and usage totals")
+    Component(cost, "Cost Calculator", "normalizer", "Estimate cost_usd with model rate card")
+    Component(context, "Context Enricher", "normalizer", "Add source, model, tool, tool_status, git_repo, git_branch")
+    Component(quality, "Quality Guard", "validator", "Schema validation + parse error counters")
+    Component(router, "Telemetry Router", "emitters", "Route normalized events to logs/metrics/traces")
+}
+
+ContainerDb(schema, "Canonical Event Schema", "JSON contract", "event_type, session_id, turn_id, model, tool, tool_status, tokens_*, cost_usd, duration_sec, traceID, git_*")
+Container(loki, "Loki", "Logs", "Structured normalized events")
+Container(prom, "Prometheus", "Metrics", "events/tool_calls/tokens/cost counters")
+Container(tempo, "Tempo", "Traces", "session + tool spans")
+
+Rel(claude_raw, input_adapters, "stdin JSON")
+Rel(codex_raw, input_adapters, "notify arg JSON")
+Rel(gemini_raw, input_adapters, "stdin JSON + env context")
+
+Rel(input_adapters, field_mapper, "raw fields")
+Rel(field_mapper, identity, "normalized ids")
+Rel(identity, usage, "canonical event frame")
+Rel(usage, cost, "usage totals")
+Rel(cost, context, "cost + model")
+Rel(context, quality, "fully shaped event")
+Rel(quality, schema, "validate against canonical contract")
+Rel(quality, router, "accepted events")
+Rel(quality, prom, "hook_parse_errors_total", "metrics")
+
+Rel(router, loki, "normalized JSON logs")
+Rel(router, prom, "OTLP counters")
+Rel(router, tempo, "OTLP spans")
+
+@enduml

@@ -1,0 +1,61 @@
+@startuml c4-hook-event-flow
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Dynamic.puml
+
+' ── Dark theme (GitHub #0d1117) ──
+skinparam backgroundColor #0d1117
+skinparam defaultFontColor #e6edf3
+skinparam ArrowColor #8b949e
+skinparam ArrowFontColor #8b949e
+skinparam titleFontColor #e6edf3
+skinparam legendBackgroundColor #161b22
+skinparam legendBorderColor #30363d
+skinparam legendFontColor #e6edf3
+
+UpdateElementStyle("person", $bgColor="#1f6feb", $fontColor="#ffffff", $borderColor="#388bfd")
+UpdateElementStyle("system", $bgColor="#1f6feb", $fontColor="#ffffff", $borderColor="#388bfd")
+UpdateElementStyle("external_system", $bgColor="#30363d", $fontColor="#e6edf3", $borderColor="#484f58")
+UpdateElementStyle("container", $bgColor="#1f6feb", $fontColor="#ffffff", $borderColor="#388bfd")
+
+LAYOUT_LEFT_RIGHT()
+
+title Dynamic Diagram — Hooks + Native OTel Telemetry Flow
+
+Person(dev, "Developer", "Runs AI coding sessions")
+System_Ext(claude, "Claude Code", "PostToolUse / Stop + native OTel")
+System_Ext(codex, "Codex CLI", "notify: agent-turn-complete + native OTel")
+System_Ext(gemini, "Gemini CLI", "AfterTool / AfterModel / SessionEnd + native OTel")
+
+Container(hooks, "Hook Scripts", "bash + jq", "Git context, tool/event counters → OTLP metrics")
+Container(collector, "OTel Collector", "OTLP ingest", "Receives metrics, logs, traces")
+Container(loki, "Loki", "Log store + ruler", "Native OTel logs + recording rules")
+Container(tempo, "Tempo", "Trace store", "Session and tool spans")
+Container(prom, "Prometheus", "Metrics store", "Counters, rates, recording rule results")
+Container(grafana, "Grafana", "Dashboards", "7 dashboards: 4 unified + 3 deep-dive")
+
+Rel(dev, claude, "1. Uses CLI")
+Rel(dev, codex, "1a. Uses CLI")
+Rel(dev, gemini, "1b. Uses CLI")
+
+Rel(claude, hooks, "2. Hook JSON → scripts")
+Rel(codex, hooks, "2a. Notify payload → scripts")
+Rel(gemini, hooks, "2b. Hook JSON + env → scripts")
+
+Rel(claude, collector, "2c. Native OTel (gRPC :4317)")
+Rel(codex, collector, "2d. Native OTel (gRPC :4317)")
+Rel(gemini, collector, "2e. Native OTel (gRPC :4317)")
+
+Rel(hooks, collector, "3. OTLP metrics (HTTP :4318)")
+
+Rel(collector, prom, "4. Export metrics")
+Rel(collector, loki, "5. Export logs")
+Rel(collector, tempo, "6. Export traces")
+
+Rel(loki, prom, "7. Recording rules\n(Codex metrics, remote write)")
+
+Rel(grafana, prom, "8. Query metrics (PromQL)")
+Rel(grafana, loki, "9. Query logs (LogQL)")
+Rel(grafana, tempo, "10. Query traces (TraceQL)")
+
+Rel(dev, grafana, "11. Observes cost, quality, tool errors")
+
+@enduml

@@ -1,0 +1,37 @@
+@startuml c1-system-context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+' ── Dark theme (GitHub #0d1117) ──
+skinparam backgroundColor #0d1117
+skinparam defaultFontColor #e6edf3
+skinparam ArrowColor #8b949e
+skinparam ArrowFontColor #8b949e
+skinparam titleFontColor #e6edf3
+skinparam legendBackgroundColor #161b22
+skinparam legendBorderColor #30363d
+skinparam legendFontColor #e6edf3
+
+UpdateElementStyle("person", $bgColor="#1f6feb", $fontColor="#ffffff", $borderColor="#388bfd")
+UpdateElementStyle("system", $bgColor="#1f6feb", $fontColor="#ffffff", $borderColor="#388bfd")
+UpdateElementStyle("external_system", $bgColor="#30363d", $fontColor="#e6edf3", $borderColor="#484f58")
+
+LAYOUT_WITH_LEGEND()
+
+title System Context — The Eye (shepard-obs-stack)
+
+Person(developer, "Developer", "Uses AI coding assistants and monitors their telemetry")
+
+System(eye, "The Eye", "Observability stack that collects, stores, and visualizes telemetry from AI CLI tools and instrumented services")
+
+System_Ext(claude, "Claude Code", "AI coding assistant.\nHooks: PostToolUse, Stop")
+System_Ext(codex, "Codex CLI", "OpenAI coding assistant.\nHook: agent-turn-complete")
+System_Ext(gemini, "Gemini CLI", "Google AI assistant.\nHooks: AfterTool, AfterAgent,\nAfterModel, SessionEnd")
+System_Ext(apps, "Instrumented Services", "Any application emitting OTLP telemetry")
+
+Rel(developer, eye, "Views dashboards, explores traces")
+Rel(claude, eye, "Hooks push logs + OTLP spans", "curl → Loki + OTel")
+Rel(codex, eye, "Hook pushes JSON logs", "curl → Loki HTTP")
+Rel(gemini, eye, "Hooks push logs + OTLP spans", "curl → Loki + OTel")
+Rel(apps, eye, "Sends metrics, logs, traces", "OTLP gRPC/HTTP")
+
+@enduml

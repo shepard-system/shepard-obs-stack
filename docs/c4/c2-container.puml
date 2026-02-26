@@ -1,0 +1,60 @@
+@startuml c2-container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+' ── Dark theme (GitHub #0d1117) ──
+skinparam backgroundColor #0d1117
+skinparam defaultFontColor #e6edf3
+skinparam ArrowColor #8b949e
+skinparam ArrowFontColor #8b949e
+skinparam titleFontColor #e6edf3
+skinparam legendBackgroundColor #161b22
+skinparam legendBorderColor #30363d
+skinparam legendFontColor #e6edf3
+
+UpdateElementStyle("person", $bgColor="#1f6feb", $fontColor="#ffffff", $borderColor="#388bfd")
+UpdateElementStyle("system", $bgColor="#1f6feb", $fontColor="#ffffff", $borderColor="#388bfd")
+UpdateElementStyle("external_system", $bgColor="#30363d", $fontColor="#e6edf3", $borderColor="#484f58")
+UpdateElementStyle("container", $bgColor="#1f6feb", $fontColor="#ffffff", $borderColor="#388bfd")
+UpdateElementStyle("system_boundary", $fontColor="#8b949e", $borderColor="#30363d")
+
+LAYOUT_WITH_LEGEND()
+
+title Container Diagram — The Eye (shepard-obs-stack)
+
+Person(developer, "Developer", "Views dashboards and explores telemetry")
+
+System_Ext(cli_hooks, "AI CLI Hooks", "Shell scripts emitting OTLP metrics\n(git context, tool/event counters)")
+System_Ext(apps, "Instrumented Services", "Applications sending OTLP telemetry")
+
+System_Boundary(eye, "The Eye — shepard-obs-stack") {
+    Container(grafana, "Grafana", "grafana:12.4.0", "7 dashboards: 4 unified + 3 deep-dive.\nPre-provisioned datasources.\nLog-to-trace correlation via traceID.")
+
+    Container(loki, "Loki", "grafana/loki:3.6.7", "Log aggregation with LogQL.\nRuler + recording rules (Codex metrics).\nFilesystem storage, 7d retention.")
+
+    Container(prometheus, "Prometheus", "prom/prometheus:v3.9.1", "Metrics storage and alerting.\nRemote-write receiver (Loki rules).\nScrapes collector and self, 7d retention.")
+
+    Container(alertmanager, "Alertmanager", "prom/alertmanager:v0.30.1", "Alert routing and deduplication.\nWebhook receiver (Telegram/Slack).\nInhibit rules for cascade suppression.")
+
+    Container(tempo, "Tempo", "grafana/tempo:2.10.1", "Distributed tracing.\nLocal WAL + blocks, 7d retention.\nSession timeline view per traceID.")
+
+    Container(collector, "OTel Collector", "otel-collector-contrib:0.146.0", "OTLP receiver (gRPC + HTTP).\nBatch processing.\nRoutes to Prometheus, Loki, Tempo.")
+}
+
+Rel(developer, grafana, "Views dashboards, explores traces", "HTTP :3000")
+
+Rel(cli_hooks, collector, "Push OTLP metrics\n(tool/event counters, git context)", "curl HTTP POST :4318")
+Rel(apps, collector, "Send metrics, logs, traces", "OTLP gRPC :4317 / HTTP :4318")
+
+Rel(collector, prometheus, "Export metrics", "remote write :8889")
+Rel(collector, loki, "Export logs", "HTTP push :3100")
+Rel(collector, tempo, "Export traces", "OTLP gRPC :4317")
+
+Rel(loki, prometheus, "Recording rules\n(Codex metrics)", "remote write :9090")
+Rel(prometheus, alertmanager, "Fire alerts", "HTTP :9093")
+Rel(tempo, prometheus, "Span metrics", "remote write :9090")
+
+Rel(grafana, prometheus, "Query metrics", "PromQL")
+Rel(grafana, loki, "Query logs", "LogQL")
+Rel(grafana, tempo, "Query traces", "TraceQL")
+
+@enduml
