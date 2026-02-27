@@ -113,7 +113,7 @@ hooks/
 │   ├── git-context.sh       ← get_git_context(cwd) → $GIT_REPO, $GIT_BRANCH
 │   ├── metrics.sh           ← emit_counter(name, value, labels_json) → OTLP HTTP
 │   ├── traces.sh            ← emit_spans(service_name) → OTLP HTTP /v1/traces
-│   └── session-parser.sh    ← parse Claude JSONL → span JSONL (grep+jq+perl)
+│   └── session-parser.sh    ← parse Claude JSONL → span JSONL (jq)
 ├── claude/
 │   ├── post-tool-use.sh     ← tool_calls_total + events_total (tool_use)
 │   └── stop.sh              ← events_total (session_end) + session log parser → Tempo
@@ -259,7 +259,7 @@ Verify hooks are installed: check `~/.claude/settings.json` for `.hooks` key, `~
 
 Claude Code's Stop hook parses JSONL session logs (`~/.claude/projects/{slug}/{session_id}.jsonl`) into synthetic OTLP traces and sends them to Tempo via OTel Collector.
 
-**Pipeline:** `stop.sh` → `session-parser.sh` (grep+jq+perl) → span JSONL → `emit_spans()` (traces.sh) → `/v1/traces` → Tempo
+**Pipeline:** `stop.sh` → `session-parser.sh` (single-pass jq) → span JSONL → `emit_spans()` (traces.sh) → `/v1/traces` → Tempo
 
 **Span types generated:**
 - `claude.session` — root span (session duration, model, git branch)
@@ -268,10 +268,10 @@ Claude Code's Stop hook parses JSONL session logs (`~/.claude/projects/{slug}/{s
 - `claude.agent.*` — sub-agent spans grouped by agentId
 
 **Key details:**
-- Deterministic IDs: trace_id = sha256(session_id)[:32], span_id = sha256(tool_use_id)[:16]
-- ISO 8601 → nanoseconds via perl (macOS `date` lacks `%N`)
+- Deterministic IDs: trace_id = UUID without dashes, span_id = sequential hex (pad16)
+- ISO 8601 → nanoseconds via jq `strptime`+`mktime` (no perl/shasum dependencies)
 - Tool calls joined by `tool_use_id`: tool_use entry provides start, tool_result provides end
-- Fire-and-forget: `( parser | emit_spans ) & disown` — never blocks the CLI
+- Fire-and-forget: `( parser | emit_spans ) </dev/null >/dev/null 2>&1 &` — fully detached, never blocks the CLI
 - Tempo's `metrics_generator` produces `traces_spanmetrics_calls_total` and `traces_spanmetrics_duration_seconds_*` for the dashboard stats
 
 ## Known Limitations

@@ -40,11 +40,11 @@ if [[ -n "$session_id" && -n "$cwd" ]]; then
   session_file="${HOME}/.claude/projects/${slug}/${session_id}.jsonl"
 
   if [[ -f "$session_file" ]]; then
-    # Parse session log and emit traces — fire-and-forget
+    # Parse session log and emit traces — fully detached from parent pipes
     (
-      bash "${SCRIPT_DIR}/../lib/session-parser.sh" "$session_file" 2>/dev/null \
+      bash "${SCRIPT_DIR}/../lib/session-parser.sh" "$session_file" \
         | emit_spans "claude-code-session"
-    ) &
+    ) </dev/null >/dev/null 2>&1 &
     disown
   fi
 fi
