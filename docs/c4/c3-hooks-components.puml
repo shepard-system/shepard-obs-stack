@@ -26,8 +26,7 @@ System_Ext(claude, "Claude Code", "Hook events: PostToolUse, Stop")
 System_Ext(codex, "Codex CLI", "notify event: agent-turn-complete")
 System_Ext(gemini, "Gemini CLI", "Hook events: AfterTool, AfterAgent, AfterModel, SessionEnd")
 
-Container_Ext(loki, "Loki", "Structured event logs")
-Container_Ext(collector, "OTel Collector", "OTLP traces + metrics ingress")
+Container_Ext(collector, "OTel Collector", "OTLP metrics + traces ingress")
 Container_Ext(tempo, "Tempo", "Trace storage")
 Container_Ext(prometheus, "Prometheus", "Metric storage")
 
@@ -37,10 +36,9 @@ System_Boundary(hooks_runtime, "Hooks Runtime") {
     Component(adapter_gemini, "Gemini Adapter", "bash + jq", "Parses event payloads + transcript for session totals")
 
     Component(enricher, "Context Enricher", "hooks/lib/git-context.sh", "Adds git_repo, git_branch, cwd context")
-    Component(cost, "Cost Estimator", "hooks/lib/cost.sh", "Normalizes model pricing to estimated USD")
-    Component(emit_logs, "Log Emitter", "hooks/lib/emit.sh", "Pushes JSON events to Loki")
-    Component(emit_traces, "Trace Emitter", "hooks/lib/trace.sh", "Builds OTLP spans and posts to Collector")
     Component(emit_metrics, "Metrics Emitter", "hooks/lib/metrics.sh", "Builds OTLP Sum metrics and posts to Collector")
+    Component(emit_traces, "Trace Emitter", "hooks/lib/traces.sh", "Builds OTLP spans and posts to Collector")
+    Component(session_parser, "Session Parser", "hooks/lib/session-parser.sh", "Parses Claude JSONL logs into synthetic trace spans")
 }
 
 Rel(claude, adapter_claude, "stdin JSON")
@@ -51,25 +49,16 @@ Rel(adapter_claude, enricher, "resolve git context")
 Rel(adapter_codex, enricher, "resolve git context")
 Rel(adapter_gemini, enricher, "resolve git context")
 
-Rel(adapter_claude, cost, "estimate session/tool cost")
-Rel(adapter_codex, cost, "estimate turn cost")
-Rel(adapter_gemini, cost, "estimate session/model cost")
-
-Rel(adapter_claude, emit_logs, "emit event JSON")
-Rel(adapter_codex, emit_logs, "emit event JSON")
-Rel(adapter_gemini, emit_logs, "emit event JSON")
-
-Rel(adapter_claude, emit_traces, "emit spans")
-Rel(adapter_gemini, emit_traces, "emit spans")
-
 Rel(adapter_claude, emit_metrics, "emit counters")
 Rel(adapter_codex, emit_metrics, "emit counters")
 Rel(adapter_gemini, emit_metrics, "emit counters")
 
-Rel(emit_logs, loki, "HTTP push /loki/api/v1/push")
-Rel(emit_traces, collector, "OTLP HTTP /v1/traces")
+Rel(adapter_claude, session_parser, "parse JSONL session log")
+Rel(session_parser, emit_traces, "emit spans")
+
 Rel(emit_metrics, collector, "OTLP HTTP /v1/metrics")
-Rel(collector, tempo, "trace export")
+Rel(emit_traces, collector, "OTLP HTTP /v1/traces")
 Rel(collector, prometheus, "metric export")
+Rel(collector, tempo, "trace export")
 
 @enduml

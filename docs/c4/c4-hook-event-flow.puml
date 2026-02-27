@@ -30,7 +30,7 @@ Container(collector, "OTel Collector", "OTLP ingest", "Receives metrics, logs, t
 Container(loki, "Loki", "Log store + ruler", "Native OTel logs + recording rules")
 Container(tempo, "Tempo", "Trace store", "Session and tool spans")
 Container(prom, "Prometheus", "Metrics store", "Counters, rates, recording rule results")
-Container(grafana, "Grafana", "Dashboards", "7 dashboards: 4 unified + 3 deep-dive")
+Container(grafana, "Grafana", "Dashboards", "8 dashboards: 4 unified + 3 deep-dive + 1 session timeline")
 
 Rel(dev, claude, "1. Uses CLI")
 Rel(dev, codex, "1a. Uses CLI")

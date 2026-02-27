@@ -45,7 +45,7 @@ curl -s 'http://localhost:9090/api/v1/query?query=shepherd_events_total' | jq .
 
 # Query Loki directly
 curl -s 'http://localhost:3100/loki/api/v1/query_range' \
-  --data-urlencode 'query={job="claude-code"}' --data-urlencode 'limit=5' | jq .
+  --data-urlencode 'query={service_name="claude-code"}' --data-urlencode 'limit=5' | jq .
 
 # Render C4 architecture diagrams (requires Docker)
 ./scripts/render-c4.sh
@@ -73,7 +73,7 @@ AI CLI (Claude Code / Codex / Gemini)
     │   └── curl POST → OTel Collector :4318 (OTLP HTTP → metrics)
     └── native OTel → OTel Collector :4317 (gRPC)
         ├── metrics → Prometheus (claude_code.*, gen_ai.client.*)
-        ├── logs → Loki ({job="claude-code"}, {job="codex_cli_rs"}, {job="gemini-cli"})
+        ├── logs → Loki ({service_name="claude-code"}, {service_name="codex_cli_rs"}, {service_name="gemini-cli"})
         └── traces → Tempo
     ▼
 Loki :3100
@@ -82,6 +82,7 @@ Loki :3100
 Grafana dashboards:
     Unified (01-04):   hook metrics (tools/events) + native OTel metrics (cost/tokens)
     Deep-Dive (10-12): native OTel metrics + logs (provider-specific)
+    Session Timeline (13): synthetic traces from JSONL parser
     ▲
 Prometheus :9090 ← scrapes OTel Collector :8889
     └─→ Alertmanager :9093 → webhook
@@ -144,7 +145,7 @@ Tool status detection: hooks grep `tool_response` for error patterns (exit code,
 | CLI         | Transport       | Signals                                        | Config location             |
 |-------------|-----------------|------------------------------------------------|-----------------------------|
 | Claude Code | OTLP gRPC :4317 | metrics (`claude_code.*`) + logs               | `~/.claude/settings.json` `"env"` block |
-| Codex       | OTLP gRPC :4317 | logs (`job=codex_cli_rs`) + traces             | `~/.codex/config.toml` `[otel]` section |
+| Codex       | OTLP gRPC :4317 | logs (`service_name=codex_cli_rs`) + traces    | `~/.codex/config.toml` `[otel]` section |
 | Gemini CLI  | OTLP gRPC :4317 | metrics (`gemini_cli.*`, `gen_ai.client.*`) + logs + traces | `~/.gemini/settings.json` `"telemetry"` block |
 
 Native OTel metric names after Prometheus ingestion follow the pattern: `shepherd_<cli>_<metric>_<unit>_total`. See `configs/otel-collector/config.yaml` for the full pipeline and the Native OTel Metric Catalog section below for the complete list.
@@ -170,7 +171,7 @@ After Prometheus ingestion with `shepherd` namespace (dots→underscores, `_tota
 
 ### Native OTel Log Sources
 
-| Job label      | Source    | Event types in Loki                                                                           |
+| Service name   | Source    | Event types in Loki                                                                           |
 |----------------|-----------|-----------------------------------------------------------------------------------------------|
 | `claude-code`  | Claude    | `claude_code.api_request`, `claude_code.tool_decision`, `claude_code.tool_result`, `claude_code.user_prompt` |
 | `codex_cli_rs` | Codex     | OTLP logs with token/model attributes                                                         |
