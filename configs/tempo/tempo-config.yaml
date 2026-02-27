@@ -38,6 +38,9 @@ metrics_generator:
     external_labels:
       source: tempo
       cluster: shepherd-obs
+    stale_duration: 30m
+  traces_storage:
+    path: /var/tempo/generator/traces
   storage:
     path: /var/tempo/generator/wal
     remote_write:
@@ -50,6 +53,7 @@ overrides:
       processors:
         - service-graphs
         - span-metrics
+        - local-blocks
 
 usage_report:
   reporting_enabled: false

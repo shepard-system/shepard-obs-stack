@@ -12,9 +12,9 @@ You use Claude Code, Codex, or Gemini CLI every day. You have no idea how much t
 
 ## Highlights
 
-- **One command** to start: `./scripts/init.sh` — 6 services, 7 dashboards, under a minute
+- **One command** to start: `./scripts/init.sh` — 6 services, 8 dashboards, under a minute
 - **Three CLIs supported**: Claude Code, Codex, Gemini CLI — hooks + native OpenTelemetry
-- **Seven Grafana dashboards** auto-provisioned: cost, tools, operations, quality, and per-provider deep dives
+- **Eight Grafana dashboards** auto-provisioned: cost, tools, operations, quality, per-provider deep dives, and session timeline
 - **Zero dependencies** beyond Docker — no Python, no Node, no cloud accounts
 - **Works offline** — everything runs on localhost, your data stays on your machine
 
@@ -32,7 +32,7 @@ cd shepard-obs-stack
 Open [localhost:3000](http://localhost:3000) (admin / shepherd). Use your CLI as usual — data appears in dashboards within seconds.
 
 ```bash
-./scripts/test-signal.sh   # verify the full pipeline (8 checks)
+./scripts/test-signal.sh   # verify the full pipeline (9 checks)
 ```
 
 ## Dashboards
@@ -53,6 +53,14 @@ Open [localhost:3000](http://localhost:3000) (admin / shepherd). Use your CLI as
 | **Claude Code**      | Token usage, cost by model, tool decisions, active time |
 | **Codex**            | Sessions, API latency percentiles, reasoning tokens    |
 | **Gemini CLI**       | Token breakdown, latency heatmap, tool call routing    |
+
+### Session Timeline
+
+| Dashboard              | What you see                                          |
+|------------------------|-------------------------------------------------------|
+| **Session Timeline**   | Synthetic traces from Claude Code session logs — tool call waterfall, MCP timing, sub-agents |
+
+Click any Trace ID to open the full waterfall in Grafana Explore → Tempo.
 
 All dashboards support `$source` and `$git_repo` template variables for filtering.
 
@@ -141,7 +149,7 @@ shepard-obs-stack/
 ├── docker-compose.yaml
 ├── .env.example
 ├── hooks/
-│   ├── lib/                   # shared: git context, OTLP emission
+│   ├── lib/                   # shared: git context, OTLP metrics + traces, session parser
 │   ├── claude/                # PostToolUse + Stop
 │   ├── codex/                 # agent-turn-complete
 │   ├── gemini/                # AfterTool + AfterAgent + SessionEnd
@@ -157,7 +165,7 @@ shepard-obs-stack/
 │   ├── alertmanager/           # routing, Telegram/Slack receivers
 │   ├── loki/                   # storage + 15 recording rules
 │   ├── tempo/                  # trace storage, 7d retention
-│   └── grafana/                # provisioning + 7 dashboard JSONs
+│   └── grafana/                # provisioning + 8 dashboard JSONs
 └── docs/c4/                    # architecture diagrams
 ```
 
@@ -166,7 +174,7 @@ shepard-obs-stack/
 Issues and pull requests are welcome. Before submitting changes, run the test pipeline:
 
 ```bash
-./scripts/test-signal.sh    # should pass 7/8 checks (Codex recording rules need live data)
+./scripts/test-signal.sh    # should pass 3/9 checks (others need live CLI data)
 ```
 
 ## License

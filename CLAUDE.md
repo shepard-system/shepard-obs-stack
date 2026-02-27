@@ -4,14 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-**shepard-obs-stack** ("The Eye") — Docker-based observability for AI coding assistants (Claude Code, Codex, Gemini CLI). Hybrid telemetry: bash hooks emit OTLP metrics (git context + tool/event counters); native OTel export provides logs, traces, and richer provider-specific metrics. All data flows through OTel Collector into Prometheus, Loki, and Tempo; 7 Grafana dashboards auto-provision on startup.
+**shepard-obs-stack** ("The Eye") — Docker-based observability for AI coding assistants (Claude Code, Codex, Gemini CLI). Hybrid telemetry: bash hooks emit OTLP metrics (git context + tool/event counters); native OTel export provides logs, traces, and richer provider-specific metrics. All data flows through OTel Collector into Prometheus, Loki, and Tempo; 8 Grafana dashboards auto-provision on startup.
 
 ## Quick Start
 
 ```bash
 ./scripts/init.sh               # bootstrap: env, docker compose up, health check
 ./hooks/install.sh              # inject hooks + native OTel into CLI configs
-./scripts/test-signal.sh        # verify pipeline (5 checks)
+./scripts/test-signal.sh        # verify pipeline (9 checks)
 ```
 
 Open http://localhost:3000 (admin / shepherd).
@@ -111,10 +111,12 @@ Hooks provide what native OTel cannot: **git context** (`git_repo`, `git_branch`
 hooks/
 ├── lib/
 │   ├── git-context.sh       ← get_git_context(cwd) → $GIT_REPO, $GIT_BRANCH
-│   └── metrics.sh           ← emit_counter(name, value, labels_json) → OTLP HTTP
+│   ├── metrics.sh           ← emit_counter(name, value, labels_json) → OTLP HTTP
+│   ├── traces.sh            ← emit_spans(service_name) → OTLP HTTP /v1/traces
+│   └── session-parser.sh    ← parse Claude JSONL → span JSONL (grep+jq+perl)
 ├── claude/
 │   ├── post-tool-use.sh     ← tool_calls_total + events_total (tool_use)
-│   └── stop.sh              ← events_total (session_end) ONLY
+│   └── stop.sh              ← events_total (session_end) + session log parser → Tempo
 ├── codex/
 │   └── notify.sh            ← events_total (turn_end)
 ├── gemini/
@@ -204,8 +206,9 @@ Key config requirements:
 | Claude Deep Dive     | `shepherd-claude-deep-dive` | Prometheus + Loki                    | `configs/grafana/dashboards/10-claude-deep-dive.json` |
 | Codex Deep Dive      | `shepherd-codex-deep-dive`  | Prometheus (recording rules) + Loki  | `configs/grafana/dashboards/11-codex-deep-dive.json`  |
 | Gemini Deep Dive     | `shepherd-gemini-deep-dive` | Prometheus + Loki                    | `configs/grafana/dashboards/12-gemini-deep-dive.json` |
+| Session Timeline     | `shepherd-session-timeline` | Tempo + Prometheus (span-metrics)    | `configs/grafana/dashboards/13-session-timeline.json` |
 
-Unified dashboards (01–04) aggregate across providers. Deep-dive dashboards (10–12) are provider-specific using native OTel.
+Unified dashboards (01–04) aggregate across providers. Deep-dive dashboards (10–12) are provider-specific using native OTel. Session Timeline (13) shows synthetic traces parsed from Claude Code JSONL session logs.
 
 ## Config Structure
 
@@ -224,7 +227,7 @@ configs/
     ├── provisioning/
     │   ├── datasources/datasources.yaml  ← Prometheus, Loki, Tempo (cross-linked)
     │   └── dashboards/dashboards.yaml    ← Auto-load from /dashboards
-    └── dashboards/                       ← 7 JSON files (see Dashboards table above)
+    └── dashboards/                       ← 8 JSON files (see Dashboards table above)
 ```
 
 ## Alerting
@@ -251,6 +254,25 @@ Ensure time range is correct (dashboards default to "Last 1 hour"). Hook metrics
 
 **Hooks not firing:**
 Verify hooks are installed: check `~/.claude/settings.json` for `.hooks` key, `~/.codex/config.toml` for `notify` line, `~/.gemini/settings.json` for `.hooks` key. Re-run `./hooks/install.sh`.
+
+## Session Timeline (Synthetic Traces)
+
+Claude Code's Stop hook parses JSONL session logs (`~/.claude/projects/{slug}/{session_id}.jsonl`) into synthetic OTLP traces and sends them to Tempo via OTel Collector.
+
+**Pipeline:** `stop.sh` → `session-parser.sh` (grep+jq+perl) → span JSONL → `emit_spans()` (traces.sh) → `/v1/traces` → Tempo
+
+**Span types generated:**
+- `claude.session` — root span (session duration, model, git branch)
+- `claude.tool.*` — tool call spans (Read, Edit, Bash, etc.) with duration
+- `claude.mcp.*` — MCP tool calls with native `elapsedTimeMs` timing
+- `claude.agent.*` — sub-agent spans grouped by agentId
+
+**Key details:**
+- Deterministic IDs: trace_id = sha256(session_id)[:32], span_id = sha256(tool_use_id)[:16]
+- ISO 8601 → nanoseconds via perl (macOS `date` lacks `%N`)
+- Tool calls joined by `tool_use_id`: tool_use entry provides start, tool_result provides end
+- Fire-and-forget: `( parser | emit_spans ) & disown` — never blocks the CLI
+- Tempo's `metrics_generator` produces `traces_spanmetrics_calls_total` and `traces_spanmetrics_duration_seconds_*` for the dashboard stats
 
 ## Known Limitations
 

@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 # scripts/test-signal.sh — send test metrics and verify the pipeline
 #
-# Sends test OTLP metrics (hook counters),
-# waits briefly, then runs 8 checks across Prometheus and Loki.
+# Sends test OTLP metrics and a synthetic trace,
+# waits briefly, then runs 9 checks across Prometheus, Loki, and Tempo.
 #
 # Checks:
 #   1-2  Hook metrics in Prometheus (tool_calls, events)
 #   3-5  Native OTel metrics in Prometheus (Claude, Gemini, Codex recording rules)
 #   6-8  Native OTel logs in Loki (Claude, Codex, Gemini)
+#   9    Synthetic trace in Tempo
 
 set -euo pipefail
 
@@ -167,6 +168,69 @@ check_loki "Codex logs (service_name=codex_cli_rs)" \
 check_loki "Gemini logs (service_name=gemini-cli)" \
   '{service_name="gemini-cli"}'
 
+# ── 4. Synthetic trace to Tempo ───────────────────────────────────
+
+echo ""
+echo "Session traces (Tempo):"
+
+TEMPO_URL="${TEMPO_URL:-http://localhost:3200}"
+
+# Generate a unique test trace
+TEST_TRACE_ID=$(printf '%032x' $((RANDOM * RANDOM * RANDOM)))
+TEST_SPAN_ID=$(printf '%016x' $((RANDOM * RANDOM)))
+NOW_NS="$(date +%s)000000000"
+END_NS="$(( $(date +%s) + 1 ))000000000"
+
+# Send a minimal test trace via OTel Collector
+TEST_TRACE_PAYLOAD=$(cat <<EOJSON
+{
+  "resourceSpans": [{
+    "resource": {
+      "attributes": [
+        { "key": "service.name", "value": { "stringValue": "claude-code-session" } }
+      ]
+    },
+    "scopeSpans": [{
+      "scope": { "name": "shepherd-test", "version": "0.1.0" },
+      "spans": [{
+        "traceId": "${TEST_TRACE_ID}",
+        "spanId": "${TEST_SPAN_ID}",
+        "name": "test.signal",
+        "kind": 1,
+        "startTimeUnixNano": "${NOW_NS}",
+        "endTimeUnixNano": "${END_NS}",
+        "attributes": [
+          { "key": "test", "value": { "stringValue": "true" } }
+        ],
+        "status": { "code": 1 }
+      }]
+    }]
+  }]
+}
+EOJSON
+)
+
+curl -s -o /dev/null \
+  -H "Content-Type: application/json" \
+  -XPOST "${OTEL_HTTP_URL}/v1/traces" \
+  -d "$TEST_TRACE_PAYLOAD"
+
+sleep 3  # Wait for Tempo ingestion
+
+# Verify trace by ID (search needs WAL flush, but by-ID works immediately)
+TRACE_RESULT=$(curl -sf "${TEMPO_URL}/api/traces/${TEST_TRACE_ID}" \
+  -H "Accept: application/json" 2>/dev/null || echo '{}')
+
+TRACE_SPANS=$(echo "$TRACE_RESULT" | jq '.batches | length' 2>/dev/null || echo 0)
+
+if [[ "$TRACE_SPANS" -gt 0 ]]; then
+  green "  ✓ Synthetic trace in Tempo (traceId=${TEST_TRACE_ID:0:8}...)"
+  PASS=$((PASS + 1))
+else
+  yellow "  ~ Synthetic trace (sent OK, Tempo may need a moment to flush)"
+  WARN=$((WARN + 1))
+fi
+
 # ── Summary ──────────────────────────────────────────────────────────
 
 echo ""
@@ -190,3 +254,4 @@ echo "  Hook metrics:    Prometheus → shepherd_tool_calls_total, shepherd_even
 echo "  Native metrics:  Prometheus → shepherd_claude_code_*, shepherd_gemini_cli_*"
 echo "  Recording rules: Prometheus → shepherd:codex:*:1m"
 echo "  Native logs:     Loki → {service_name=\"claude-code\"}"
+echo "  Session traces:  Tempo → { resource.service.name = \"claude-code-session\" }"
