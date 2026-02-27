@@ -304,7 +304,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (tool) (increase(shepherd_tool_calls_total{source=~\"$source\",git_repo=~\"$git_repo\"}[$__interval]))",
+          "expr": "sum by (tool) (increase(shepherd_tool_calls_total{source=~\"$source\",git_repo=~\"$git_repo\"}[$__rate_interval]))",
           "legendFormat": "{{tool}}",
           "queryType": "range",
           "refId": "A"
@@ -418,7 +418,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (source) (increase(shepherd_tool_calls_total{source=~\"$source\",git_repo=~\"$git_repo\"}[$__interval]))",
+          "expr": "sum by (source) (increase(shepherd_tool_calls_total{source=~\"$source\",git_repo=~\"$git_repo\"}[$__rate_interval]))",
           "legendFormat": "{{source}}",
           "queryType": "range",
           "refId": "A"

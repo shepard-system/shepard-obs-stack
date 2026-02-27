@@ -1794,7 +1794,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (type) (increase(shepherd_gemini_cli_token_usage_total{model=~\"$model\"}[$__interval]))",
+          "expr": "sum by (type) (increase(shepherd_gemini_cli_token_usage_total{model=~\"$model\"}[$__rate_interval]))",
           "queryType": "range",
           "legendFormat": "{{type}}",
           "refId": "A"
@@ -1888,7 +1888,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (model) (increase(shepherd_gemini_cli_token_usage_total{model=~\"$model\",model!=\"\"}[$__interval]))",
+          "expr": "sum by (model) (increase(shepherd_gemini_cli_token_usage_total{model=~\"$model\",model!=\"\"}[$__rate_interval]))",
           "queryType": "range",
           "legendFormat": "{{model}}",
           "refId": "A"
@@ -2330,7 +2330,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (le) (increase(shepherd_gemini_cli_tool_call_latency_milliseconds_bucket[$__interval]))",
+          "expr": "sum by (le) (increase(shepherd_gemini_cli_tool_call_latency_milliseconds_bucket[$__rate_interval]))",
           "legendFormat": "{{le}}",
           "queryType": "range",
           "refId": "A",
