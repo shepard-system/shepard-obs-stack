@@ -157,7 +157,7 @@ shepard-obs-stack/
 │   └── uninstall.sh           # clean removal
 ├── scripts/
 │   ├── init.sh                # bootstrap
-│   ├── test-signal.sh         # pipeline verification (8 checks)
+│   ├── test-signal.sh         # pipeline verification (9 checks)
 │   └── render-c4.sh           # render PlantUML → SVG
 ├── configs/
 │   ├── otel-collector/        # receivers → processors → exporters
