@@ -9,6 +9,7 @@
 #   3-5   Native OTel metrics in Prometheus (Claude, Gemini, Codex recording rules)
 #   6-8   Native OTel logs in Loki (Claude, Codex, Gemini)
 #   9-11  Synthetic traces in Tempo (Claude, Codex, Gemini sessions)
+#         Each trace: root session span + 3 tool spans + 1 error tool + 1 agent span
 
 set -euo pipefail
 
@@ -27,6 +28,13 @@ FAIL=0
 WARN=0
 
 # ── Preflight ────────────────────────────────────────────────────────
+
+for cmd in curl jq; do
+  if ! command -v "$cmd" &>/dev/null; then
+    red "${cmd} is required but not found. Install it first."
+    exit 1
+  fi
+done
 
 echo "Testing signal pipeline"
 echo "  Prometheus: ${PROMETHEUS_URL}"
@@ -177,12 +185,71 @@ TEMPO_URL="${TEMPO_URL:-http://localhost:3200}"
 NOW_NS="$(date +%s)000000000"
 END_NS="$(( $(date +%s) + 1 ))000000000"
 
-# Send test traces for all 3 providers
-send_test_trace() {
-  local service="$1" span_name="$2"
-  local trace_id span_id
+# Build a span JSON object
+make_span() {
+  local trace_id="$1" span_id="$2" parent_id="$3" name="$4"
+  local start_ns="$5" end_ns="$6" status_code="${7:-0}"
+
+  local parent_field=""
+  [[ -n "$parent_id" ]] && parent_field="\"parentSpanId\": \"${parent_id}\","
+
+  cat <<SPAN
+{
+  "traceId": "${trace_id}",
+  "spanId": "${span_id}",
+  ${parent_field}
+  "name": "${name}",
+  "kind": 1,
+  "startTimeUnixNano": "${start_ns}",
+  "endTimeUnixNano": "${end_ns}",
+  "attributes": [
+    { "key": "test", "value": { "stringValue": "true" } }
+  ],
+  "status": { "code": ${status_code} }
+}
+SPAN
+}
+
+# Send a test session: root span + tool spans + agent span + error span
+send_test_session() {
+  local service="$1" provider="$2"
+  local trace_id root_id
   trace_id=$(printf '%032x' $((RANDOM * RANDOM * RANDOM + RANDOM)))
-  span_id=$(printf '%016x' $((RANDOM * RANDOM + RANDOM)))
+  root_id=$(printf '%016x' $((RANDOM * RANDOM + RANDOM)))
+
+  local now_s
+  now_s=$(date +%s)
+  local root_start="${now_s}000000000"
+  local root_end="$(( now_s + 60 ))000000000"
+
+  # Tool spans (children of root)
+  local spans=""
+  local tools=("Bash" "Read" "Edit")
+  local i=1
+  for tool in "${tools[@]}"; do
+    local sid=$(printf '%016x' $((i + 100)))
+    local t_start="$(( now_s + i * 5 ))000000000"
+    local t_end="$(( now_s + i * 5 + 3 ))000000000"
+    [[ -n "$spans" ]] && spans="${spans},"
+    spans="${spans}$(make_span "$trace_id" "$sid" "$root_id" "${provider}.tool.${tool}" "$t_start" "$t_end")"
+    i=$((i + 1))
+  done
+
+  # Error tool span
+  local err_sid=$(printf '%016x' 200)
+  local err_start="$(( now_s + 25 ))000000000"
+  local err_end="$(( now_s + 28 ))000000000"
+  spans="${spans},$(make_span "$trace_id" "$err_sid" "$root_id" "${provider}.tool.Write" "$err_start" "$err_end" 2)"
+
+  # Agent span
+  local agent_sid=$(printf '%016x' 300)
+  local agent_start="$(( now_s + 30 ))000000000"
+  local agent_end="$(( now_s + 45 ))000000000"
+  spans="${spans},$(make_span "$trace_id" "$agent_sid" "$root_id" "${provider}.agent.subagent" "$agent_start" "$agent_end")"
+
+  # Root span
+  local root_span
+  root_span=$(make_span "$trace_id" "$root_id" "" "${provider}.session" "$root_start" "$root_end")
 
   curl -s -o /dev/null \
     -H "Content-Type: application/json" \
@@ -196,19 +263,7 @@ send_test_trace() {
         },
         \"scopeSpans\": [{
           \"scope\": { \"name\": \"shepherd-test\", \"version\": \"0.2.0\" },
-          \"spans\": [{
-            \"traceId\": \"${trace_id}\",
-            \"spanId\": \"${span_id}\",
-            \"name\": \"${span_name}\",
-            \"kind\": 1,
-            \"startTimeUnixNano\": \"${NOW_NS}\",
-            \"endTimeUnixNano\": \"${END_NS}\",
-            \"attributes\": [
-              { \"key\": \"test\", \"value\": { \"stringValue\": \"true\" } },
-              { \"key\": \"provider\", \"value\": { \"stringValue\": \"${service}\" } }
-            ],
-            \"status\": { \"code\": 0 }
-          }]
+          \"spans\": [${root_span},${spans}]
         }]
       }]
     }"
@@ -216,9 +271,9 @@ send_test_trace() {
   echo "$trace_id"
 }
 
-CLAUDE_TRACE_ID=$(send_test_trace "claude-code-session" "claude.session")
-CODEX_TRACE_ID=$(send_test_trace "codex-session" "codex.session")
-GEMINI_TRACE_ID=$(send_test_trace "gemini-session" "gemini.session")
+CLAUDE_TRACE_ID=$(send_test_session "claude-code-session" "claude")
+CODEX_TRACE_ID=$(send_test_session "codex-session" "codex")
+GEMINI_TRACE_ID=$(send_test_session "gemini-session" "gemini")
 
 sleep 3  # Wait for Tempo ingestion
 
