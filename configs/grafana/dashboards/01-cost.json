@@ -509,10 +509,9 @@
         },
         "legend": {
           "displayMode": "list",
-          "placement": "right",
+          "placement": "bottom",
           "values": [
-            "percent",
-            "value"
+            "percent"
           ]
         },
         "pieType": "donut",
@@ -789,10 +788,9 @@
         },
         "legend": {
           "displayMode": "list",
-          "placement": "right",
+          "placement": "bottom",
           "values": [
-            "percent",
-            "value"
+            "percent"
           ]
         },
         "pieType": "donut",

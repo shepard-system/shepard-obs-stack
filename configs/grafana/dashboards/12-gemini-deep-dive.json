@@ -845,7 +845,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.50, sum by (le, gen_ai_request_model) (increase(shepherd_gen_ai_client_operation_duration_seconds_bucket{gen_ai_request_model=~\"$model\",gen_ai_request_model!=\"\"}[$__range]))) * 1000",
+          "expr": "histogram_quantile(0.50, sum by (le, gen_ai_request_model) (increase(shepherd_gen_ai_client_operation_duration_seconds_bucket{gen_ai_request_model=~\"$model\",gen_ai_request_model!=\"\"}[$__range]))) * 1000 > 0",
           "queryType": "instant",
           "legendFormat": "{{gen_ai_request_model}}",
           "refId": "A"
