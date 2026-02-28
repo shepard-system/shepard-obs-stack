@@ -32,7 +32,7 @@ cd shepard-obs-stack
 Open [localhost:3000](http://localhost:3000) (admin / shepherd). Use your CLI as usual — data appears in dashboards within seconds.
 
 ```bash
-./scripts/test-signal.sh   # verify the full pipeline (9 checks)
+./scripts/test-signal.sh   # verify the full pipeline (11 checks)
 ```
 
 ## Dashboards
@@ -157,7 +157,7 @@ shepard-obs-stack/
 │   └── uninstall.sh           # clean removal
 ├── scripts/
 │   ├── init.sh                # bootstrap
-│   ├── test-signal.sh         # pipeline verification (9 checks)
+│   ├── test-signal.sh         # pipeline verification (11 checks)
 │   └── render-c4.sh           # render PlantUML → SVG
 ├── configs/
 │   ├── otel-collector/        # receivers → processors → exporters
@@ -174,7 +174,7 @@ shepard-obs-stack/
 Issues and pull requests are welcome. Before submitting changes, run the test pipeline:
 
 ```bash
-./scripts/test-signal.sh    # should pass 3/9 checks (others need live CLI data)
+./scripts/test-signal.sh    # should pass 3/11 checks (others need live CLI data)
 ```
 
 ## License

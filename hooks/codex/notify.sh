@@ -15,6 +15,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../lib/git-context.sh"
 source "${SCRIPT_DIR}/../lib/metrics.sh"
+source "${SCRIPT_DIR}/../lib/traces.sh"
 
 input="${1:-}"
 [[ -z "$input" ]] && exit 0
@@ -23,6 +24,7 @@ event_type_raw="$(jq -r '.type // ""' <<< "$input")"
 [[ "$event_type_raw" != "agent-turn-complete" ]] && exit 0
 
 cwd="$(jq -r '.cwd // ""' <<< "$input")"
+thread_id="$(jq -r '.["thread-id"] // ""' <<< "$input")"
 
 # Git context
 get_git_context "$cwd"
@@ -31,5 +33,20 @@ get_git_context "$cwd"
 evt_labels=$(jq -n -c --arg s "codex" --arg e "turn_end" --arg g "$GIT_REPO" \
   '{source:$s, event_type:$e, git_repo:$g}')
 emit_counter "events"  "1"  "$evt_labels"
+
+# --- Session log parser → synthetic traces to Tempo ---
+# Locate JSONL: ~/.codex/sessions/YYYY/MM/DD/rollout-*-{thread_id}.jsonl
+if [[ -n "$thread_id" ]]; then
+  session_dir="${HOME}/.codex/sessions/$(date -u +%Y/%m/%d)"
+  session_file=$(ls -t "${session_dir}"/rollout-*-"${thread_id}".jsonl 2>/dev/null | head -1)
+
+  if [[ -n "$session_file" && -f "$session_file" ]]; then
+    (
+      bash "${SCRIPT_DIR}/../lib/codex-session-parser.sh" "$session_file" \
+        | emit_spans "codex-session"
+    ) </dev/null >/dev/null 2>&1 &
+    disown
+  fi
+fi
 
 exit 0

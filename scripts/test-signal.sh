@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # scripts/test-signal.sh — send test metrics and verify the pipeline
 #
-# Sends test OTLP metrics and a synthetic trace,
-# waits briefly, then runs 9 checks across Prometheus, Loki, and Tempo.
+# Sends test OTLP metrics and synthetic traces (3 providers),
+# waits briefly, then runs 11 checks across Prometheus, Loki, and Tempo.
 #
 # Checks:
-#   1-2  Hook metrics in Prometheus (tool_calls, events)
-#   3-5  Native OTel metrics in Prometheus (Claude, Gemini, Codex recording rules)
-#   6-8  Native OTel logs in Loki (Claude, Codex, Gemini)
-#   9    Synthetic trace in Tempo
+#   1-2   Hook metrics in Prometheus (tool_calls, events)
+#   3-5   Native OTel metrics in Prometheus (Claude, Gemini, Codex recording rules)
+#   6-8   Native OTel logs in Loki (Claude, Codex, Gemini)
+#   9-11  Synthetic traces in Tempo (Claude, Codex, Gemini sessions)
 
 set -euo pipefail
 
@@ -174,68 +174,82 @@ echo ""
 echo "Session traces (Tempo):"
 
 TEMPO_URL="${TEMPO_URL:-http://localhost:3200}"
-
-# Generate a unique test trace
-TEST_TRACE_ID=$(printf '%032x' $((RANDOM * RANDOM * RANDOM)))
-TEST_SPAN_ID=$(printf '%016x' $((RANDOM * RANDOM)))
 NOW_NS="$(date +%s)000000000"
 END_NS="$(( $(date +%s) + 1 ))000000000"
 
-# Send a minimal test trace via OTel Collector
-TEST_TRACE_PAYLOAD=$(cat <<EOJSON
-{
-  "resourceSpans": [{
-    "resource": {
-      "attributes": [
-        { "key": "service.name", "value": { "stringValue": "claude-code-session" } }
-      ]
-    },
-    "scopeSpans": [{
-      "scope": { "name": "shepherd-test", "version": "0.1.0" },
-      "spans": [{
-        "traceId": "${TEST_TRACE_ID}",
-        "spanId": "${TEST_SPAN_ID}",
-        "name": "test.signal",
-        "kind": 1,
-        "startTimeUnixNano": "${NOW_NS}",
-        "endTimeUnixNano": "${END_NS}",
-        "attributes": [
-          { "key": "test", "value": { "stringValue": "true" } }
-        ],
-        "status": { "code": 1 }
-      }]
-    }]
-  }]
-}
-EOJSON
-)
+# Send test traces for all 3 providers
+send_test_trace() {
+  local service="$1" span_name="$2"
+  local trace_id span_id
+  trace_id=$(printf '%032x' $((RANDOM * RANDOM * RANDOM + RANDOM)))
+  span_id=$(printf '%016x' $((RANDOM * RANDOM + RANDOM)))
 
-curl -s -o /dev/null \
-  -H "Content-Type: application/json" \
-  -XPOST "${OTEL_HTTP_URL}/v1/traces" \
-  -d "$TEST_TRACE_PAYLOAD"
+  curl -s -o /dev/null \
+    -H "Content-Type: application/json" \
+    -XPOST "${OTEL_HTTP_URL}/v1/traces" \
+    -d "{
+      \"resourceSpans\": [{
+        \"resource\": {
+          \"attributes\": [
+            { \"key\": \"service.name\", \"value\": { \"stringValue\": \"${service}\" } }
+          ]
+        },
+        \"scopeSpans\": [{
+          \"scope\": { \"name\": \"shepherd-test\", \"version\": \"0.2.0\" },
+          \"spans\": [{
+            \"traceId\": \"${trace_id}\",
+            \"spanId\": \"${span_id}\",
+            \"name\": \"${span_name}\",
+            \"kind\": 1,
+            \"startTimeUnixNano\": \"${NOW_NS}\",
+            \"endTimeUnixNano\": \"${END_NS}\",
+            \"attributes\": [
+              { \"key\": \"test\", \"value\": { \"stringValue\": \"true\" } },
+              { \"key\": \"provider\", \"value\": { \"stringValue\": \"${service}\" } }
+            ],
+            \"status\": { \"code\": 0 }
+          }]
+        }]
+      }]
+    }"
+
+  echo "$trace_id"
+}
+
+CLAUDE_TRACE_ID=$(send_test_trace "claude-code-session" "claude.session")
+CODEX_TRACE_ID=$(send_test_trace "codex-session" "codex.session")
+GEMINI_TRACE_ID=$(send_test_trace "gemini-session" "gemini.session")
 
 sleep 3  # Wait for Tempo ingestion
 
-# Verify trace by ID (search needs WAL flush, but by-ID works immediately)
-TRACE_RESULT=$(curl -sf "${TEMPO_URL}/api/traces/${TEST_TRACE_ID}" \
-  -H "Accept: application/json" 2>/dev/null || echo '{}')
+check_tempo_trace() {
+  local label="$1" trace_id="$2"
 
-TRACE_SPANS=$(echo "$TRACE_RESULT" | jq '.batches | length' 2>/dev/null || echo 0)
+  local result
+  result=$(curl -sf "${TEMPO_URL}/api/traces/${trace_id}" \
+    -H "Accept: application/json" 2>/dev/null || echo '{}')
 
-if [[ "$TRACE_SPANS" -gt 0 ]]; then
-  green "  ✓ Synthetic trace in Tempo (traceId=${TEST_TRACE_ID:0:8}...)"
-  PASS=$((PASS + 1))
-else
-  yellow "  ~ Synthetic trace (sent OK, Tempo may need a moment to flush)"
-  WARN=$((WARN + 1))
-fi
+  local count
+  count=$(echo "$result" | jq '.batches | length' 2>/dev/null || echo 0)
+
+  if [[ "$count" -gt 0 ]]; then
+    green "  ✓ ${label} (traceId=${trace_id:0:8}...)"
+    PASS=$((PASS + 1))
+  else
+    yellow "  ~ ${label} (sent OK, Tempo may need a moment to flush)"
+    WARN=$((WARN + 1))
+  fi
+}
+
+check_tempo_trace "Claude session trace"  "$CLAUDE_TRACE_ID"
+check_tempo_trace "Codex session trace"   "$CODEX_TRACE_ID"
+check_tempo_trace "Gemini session trace"  "$GEMINI_TRACE_ID"
 
 # ── Summary ──────────────────────────────────────────────────────────
 
 echo ""
 TOTAL=$((PASS + FAIL + WARN))
-echo "Results: ${PASS} passed, ${WARN} waiting for data, ${FAIL} failed (${TOTAL} checks)"
+echo "Results: ${PASS} passed, ${WARN} waiting for data, ${FAIL} failed (${TOTAL} total)"
 
 if [[ $FAIL -gt 0 ]]; then
   echo ""
@@ -254,4 +268,4 @@ echo "  Hook metrics:    Prometheus → shepherd_tool_calls_total, shepherd_even
 echo "  Native metrics:  Prometheus → shepherd_claude_code_*, shepherd_gemini_cli_*"
 echo "  Recording rules: Prometheus → shepherd:codex:*:1m"
 echo "  Native logs:     Loki → {service_name=\"claude-code\"}"
-echo "  Session traces:  Tempo → { resource.service.name = \"claude-code-session\" }"
+echo "  Session traces:  Tempo → { resource.service.name =~ \".*-session\" }"

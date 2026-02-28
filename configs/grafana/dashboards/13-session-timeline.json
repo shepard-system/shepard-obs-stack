@@ -1,6 +1,8 @@
 {
-  "annotations": { "list": [] },
-  "description": "Session Timeline: synthetic OpenTelemetry traces from Claude Code JSONL session logs. Visualizes tool calls, sub-agents, and MCP operations as a waterfall.",
+  "annotations": {
+    "list": []
+  },
+  "description": "Session Timeline: synthetic OpenTelemetry traces parsed from AI CLI session logs (Claude, Codex, Gemini). Visualizes tool calls, sub-agents, compactions, and MCP operations as a waterfall.",
   "editable": true,
   "graphTooltip": 1,
   "id": null,
@@ -11,92 +13,238 @@
       "title": "Overview",
       "type": "row",
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
       "panels": []
     },
     {
       "id": 1,
-      "title": "Recent Sessions",
+      "title": "Sessions",
       "description": "Distinct session traces in the selected time range.",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 1 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 1
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum(increase(traces_spanmetrics_calls_total{service=\"claude-code-session\", span_name=\"claude.session\"}[$__range])) or vector(0)",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(increase(traces_spanmetrics_calls_total{service=~\"$provider\", span_name=~\"(claude|codex|gemini)\\\\.session\"}[$__range])) or vector(0)",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "fixedColor": "green", "mode": "fixed" },
+          "color": {
+            "fixedColor": "green",
+            "mode": "fixed"
+          },
           "unit": "short",
           "noValue": "0",
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
         },
         "overrides": []
       },
       "options": {
-        "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
         "colorMode": "value",
         "graphMode": "area"
       }
     },
     {
       "id": 2,
-      "title": "Total Tool Spans",
+      "title": "Tool Spans",
       "description": "Tool call spans across all sessions.",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 1 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 1
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum(increase(traces_spanmetrics_calls_total{service=\"claude-code-session\", span_name=~\"claude\\\\.tool\\\\..*\"}[$__range])) or vector(0)",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(increase(traces_spanmetrics_calls_total{service=~\"$provider\", span_name=~\"(claude|codex|gemini)\\\\.tool\\\\..*\"}[$__range])) or vector(0)",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "fixedColor": "orange", "mode": "fixed" },
+          "color": {
+            "fixedColor": "orange",
+            "mode": "fixed"
+          },
           "unit": "short",
           "noValue": "0",
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "orange", "value": null }] }
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              }
+            ]
+          }
         },
         "overrides": []
       },
       "options": {
-        "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "colorMode": "value",
+        "graphMode": "area"
+      }
+    },
+    {
+      "id": 7,
+      "title": "Error Spans",
+      "description": "Tool spans with error status across all sessions.",
+      "type": "stat",
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 1
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(increase(traces_spanmetrics_calls_total{service=~\"$provider\", span_name=~\"(claude|codex|gemini)\\\\.tool\\\\..*\", status_code=\"STATUS_CODE_ERROR\"}[$__range])) or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "red",
+            "mode": "fixed"
+          },
+          "unit": "short",
+          "noValue": "0",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
         "colorMode": "value",
         "graphMode": "area"
       }
     },
     {
       "id": 3,
-      "title": "Total Agent Spans",
-      "description": "Sub-agent spans across all sessions.",
+      "title": "Agent Spans",
+      "description": "Sub-agent and compaction spans across all sessions.",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 1 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 1
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum(increase(traces_spanmetrics_calls_total{service=\"claude-code-session\", span_name=~\"claude\\\\.agent\\\\..*\"}[$__range])) or vector(0)",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(increase(traces_spanmetrics_calls_total{service=~\"$provider\", span_name=~\"(claude|codex|gemini)\\\\.(agent|compaction)\\\\.?.*\"}[$__range])) or vector(0)",
           "refId": "A"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "fixedColor": "purple", "mode": "fixed" },
+          "color": {
+            "fixedColor": "purple",
+            "mode": "fixed"
+          },
           "unit": "short",
           "noValue": "0",
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "purple", "value": null }] }
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "purple",
+                "value": null
+              }
+            ]
+          }
         },
         "overrides": []
       },
       "options": {
-        "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
         "colorMode": "value",
         "graphMode": "area"
       }
@@ -106,7 +254,12 @@
       "title": "Trace Search",
       "type": "row",
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
       "panels": []
     },
     {
@@ -114,13 +267,24 @@
       "title": "Session Traces",
       "description": "Search and browse session traces. Click a Trace ID to open the waterfall in Explore.",
       "type": "table",
-      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 6 },
-      "datasource": { "type": "tempo", "uid": "tempo" },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      },
+      "datasource": {
+        "type": "tempo",
+        "uid": "tempo"
+      },
       "targets": [
         {
-          "datasource": { "type": "tempo", "uid": "tempo" },
+          "datasource": {
+            "type": "tempo",
+            "uid": "tempo"
+          },
           "queryType": "traceql",
-          "query": "{ resource.service.name = \"claude-code-session\" }",
+          "query": "{ resource.service.name =~ \"$provider\" }",
           "tableType": "traces",
           "limit": 20,
           "refId": "A"
@@ -128,26 +292,53 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "custom": { "align": "auto", "cellOptions": { "type": "auto" } }
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
         },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "Trace ID" },
+            "matcher": {
+              "id": "byName",
+              "options": "Trace ID"
+            },
             "properties": [
-              { "id": "links", "value": [{ "title": "Open trace", "url": "/explore?schemaVersion=1&panes=%7B%22one%22:%7B%22datasource%22:%22tempo%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22datasource%22:%7B%22type%22:%22tempo%22,%22uid%22:%22tempo%22%7D,%22queryType%22:%22traceql%22,%22query%22:%22${__value.raw}%22%7D%5D%7D%7D" }] }
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Open trace",
+                    "url": "/explore?schemaVersion=1&panes=%7B%22one%22:%7B%22datasource%22:%22tempo%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22datasource%22:%7B%22type%22:%22tempo%22,%22uid%22:%22tempo%22%7D,%22queryType%22:%22traceql%22,%22query%22:%22${__value.raw}%22%7D%5D%7D%7D"
+                  }
+                ]
+              }
             ]
           },
           {
-            "matcher": { "id": "byName", "options": "Duration" },
+            "matcher": {
+              "id": "byName",
+              "options": "Duration"
+            },
             "properties": [
-              { "id": "unit", "value": "ns" }
+              {
+                "id": "unit",
+                "value": "ns"
+              }
             ]
           }
         ]
       },
       "options": {
         "showHeader": true,
-        "sortBy": [{ "displayName": "Start time", "desc": true }],
+        "sortBy": [
+          {
+            "displayName": "Start time",
+            "desc": true
+          }
+        ],
         "cellHeight": "sm"
       }
     },
@@ -156,7 +347,12 @@
       "title": "Tool Call Analysis",
       "type": "row",
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
       "panels": []
     },
     {
@@ -164,12 +360,23 @@
       "title": "Top Tools by Invocation Count",
       "description": "Tools ranked by number of invocations across all session traces.",
       "type": "table",
-      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 19 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 19
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "topk(20, sum by (span_name) (increase(traces_spanmetrics_calls_total{service=\"claude-code-session\", span_name=~\"claude\\\\.tool\\\\..*\"}[$__range])))",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "topk(20, sum by (span_name) (increase(traces_spanmetrics_calls_total{service=~\"$provider\", span_name=~\"(claude|codex|gemini)\\\\.tool\\\\..*\"}[$__range])))",
           "format": "table",
           "instant": true,
           "refId": "A"
@@ -178,36 +385,99 @@
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "custom": { "align": "auto", "cellOptions": { "type": "auto" } },
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 50 }, { "color": "red", "value": 200 }] },
-          "color": { "mode": "thresholds" }
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 200
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
         },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "span_name" },
-            "properties": [{ "id": "displayName", "value": "Tool" }]
+            "matcher": {
+              "id": "byName",
+              "options": "span_name"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Tool"
+              }
+            ]
           },
           {
-            "matcher": { "id": "byName", "options": "Value" },
-            "properties": [{ "id": "displayName", "value": "Invocations" }]
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Invocations"
+              }
+            ]
           },
           {
-            "matcher": { "id": "byName", "options": "Time" },
-            "properties": [{ "id": "custom.hidden", "value": true }]
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
           }
         ]
       },
       "options": {
         "showHeader": true,
-        "sortBy": [{ "displayName": "Invocations", "desc": true }],
+        "sortBy": [
+          {
+            "displayName": "Invocations",
+            "desc": true
+          }
+        ],
         "cellHeight": "sm"
       },
       "transformations": [
         {
           "id": "organize",
           "options": {
-            "excludeByName": { "__name__": true, "service": true, "span_kind": true, "status_code": true, "__metrics_gen_instance": true, "cluster": true, "source": true },
-            "renameByName": { "span_name": "Tool", "Value": "Invocations" }
+            "excludeByName": {
+              "__name__": true,
+              "service": true,
+              "span_kind": true,
+              "status_code": true,
+              "__metrics_gen_instance": true,
+              "cluster": true,
+              "source": true
+            },
+            "renameByName": {
+              "span_name": "Tool",
+              "Value": "Invocations"
+            }
           }
         }
       ]
@@ -217,12 +487,23 @@
       "title": "Tool Duration Distribution (p95)",
       "description": "P95 tool span durations over time by tool name.",
       "type": "timeseries",
-      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 19 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 19
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "histogram_quantile(0.95, sum by (le, span_name) (rate(traces_spanmetrics_duration_seconds_bucket{service=\"claude-code-session\", span_name=~\"claude\\\\.tool\\\\..*\"}[$__rate_interval])))",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le, span_name) (rate(traces_spanmetrics_duration_seconds_bucket{service=~\"$provider\", span_name=~\"(claude|codex|gemini)\\\\.tool\\\\..*\"}[$__rate_interval])))",
           "legendFormat": "{{span_name}}",
           "refId": "A"
         }
@@ -230,7 +511,9 @@
       "fieldConfig": {
         "defaults": {
           "unit": "s",
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "smooth",
@@ -238,26 +521,180 @@
             "fillOpacity": 10,
             "showPoints": "auto",
             "pointSize": 5,
-            "stacking": { "mode": "none", "group": "A" }
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
           }
         },
         "overrides": []
       },
       "options": {
-        "tooltip": { "mode": "multi", "sort": "desc" },
-        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] }
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "max"
+          ]
+        }
       }
+    },
+    {
+      "id": 8,
+      "title": "Error Tools",
+      "description": "Tool spans that completed with error status.",
+      "type": "table",
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "topk(20, sum by (span_name, service) (increase(traces_spanmetrics_calls_total{service=~\"$provider\", span_name=~\"(claude|codex|gemini)\\\\.tool\\\\..*\", status_code=\"STATUS_CODE_ERROR\"}[$__range])))",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "displayName": "Value",
+            "desc": true
+          }
+        ],
+        "cellHeight": "sm"
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "__name__": true,
+              "span_kind": true,
+              "status_code": true,
+              "__metrics_gen_instance": true,
+              "cluster": true,
+              "source": true
+            },
+            "renameByName": {
+              "span_name": "Tool",
+              "service": "Provider",
+              "Value": "Errors"
+            }
+          }
+        }
+      ]
     }
   ],
   "refresh": "30s",
   "schemaVersion": 39,
-  "tags": ["shepherd", "traces", "session-timeline"],
-  "templating": { "list": [] },
-  "time": { "from": "now-24h", "to": "now" },
+  "tags": [
+    "session-timeline",
+    "traces",
+    "shepherd"
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "provider",
+        "label": "Provider",
+        "type": "custom",
+        "query": "claude-code-session,codex-session,gemini-session",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "All",
+            "value": "$__all"
+          },
+          {
+            "selected": false,
+            "text": "Claude",
+            "value": "claude-code-session"
+          },
+          {
+            "selected": false,
+            "text": "Codex",
+            "value": "codex-session"
+          },
+          {
+            "selected": false,
+            "text": "Gemini",
+            "value": "gemini-session"
+          }
+        ],
+        "includeAll": true,
+        "allValue": ".*-session",
+        "multi": false
+      }
+    ]
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
   "timepicker": {},
   "timezone": "browser",
   "title": "Shepherd / Session Timeline",
   "uid": "shepherd-session-timeline",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }

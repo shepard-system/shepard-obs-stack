@@ -8,7 +8,9 @@
 # All spans in a single request share the same resource (service.name).
 #
 # Input: newline-delimited JSON spans from session-parser.sh:
-#   { "trace_id", "span_id", "parent_span_id", "name", "start_ns", "end_ns", "attributes": {...} }
+#   { "trace_id", "span_id", "parent_span_id", "name", "start_ns", "end_ns",
+#     "status": 0|2, "attributes": {...} }
+# Status codes: 0 = STATUS_CODE_UNSET/OK, 2 = STATUS_CODE_ERROR
 
 OTEL_HTTP_URL="${OTEL_HTTP_URL:-http://localhost:4318}"
 
@@ -51,7 +53,7 @@ emit_spans() {
           )
         }
       ],
-      status: { code: 1 }
+      status: { code: (.status // 0) }
     }] |
     {
       resourceSpans: [{
