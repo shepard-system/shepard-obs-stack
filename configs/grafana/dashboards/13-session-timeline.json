@@ -42,7 +42,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(increase(traces_spanmetrics_calls_total{service=~\"$provider\", span_name=~\"(claude|codex|gemini)\\\\.session\"}[$__range])) or vector(0)",
+          "expr": "round(sum(increase(traces_spanmetrics_calls_total{service=~\"$provider\", span_name=~\"(claude|codex|gemini)\\\\.session\"}[$__range]))) or vector(0)",
           "refId": "A"
         }
       ],
@@ -99,7 +99,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(increase(traces_spanmetrics_calls_total{service=~\"$provider\", span_name=~\"(claude|codex|gemini)\\\\.tool\\\\..*\"}[$__range])) or vector(0)",
+          "expr": "round(sum(increase(traces_spanmetrics_calls_total{service=~\"$provider\", span_name=~\"(claude|codex|gemini)\\\\.tool\\\\..*\"}[$__range]))) or vector(0)",
           "refId": "A"
         }
       ],
@@ -156,7 +156,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(increase(traces_spanmetrics_calls_total{service=~\"$provider\", span_name=~\"(claude|codex|gemini)\\\\.tool\\\\..*\", status_code=\"STATUS_CODE_ERROR\"}[$__range])) or vector(0)",
+          "expr": "round(sum(increase(traces_spanmetrics_calls_total{service=~\"$provider\", span_name=~\"(claude|codex|gemini)\\\\.tool\\\\..*\", status_code=\"STATUS_CODE_ERROR\"}[$__range]))) or vector(0)",
           "refId": "A"
         }
       ],
@@ -213,7 +213,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum(increase(traces_spanmetrics_calls_total{service=~\"$provider\", span_name=~\"(claude|codex|gemini)\\\\.(agent|compaction)\\\\.?.*\"}[$__range])) or vector(0)",
+          "expr": "round(sum(increase(traces_spanmetrics_calls_total{service=~\"$provider\", span_name=~\"(claude|codex|gemini)\\\\.(agent|compaction)\\\\.?.*\"}[$__range]))) or vector(0)",
           "refId": "A"
         }
       ],
@@ -376,7 +376,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "topk(20, sum by (span_name) (increase(traces_spanmetrics_calls_total{service=~\"$provider\", span_name=~\"(claude|codex|gemini)\\\\.tool\\\\..*\"}[$__range])))",
+          "expr": "topk(20, round(sum by (span_name) (increase(traces_spanmetrics_calls_total{service=~\"$provider\", span_name=~\"(claude|codex|gemini)\\\\.tool\\\\..*\"}[$__range]))))",
           "format": "table",
           "instant": true,
           "refId": "A"
@@ -503,7 +503,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (le, span_name) (rate(traces_spanmetrics_duration_seconds_bucket{service=~\"$provider\", span_name=~\"(claude|codex|gemini)\\\\.tool\\\\..*\"}[$__rate_interval])))",
+          "expr": "histogram_quantile(0.95, sum by (le, span_name) (rate(traces_spanmetrics_latency_bucket{service=~\"$provider\", span_name=~\"(claude|codex|gemini)\\\\.tool\\\\..*\"}[$__rate_interval])))",
           "legendFormat": "{{span_name}}",
           "refId": "A"
         }
@@ -565,7 +565,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "topk(20, sum by (span_name, service) (increase(traces_spanmetrics_calls_total{service=~\"$provider\", span_name=~\"(claude|codex|gemini)\\\\.tool\\\\..*\", status_code=\"STATUS_CODE_ERROR\"}[$__range])))",
+          "expr": "topk(20, round(sum by (span_name, service) (increase(traces_spanmetrics_calls_total{service=~\"$provider\", span_name=~\"(claude|codex|gemini)\\\\.tool\\\\..*\", status_code=\"STATUS_CODE_ERROR\"}[$__range]))))",
           "format": "table",
           "instant": true,
           "refId": "A"
