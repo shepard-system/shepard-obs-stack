@@ -50,20 +50,54 @@ uninstall_codex() {
     return
   fi
 
-  if ! grep -q '^notify' "$config_file"; then
-    yellow "Codex CLI    — no hooks configured, skipping"
+  # Detect shepherd config (markers or legacy patterns)
+  local has_markers=false
+  local has_legacy_notify=false
+  local has_legacy_otel=false
+
+  grep -q '# shepherd-managed:' "$config_file" 2>/dev/null && has_markers=true
+  grep -q 'codex/notify\.sh' "$config_file" 2>/dev/null && has_legacy_notify=true
+  if grep -q '^\[otel\]' "$config_file" 2>/dev/null && \
+     sed -n '/^\[otel\]/,/^\[/p' "$config_file" | grep -q 'localhost:4317'; then
+    has_legacy_otel=true
+  fi
+
+  if ! $has_markers && ! $has_legacy_notify && ! $has_legacy_otel; then
+    yellow "Codex CLI    — no shepherd config found, skipping"
     return
   fi
 
-  # Remove the notify line
-  sed -i.tmp '/^notify/d' "$config_file"
-  rm -f "${config_file}.tmp"
+  # Back up before uninstall
+  cp "$config_file" "${config_file}.bak.$(date +%s)"
 
-  # Remove [otel] section and its contents
-  if grep -q '^\[otel\]' "$config_file" 2>/dev/null; then
-    sed -i.tmp '/^\[otel\]/,/^\[/{/^\[otel\]/d;/^\[/!d;}' "$config_file"
+  # Remove shepherd-managed blocks
+  if $has_markers; then
+    sed -i.tmp '/^# shepherd-managed:start/,/^# shepherd-managed:end/d' "$config_file"
     rm -f "${config_file}.tmp"
-    green "Codex CLI    — native OTel config removed"
+    green "Codex CLI    — shepherd config removed (managed blocks)"
+  fi
+
+  # Legacy fallback (for installs before markers were added)
+  if ! $has_markers; then
+    if $has_legacy_notify; then
+      sed -i.tmp '/codex\/notify\.sh/d' "$config_file"
+      rm -f "${config_file}.tmp"
+    fi
+
+    if $has_legacy_otel; then
+      sed -i.tmp '/^\[otel\]/,/^\[/{/^\[otel\]/d;/^\[/!d;}' "$config_file"
+      rm -f "${config_file}.tmp"
+    fi
+
+    green "Codex CLI    — shepherd hooks removed (legacy format)"
+  fi
+
+  # Warn about non-shepherd config that was preserved
+  if grep -q '^notify' "$config_file" 2>/dev/null; then
+    yellow "Codex CLI    — non-shepherd notify config preserved"
+  fi
+  if grep -q '^\[otel\]' "$config_file" 2>/dev/null; then
+    yellow "Codex CLI    — non-shepherd [otel] config preserved"
   fi
 
   # Remove empty file if nothing left
@@ -71,7 +105,6 @@ uninstall_codex() {
     rm -f "$config_file"
   fi
 
-  green "Codex CLI    — hooks removed from $config_file"
   REMOVED=$((REMOVED + 1))
 }
 

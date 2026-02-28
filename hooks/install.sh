@@ -102,37 +102,77 @@ install_codex() {
     cp "$config_file" "${config_file}.bak.$(date +%s)"
   fi
 
-  local notify_line="notify = [\"/bin/bash\", \"${HOOKS_DIR}/codex/notify.sh\"]"
-
-  if [[ -f "$config_file" ]] && grep -q '^notify' "$config_file"; then
-    # Replace existing notify line
-    sed -i.tmp "s|^notify.*|${notify_line}|" "$config_file"
+  # Remove existing shepherd-managed blocks (idempotent re-install)
+  if [[ -f "$config_file" ]] && grep -q '# shepherd-managed:' "$config_file" 2>/dev/null; then
+    sed -i.tmp '/^# shepherd-managed:start/,/^# shepherd-managed:end/d' "$config_file"
     rm -f "${config_file}.tmp"
-  elif [[ -f "$config_file" ]]; then
-    # Prepend notify line before any sections
-    local tmp
-    tmp=$(mktemp)
-    echo "$notify_line" > "$tmp"
-    echo "" >> "$tmp"
-    cat "$config_file" >> "$tmp"
-    mv "$tmp" "$config_file"
-  else
-    echo "$notify_line" > "$config_file"
   fi
 
-  # Native OTel: add [otel] section if not present
-  if ! grep -q '^\[otel\]' "$config_file" 2>/dev/null; then
+  # Remove legacy (pre-marker) shepherd notify line
+  if [[ -f "$config_file" ]] && grep -q 'codex/notify\.sh' "$config_file" 2>/dev/null; then
+    sed -i.tmp '/codex\/notify\.sh/d' "$config_file"
+    rm -f "${config_file}.tmp"
+  fi
+
+  # Remove legacy (pre-marker) shepherd [otel] section (only if endpoint matches)
+  if [[ -f "$config_file" ]] && grep -q '^\[otel\]' "$config_file" 2>/dev/null; then
+    if sed -n '/^\[otel\]/,/^\[/p' "$config_file" | grep -q 'localhost:4317'; then
+      sed -i.tmp '/^\[otel\]/,/^\[/{/^\[otel\]/d;/^\[/!d;}' "$config_file"
+      rm -f "${config_file}.tmp"
+    fi
+  fi
+
+  local notify_line="notify = [\"/bin/bash\", \"${HOOKS_DIR}/codex/notify.sh\"]"
+  local skip_notify=false
+  local skip_otel=false
+
+  # Warn if non-shepherd notify exists (TOML allows only one top-level key)
+  if [[ -f "$config_file" ]] && grep -q '^notify' "$config_file" 2>/dev/null; then
+    yellow "Codex CLI    — existing non-shepherd notify found, skipping hook install"
+    skip_notify=true
+  fi
+
+  # Warn if non-shepherd [otel] exists
+  if [[ -f "$config_file" ]] && grep -q '^\[otel\]' "$config_file" 2>/dev/null; then
+    yellow "Codex CLI    — existing non-shepherd [otel] found, skipping OTel config"
+    skip_otel=true
+  fi
+
+  # Prepend managed notify block
+  if ! $skip_notify; then
+    local tmp
+    tmp=$(mktemp)
+    cat > "$tmp" <<EOF
+# shepherd-managed:start notify
+${notify_line}
+# shepherd-managed:end notify
+EOF
+    if [[ -f "$config_file" ]] && [[ -s "$config_file" ]]; then
+      echo "" >> "$tmp"
+      cat "$config_file" >> "$tmp"
+    fi
+    mv "$tmp" "$config_file"
+  fi
+
+  # Append managed otel block
+  if ! $skip_otel; then
     cat >> "$config_file" <<'OTEL_EOF'
 
+# shepherd-managed:start otel
 [otel]
 environment = "dev"
 exporter = { otlp-grpc = { endpoint = "http://localhost:4317" } }
 trace_exporter = { otlp-grpc = { endpoint = "http://localhost:4317" } }
+# shepherd-managed:end otel
 OTEL_EOF
-    green "Codex CLI    — native OTel (logs + traces) added → $config_file"
   fi
 
-  green "Codex CLI    — hooks installed → $config_file"
+  if $skip_notify && $skip_otel; then
+    yellow "Codex CLI    — nothing installed (existing non-shepherd config)"
+    return
+  fi
+
+  green "Codex CLI    — hooks + native OTel installed → $config_file"
   INSTALLED=$((INSTALLED + 1))
 }
 
