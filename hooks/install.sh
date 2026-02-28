@@ -199,23 +199,27 @@ install_gemini() {
 
   local hook_config
   hook_config=$(jq -n \
-    --arg after_tool "${HOOKS_DIR}/gemini/after-tool.sh" \
-    --arg after_agent "${HOOKS_DIR}/gemini/after-agent.sh" \
-    --arg after_model "${HOOKS_DIR}/gemini/after-model.sh" \
-    --arg session_end "${HOOKS_DIR}/gemini/session-end.sh" \
+    --arg after_tool "bash ${HOOKS_DIR}/gemini/after-tool.sh" \
+    --arg after_agent "bash ${HOOKS_DIR}/gemini/after-agent.sh" \
+    --arg after_model "bash ${HOOKS_DIR}/gemini/after-model.sh" \
+    --arg session_end "bash ${HOOKS_DIR}/gemini/session-end.sh" \
     '{
       hooks: {
         AfterTool: [{
-          command: ["bash", $after_tool]
+          matcher: "*",
+          hooks: [{ type: "command", command: $after_tool }]
         }],
         AfterAgent: [{
-          command: ["bash", $after_agent]
+          matcher: "*",
+          hooks: [{ type: "command", command: $after_agent }]
         }],
         AfterModel: [{
-          command: ["bash", $after_model]
+          matcher: "*",
+          hooks: [{ type: "command", command: $after_model }]
         }],
         SessionEnd: [{
-          command: ["bash", $session_end]
+          matcher: "exit",
+          hooks: [{ type: "command", command: $session_end }]
         }]
       }
     }')

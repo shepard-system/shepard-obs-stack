@@ -303,6 +303,6 @@ All 3 CLI hooks parse session logs into synthetic OTLP traces → Tempo via OTel
 ## Known Limitations
 
 - **Codex**: notify hook payload has no `total_token_usage` — tokens always 0, cost always 0. Events are tracked. Native OTel config accepted but sends zero data.
-- **Gemini CLI**: hooks installed but not yet tested with real session data.
+- **Gemini CLI**: hooks tested and working. Hook config format uses nested `matcher`/`hooks` schema (not flat `command` arrays). See `install.sh` for the correct format.
 - **Empty model labels**: test data may create metrics with `model=""`. PromQL queries filter with `model!=""` where needed.
 
