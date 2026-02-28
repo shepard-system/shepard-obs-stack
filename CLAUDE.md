@@ -96,13 +96,15 @@ Prometheus :9090 ← scrapes OTel Collector :8889
 
 **Fire-and-forget hooks:** `hooks/lib/metrics.sh:emit_counter()` uses `curl -s & disown` to avoid blocking the CLI. Hooks must never block or slow down the AI assistant.
 
-**Dashboard provisioning:** Dashboards in `configs/grafana/dashboards/*.json` are auto-loaded by Grafana on startup. Edits made in the Grafana UI are **lost on container restart**. Always edit the JSON files directly. All dashboards use `$source` and `$git_repo` template variables.
+**Dashboard provisioning:** Dashboards in `configs/grafana/dashboards/*.json` are auto-loaded by Grafana on startup. Edits made in the Grafana UI are **lost on container restart**. Always edit the JSON files directly. Tools and Operations dashboards use `$source` and `$git_repo` variables. Deep Dive dashboards use `$model`. Session Timeline uses `$provider`. Cost and Quality have no template variables.
 
 **Install backups:** `hooks/install.sh` creates `.bak.<timestamp>` backups of CLI config files before modifying them. Uninstall does NOT restore backups.
 
 **jq deep-merge in install.sh:** Hook and native OTel config is merged into existing CLI settings using jq's `*` (recursive merge), preserving user's existing config.
 
-**Dashboard query convention:** PromQL for all numeric panels (rates, totals, gauges). LogQL only for log stream/table panels. Deep-dive dashboards may use LogQL `| json | unwrap` for providers that only emit logs (Codex).
+**Dashboard query convention:** PromQL for all numeric panels (rates, totals, gauges). LogQL only for log stream/table panels. Deep-dive dashboards may use LogQL `| json | unwrap` for providers that only emit logs (Codex). **Exception:** Session Timeline (13) stat/table panels use Tempo TraceQL metrics (queryType: traceql) (`count_over_time()`) to count spans from both realtime and bulk-imported traces — Prometheus span-metrics only count realtime-ingested traces.
+
+**Hook shell options:** All hooks use `set -u` (not `set -euo pipefail`). `set -e` causes silent SIGPIPE kills in fire-and-forget pipelines; `set -o pipefail` amplifies this. Hooks must never fail or block the CLI.
 
 ## Hooks
 
@@ -209,9 +211,9 @@ Key config requirements:
 | Claude Deep Dive     | `shepherd-claude-deep-dive` | Prometheus + Loki                    | `configs/grafana/dashboards/10-claude-deep-dive.json` |
 | Codex Deep Dive      | `shepherd-codex-deep-dive`  | Prometheus (recording rules) + Loki  | `configs/grafana/dashboards/11-codex-deep-dive.json`  |
 | Gemini Deep Dive     | `shepherd-gemini-deep-dive` | Prometheus + Loki                    | `configs/grafana/dashboards/12-gemini-deep-dive.json` |
-| Session Timeline     | `shepherd-session-timeline` | Tempo + Prometheus (span-metrics)    | `configs/grafana/dashboards/13-session-timeline.json` |
+| Session Timeline     | `shepherd-session-timeline` | Tempo (TraceQL metrics) + Prometheus | `configs/grafana/dashboards/13-session-timeline.json` |
 
-Unified dashboards (01–04) aggregate across providers. Deep-dive dashboards (10–12) are provider-specific using native OTel. Session Timeline (13) shows synthetic traces parsed from all 3 CLI session logs with `$provider` variable.
+Unified dashboards (01–04) aggregate across providers. Deep-dive dashboards (10–12) are provider-specific using native OTel. Session Timeline (13) shows synthetic traces parsed from all 3 CLI session logs with `$provider` variable. Stat/table panels use Tempo TraceQL `count_over_time()` to count spans directly from trace storage (works for both realtime and bulk-imported traces). Tool Duration Distribution uses Prometheus `traces_spanmetrics_latency_bucket` (realtime traces only).
 
 ## Config Structure
 
@@ -290,7 +292,11 @@ All 3 CLI hooks parse session logs into synthetic OTLP traces → Tempo via OTel
 - Gemini: single JSON (not JSONL), inline toolCalls with status
 - Error status: OTLP status code 2 for error spans, detected from `is_error`/`status`
 - Fire-and-forget: `( parser | emit_spans ) </dev/null >/dev/null 2>&1 &` — fully detached
-- Tempo's `metrics_generator` produces `traces_spanmetrics_calls_total` and `traces_spanmetrics_duration_seconds_*`
+- Tempo's `metrics_generator` produces `traces_spanmetrics_calls_total` and `traces_spanmetrics_latency_bucket` (realtime traces only)
+- Session Timeline stat/table panels use Tempo TraceQL metrics API (`count_over_time()`) — works for both realtime and bulk-imported traces
+- Tempo `query_frontend.metrics.max_duration: 168h` — allows TraceQL metrics queries spanning full 7d retention
+- Tempo `local_blocks.complete_block_timeout: 168h` — keeps local-blocks copies for 7d so TraceQL metrics can query all stored traces (default is 15m, which causes older traces to return 0)
+- Tempo `local_blocks.filter_server_spans: false` — MUST be set at top-level `metrics_generator.processor.local_blocks` (NOT in overrides). Default `true` only indexes SERVER spans; our synthetic spans are INTERNAL kind, so this must be `false` for tool/agent span metrics to work. Cannot be set in `overrides.defaults` ([grafana/tempo#5313](https://github.com/grafana/tempo/issues/5313)).
 
 ## Known Limitations
 

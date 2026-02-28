@@ -15,12 +15,12 @@ You use Claude Code, Codex, or Gemini CLI every day. You have no idea how much t
 - **One command** to start: `./scripts/init.sh` — 6 services, 8 dashboards, under a minute
 - **Three CLIs supported**: Claude Code, Codex, Gemini CLI — hooks + native OpenTelemetry
 - **Eight Grafana dashboards** auto-provisioned: cost, tools, operations, quality, per-provider deep dives, and session timeline
-- **Zero dependencies** beyond Docker — no Python, no Node, no cloud accounts
+- **Minimal dependencies** — Docker, plus `bash`, `curl`, and `jq` on the host for hooks and tests. No Python, no Node, no cloud accounts
 - **Works offline** — everything runs on localhost, your data stays on your machine
 
 ## Quick Start
 
-**Prerequisites:** Docker (with Compose v2) and at least one AI CLI installed.
+**Prerequisites:** Docker (with Compose v2), `curl`, `jq`, and at least one AI CLI installed.
 
 ```bash
 git clone https://github.com/shepard-system/shepard-obs-stack.git
@@ -62,7 +62,7 @@ Open [localhost:3000](http://localhost:3000) (admin / shepherd). Use your CLI as
 
 Click any Trace ID to open the full waterfall in Grafana Explore → Tempo.
 
-All dashboards support `$source` and `$git_repo` template variables for filtering.
+Dashboard template variables: **Tools** and **Operations** support `$source` and `$git_repo` filtering. **Deep Dive** dashboards use `$model`. **Session Timeline** uses `$provider`. **Cost** and **Quality** show aggregated data without filters.
 
 ## How It Works
 
