@@ -53,6 +53,7 @@ if $session_id == null or $session_id == "" then empty else
 
 ($session_id | gsub("-"; "")) as $trace_id |
 "0000000000000001" as $root_sid |
+"0000000000000002" as $meta_sid |
 
 .startTime as $t_start |
 .lastUpdated as $t_end |
@@ -115,6 +116,13 @@ if $session_id == null or $session_id == "" then empty else
      {"has_interruption": "true", "interruption.count": ($interruption_count | tostring)}
    else {} end)
  )},
+
+# 1b. Session meta marker (child of root — root spans are not indexed by Tempo local-blocks)
+{trace_id: $trace_id, span_id: $meta_sid, parent_span_id: $root_sid,
+ name: "gemini.session.meta",
+ start_ns: ($t_start | ts_to_ns), end_ns: ($t_start | ts_to_ns),
+ status: 0,
+ attributes: {"session.id": $session_id, "provider": "gemini-cli"}},
 
 # 2. Tool call spans (span_id offset: 16)
 ($all_tools | to_entries[] |

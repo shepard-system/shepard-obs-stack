@@ -42,7 +42,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "count(max_over_time(shepherd_gemini_cli_session_count_total[$__range]))",
+          "expr": "sum(max_over_time(shepherd_gemini_cli_session_count_total[$__range]))",
           "queryType": "instant",
           "legendFormat": "__auto",
           "refId": "A"
@@ -64,7 +64,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -104,7 +105,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_gen_ai_client_operation_duration_seconds_sum{gen_ai_request_model=~\"$model\"}[$__range])) / sum(increase(shepherd_gen_ai_client_operation_duration_seconds_count{gen_ai_request_model=~\"$model\"}[$__range]))",
+          "expr": "(sum(increase(shepherd_gen_ai_client_operation_duration_seconds_sum{gen_ai_request_model=~\"$model\"}[$__range])) / sum(increase(shepherd_gen_ai_client_operation_duration_seconds_count{gen_ai_request_model=~\"$model\"}[$__range]))) * 1000",
           "queryType": "instant",
           "legendFormat": "__auto",
           "refId": "A"
@@ -115,7 +116,7 @@
           "color": {
             "mode": "thresholds"
           },
-          "unit": "s",
+          "unit": "ms",
           "decimals": 1,
           "mappings": [],
           "thresholds": {
@@ -196,7 +197,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -258,7 +260,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -320,7 +323,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -382,7 +386,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -527,7 +532,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -589,7 +595,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -651,7 +658,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -713,7 +721,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -836,7 +845,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.50, sum by (le, gen_ai_request_model) (increase(shepherd_gen_ai_client_operation_duration_seconds_bucket{gen_ai_request_model=~\"$model\",gen_ai_request_model!=\"\"}[$__range])))",
+          "expr": "histogram_quantile(0.50, sum by (le, gen_ai_request_model) (increase(shepherd_gen_ai_client_operation_duration_seconds_bucket{gen_ai_request_model=~\"$model\",gen_ai_request_model!=\"\"}[$__range]))) * 1000",
           "queryType": "instant",
           "legendFormat": "{{gen_ai_request_model}}",
           "refId": "A"
@@ -847,7 +856,7 @@
           "color": {
             "mode": "thresholds"
           },
-          "unit": "s",
+          "unit": "ms",
           "decimals": 1,
           "mappings": [],
           "thresholds": {
@@ -908,7 +917,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (model) (increase(shepherd_gemini_cli_token_usage_total{model=~\"$model\",model!=\"\"}[$__range]))",
+          "expr": "sum by (model) (increase(shepherd_gemini_cli_token_usage_total{model=~\"$model\",model!=\"\"}[$__range])) > 0",
           "queryType": "instant",
           "legendFormat": "{{model}}",
           "refId": "A"
@@ -928,7 +937,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -978,7 +988,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (type) (increase(shepherd_gemini_cli_token_usage_total{model=~\"$model\"}[$__range]))",
+          "expr": "sum by (type) (increase(shepherd_gemini_cli_token_usage_total{model=~\"$model\"}[$__range])) > 0",
           "queryType": "instant",
           "legendFormat": "{{type}}",
           "refId": "A"
@@ -998,7 +1008,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -1061,7 +1072,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "topk(10, sum by (function_name) (increase(shepherd_gemini_cli_tool_call_count_total[$__range])))",
+          "expr": "topk(10, sum by (function_name) (increase(shepherd_gemini_cli_tool_call_count_total[$__range]))) > 0",
           "queryType": "instant",
           "legendFormat": "{{function_name}}",
           "refId": "A"
@@ -1081,7 +1092,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -1131,7 +1143,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_gemini_cli_tool_call_count_total{success=\"true\"}[$__range]))",
+          "expr": "sum(increase(shepherd_gemini_cli_tool_call_count_total{success=\"true\"}[$__range])) > 0",
           "queryType": "instant",
           "legendFormat": "Success",
           "refId": "A"
@@ -1142,7 +1154,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_gemini_cli_tool_call_count_total{success=\"false\"}[$__range]))",
+          "expr": "sum(increase(shepherd_gemini_cli_tool_call_count_total{success=\"false\"}[$__range])) > 0",
           "queryType": "instant",
           "legendFormat": "Errors",
           "refId": "B"
@@ -1163,7 +1175,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": [
           {
@@ -1265,7 +1278,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -1315,7 +1329,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_gemini_cli_api_request_count_total{status_code=\"200\"}[$__range]))",
+          "expr": "sum(increase(shepherd_gemini_cli_api_request_count_total{status_code=\"200\"}[$__range])) > 0",
           "queryType": "instant",
           "legendFormat": "Success",
           "refId": "A"
@@ -1326,7 +1340,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_gemini_cli_api_request_count_total{status_code!=\"200\"}[$__range]))",
+          "expr": "sum(increase(shepherd_gemini_cli_api_request_count_total{status_code!=\"200\"}[$__range])) > 0",
           "queryType": "instant",
           "legendFormat": "Errors",
           "refId": "B"
@@ -1347,7 +1361,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": [
           {
@@ -1479,7 +1494,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(max_over_time(shepherd_gemini_cli_model_routing_latency_milliseconds_sum[$__range])) / sum(max_over_time(shepherd_gemini_cli_model_routing_latency_milliseconds_count[$__range]))",
+          "expr": "sum(increase(shepherd_gemini_cli_model_routing_latency_milliseconds_sum[$__range])) / sum(increase(shepherd_gemini_cli_model_routing_latency_milliseconds_count[$__range]))",
           "queryType": "instant",
           "legendFormat": "__auto",
           "refId": "A"
@@ -1689,7 +1704,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": [
           {
@@ -1988,7 +2004,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(shepherd_gen_ai_client_operation_duration_seconds_bucket{gen_ai_request_model=~\"$model\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(shepherd_gen_ai_client_operation_duration_seconds_bucket{gen_ai_request_model=~\"$model\"}[5m]))) * 1000",
           "queryType": "range",
           "legendFormat": "P95 Latency",
           "refId": "A"
@@ -1999,7 +2015,7 @@
           "color": {
             "mode": "palette-classic"
           },
-          "unit": "s",
+          "unit": "ms",
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "smooth",
@@ -2014,7 +2030,7 @@
               "group": "A"
             },
             "axisPlacement": "auto",
-            "axisLabel": "seconds",
+            "axisLabel": "ms",
             "scaleDistribution": {
               "type": "linear"
             },
@@ -2178,7 +2194,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(shepherd_gen_ai_client_operation_duration_seconds_bucket{gen_ai_request_model=~\"$model\"}[5m])))",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(shepherd_gen_ai_client_operation_duration_seconds_bucket{gen_ai_request_model=~\"$model\"}[5m]))) * 1000",
           "legendFormat": "P50",
           "queryType": "range",
           "refId": "A"
@@ -2189,7 +2205,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(shepherd_gen_ai_client_operation_duration_seconds_bucket{gen_ai_request_model=~\"$model\"}[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(shepherd_gen_ai_client_operation_duration_seconds_bucket{gen_ai_request_model=~\"$model\"}[5m]))) * 1000",
           "legendFormat": "P95",
           "queryType": "range",
           "refId": "B"
@@ -2200,7 +2216,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(shepherd_gen_ai_client_operation_duration_seconds_bucket{gen_ai_request_model=~\"$model\"}[5m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(shepherd_gen_ai_client_operation_duration_seconds_bucket{gen_ai_request_model=~\"$model\"}[5m]))) * 1000",
           "legendFormat": "P99",
           "queryType": "range",
           "refId": "C"
@@ -2211,7 +2227,7 @@
           "color": {
             "mode": "palette-classic"
           },
-          "unit": "s",
+          "unit": "ms",
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "smooth",
@@ -2225,7 +2241,7 @@
               "group": "A"
             },
             "axisPlacement": "auto",
-            "axisLabel": "seconds",
+            "axisLabel": "ms",
             "scaleDistribution": {
               "type": "linear"
             },
@@ -2495,6 +2511,11 @@
         "enableLogDetails": true,
         "sortOrder": "Descending",
         "dedupStrategy": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "No Gemini CLI sessions recorded yet"
+        }
       }
     }
   ],
@@ -2536,7 +2557,8 @@
         "regex": "",
         "skipUrlSync": false,
         "sort": 1,
-        "type": "query"
+        "type": "query",
+        "allValue": ".*"
       }
     ]
   },

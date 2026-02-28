@@ -57,6 +57,7 @@ if $meta == null then empty else
 ($meta.id // "") as $session_id |
 ($session_id | gsub("-"; "")) as $trace_id |
 "0000000000000001" as $root_sid |
+"0000000000000002" as $meta_sid |
 
 # Model from first turn_context
 (map(select(.type == "turn_context") | .payload.model // empty) | .[0] // "unknown") as $model |
@@ -141,6 +142,13 @@ if $meta == null then empty else
      {"has_interruption": "true", "interruption.count": ($interruption_count | tostring)}
    else {} end)
  )},
+
+# 1b. Session meta marker (child of root — root spans are not indexed by Tempo local-blocks)
+{trace_id: $trace_id, span_id: $meta_sid, parent_span_id: $root_sid,
+ name: "codex.session.meta",
+ start_ns: ($t_start | ts_to_ns), end_ns: ($t_start | ts_to_ns),
+ status: 0,
+ attributes: {"session.id": $session_id, "provider": "codex"}},
 
 # 2. Tool call spans (span_id offset: 16)
 ($tools | to_entries[] |

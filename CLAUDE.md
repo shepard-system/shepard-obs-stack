@@ -169,7 +169,7 @@ After Prometheus ingestion with `shepherd` namespace (dots→underscores, `_tota
 | `shepherd_gemini_cli_token_usage_total`              | Gemini | type (input/output/thought/cache/tool), model      |
 | `shepherd_gemini_cli_tool_call_count_total`          | Gemini | function_name, success, tool_type                  |
 | `shepherd_gemini_cli_session_count_total`            | Gemini | —                                                  |
-| `shepherd_gemini_cli_api_request_count_total`        | Gemini | —                                                  |
+| `shepherd_gemini_cli_api_request_count_total`        | Gemini | status_code                                        |
 | `shepherd_gen_ai_client_operation_duration_seconds_*` | Gemini | gen_ai_request_model (histogram)                   |
 | `shepherd_gemini_cli_tool_call_latency_milliseconds_*` | Gemini | function_name (histogram)                        |
 
@@ -274,10 +274,13 @@ All 3 CLI hooks parse session logs into synthetic OTLP traces → Tempo via OTel
 | Span Name | Claude | Codex | Gemini |
 |-----------|--------|-------|--------|
 | `{provider}.session` | root span | root span | root span |
+| `{provider}.session.meta` | marker child | marker child | marker child |
 | `{provider}.tool.*` | tool calls | function calls | tool calls |
 | `claude.mcp.*` | MCP calls | — | — |
 | `claude.agent.*` | sub-agents | — | — |
 | `{provider}.compaction` | context compaction | context compaction | — |
+
+**Session meta marker span:** Tempo's local-blocks processor does NOT index root spans (spans without a parent). To enable `count_over_time()` on sessions, each parser emits a zero-duration `{provider}.session.meta` child span (span_id=0x02, parent=root). The Session Timeline "Sessions" panel queries `name=~".*\\.session\\.meta"`.
 
 **Root span attributes (all providers):**
 `session.id`, `model`, `provider`, `git.branch`, `git.repo`, `tokens.input`, `tokens.output`, `tokens.cache_read`, `tokens.total`, `tool.count`, `tool.error_count`, `turn.count`, `compaction.count`, `stop_reason`, `has_interruption`
@@ -294,9 +297,12 @@ All 3 CLI hooks parse session logs into synthetic OTLP traces → Tempo via OTel
 - Fire-and-forget: `( parser | emit_spans ) </dev/null >/dev/null 2>&1 &` — fully detached
 - Tempo's `metrics_generator` produces `traces_spanmetrics_calls_total` and `traces_spanmetrics_latency_bucket` (realtime traces only)
 - Session Timeline stat/table panels use Tempo TraceQL metrics API (`count_over_time()`) — works for both realtime and bulk-imported traces
-- Tempo `query_frontend.metrics.max_duration: 168h` — allows TraceQL metrics queries spanning full 7d retention
-- Tempo `local_blocks.complete_block_timeout: 168h` — keeps local-blocks copies for 7d so TraceQL metrics can query all stored traces (default is 15m, which causes older traces to return 0)
+- Tempo `query_frontend.metrics.max_duration: 48h` — allows TraceQL metrics queries spanning 2d window (must match complete_block_timeout)
+- Tempo `local_blocks.complete_block_timeout: 48h` — keeps local-blocks copies for 2d. 168h (7d) caused Tempo OOM with 84+ accumulated blocks. Trace search still works for full 7d retention. Prometheus span-metrics cover all history for timeseries panels.
+- Tempo `ingester.max_block_duration: 30m` + `max_block_bytes: 5MB` — 6x fewer blocks than default 5m/1MB, reduces local-blocks memory pressure
 - Tempo `local_blocks.filter_server_spans: false` — MUST be set at top-level `metrics_generator.processor.local_blocks` (NOT in overrides). Default `true` only indexes SERVER spans; our synthetic spans are INTERNAL kind, so this must be `false` for tool/agent span metrics to work. Cannot be set in `overrides.defaults` ([grafana/tempo#5313](https://github.com/grafana/tempo/issues/5313)).
+- Tempo `overrides.defaults.global.max_bytes_per_trace: 0` — disables trace size limit (default 5MB drops large session traces). MUST be at `overrides.defaults.global` — placing it at top-level `metrics_generator.processor.local_blocks` is silently ignored; placing at `overrides.defaults` directly crashes Tempo.
+- Tempo local-blocks does NOT index root spans (spans without a parent). Workaround: `{provider}.session.meta` zero-duration child marker spans.
 
 ## Known Limitations
 

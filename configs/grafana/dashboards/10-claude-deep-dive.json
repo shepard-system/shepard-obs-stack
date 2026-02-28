@@ -64,7 +64,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -320,7 +321,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -382,7 +384,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -444,7 +447,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -589,7 +593,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -651,7 +656,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -713,7 +719,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -775,7 +782,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -970,7 +978,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (model) (increase(shepherd_claude_code_token_usage_tokens_total{model=~\"$model\",model!=\"\"}[$__range]))",
+          "expr": "sum by (model) (increase(shepherd_claude_code_token_usage_tokens_total{model=~\"$model\",model!=\"\"}[$__range])) > 0",
           "queryType": "instant",
           "legendFormat": "{{model}}",
           "refId": "A"
@@ -990,7 +998,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 2
         },
         "overrides": []
       },
@@ -1040,7 +1049,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (type) (increase(shepherd_claude_code_token_usage_tokens_total{model=~\"$model\"}[$__range]))",
+          "expr": "sum by (type) (increase(shepherd_claude_code_token_usage_tokens_total{model=~\"$model\"}[$__range])) > 0",
           "queryType": "instant",
           "legendFormat": "{{type}}",
           "refId": "A"
@@ -1060,7 +1069,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 2
         },
         "overrides": []
       },
@@ -1123,7 +1133,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (type) (increase(shepherd_claude_code_active_time_seconds_total{}[$__range]))",
+          "expr": "sum by (type) (increase(shepherd_claude_code_active_time_seconds_total{}[$__range])) > 0",
           "queryType": "instant",
           "legendFormat": "{{type}}",
           "refId": "A"
@@ -1268,7 +1278,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "topk(10, sum by (tool) (increase(shepherd_tool_calls_total{source=\"claude-code\"}[$__range])))",
+          "expr": "topk(10, sum by (tool) (increase(shepherd_tool_calls_total{source=\"claude-code\"}[$__range]))) > 0",
           "queryType": "instant",
           "legendFormat": "{{tool}}",
           "refId": "A"
@@ -1288,7 +1298,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 2
         },
         "overrides": []
       },
@@ -1338,7 +1349,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_tool_calls_total{source=\"claude-code\",tool_status=\"success\"}[$__range]))",
+          "expr": "sum(increase(shepherd_tool_calls_total{source=\"claude-code\",tool_status=\"success\"}[$__range])) > 0",
           "queryType": "instant",
           "legendFormat": "Success",
           "refId": "A"
@@ -1349,7 +1360,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_tool_calls_total{source=\"claude-code\",tool_status=\"error\"}[$__range]))",
+          "expr": "sum(increase(shepherd_tool_calls_total{source=\"claude-code\",tool_status=\"error\"}[$__range])) > 0",
           "queryType": "instant",
           "legendFormat": "Errors",
           "refId": "B"
@@ -1370,7 +1381,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": [
           {

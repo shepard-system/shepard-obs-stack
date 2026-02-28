@@ -9,7 +9,7 @@
 #   3-5   Native OTel metrics in Prometheus (Claude, Gemini, Codex recording rules)
 #   6-8   Native OTel logs in Loki (Claude, Codex, Gemini)
 #   9-11  Synthetic traces in Tempo (Claude, Codex, Gemini sessions)
-#         Each trace: root session span + 3 tool spans + 1 error tool + 1 agent span
+#         Each trace: root session span + 3 tool spans + 1 error tool + 1 agent span + 1 compaction span
 
 set -euo pipefail
 
@@ -247,9 +247,20 @@ send_test_session() {
   local agent_end="$(( now_s + 45 ))000000000"
   spans="${spans},$(make_span "$trace_id" "$agent_sid" "$root_id" "${provider}.agent.subagent" "$agent_start" "$agent_end")"
 
+  # Compaction span
+  local comp_sid=$(printf '%016x' 400)
+  local comp_start="$(( now_s + 46 ))000000000"
+  local comp_end="$(( now_s + 50 ))000000000"
+  spans="${spans},$(make_span "$trace_id" "$comp_sid" "$root_id" "${provider}.compaction" "$comp_start" "$comp_end")"
+
   # Root span
   local root_span
   root_span=$(make_span "$trace_id" "$root_id" "" "${provider}.session" "$root_start" "$root_end")
+
+  # Session meta marker (child of root — root spans are not indexed by Tempo local-blocks)
+  local meta_sid=$(printf '%016x' 2)
+  local meta_span
+  meta_span=$(make_span "$trace_id" "$meta_sid" "$root_id" "${provider}.session.meta" "$root_start" "$root_start")
 
   curl -s -o /dev/null \
     -H "Content-Type: application/json" \
@@ -263,7 +274,7 @@ send_test_session() {
         },
         \"scopeSpans\": [{
           \"scope\": { \"name\": \"shepherd-test\", \"version\": \"0.2.0\" },
-          \"spans\": [${root_span},${spans}]
+          \"spans\": [${root_span},${meta_span},${spans}]
         }]
       }]
     }"

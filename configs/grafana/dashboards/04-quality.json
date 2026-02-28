@@ -62,7 +62,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -614,7 +615,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (type) (increase(shepherd_claude_code_active_time_seconds_total[$__range]))",
+          "expr": "sum by (type) (increase(shepherd_claude_code_active_time_seconds_total[$__range])) > 0",
           "legendFormat": "{{type}}",
           "queryType": "instant",
           "refId": "A"
@@ -704,7 +705,8 @@
         "defaults": {
           "color": {
             "mode": "palette-classic"
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -1052,7 +1054,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (function_name) (increase(shepherd_gemini_cli_tool_call_latency_milliseconds_sum[5m])) / sum by (function_name) (increase(shepherd_gemini_cli_tool_call_latency_milliseconds_count[5m]))",
+          "expr": "(sum by (function_name) (increase(shepherd_gemini_cli_tool_call_latency_milliseconds_sum[5m])) / sum by (function_name) (increase(shepherd_gemini_cli_tool_call_latency_milliseconds_count[5m]))) > 0",
           "legendFormat": "{{function_name}}",
           "queryType": "range",
           "refId": "A",
@@ -1114,7 +1116,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "topk(10, sum by (function_name) (increase(shepherd_gemini_cli_tool_call_latency_milliseconds_sum[$__range])) / sum by (function_name) (increase(shepherd_gemini_cli_tool_call_latency_milliseconds_count[$__range])))",
+          "expr": "topk(10, (sum by (function_name) (increase(shepherd_gemini_cli_tool_call_latency_milliseconds_sum[$__range])) / sum by (function_name) (increase(shepherd_gemini_cli_tool_call_latency_milliseconds_count[$__range]))) > 0)",
           "legendFormat": "{{function_name}}",
           "queryType": "instant",
           "refId": "A"

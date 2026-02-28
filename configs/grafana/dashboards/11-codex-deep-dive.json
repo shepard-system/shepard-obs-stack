@@ -957,7 +957,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 0
         },
         "overrides": []
       },
@@ -989,7 +990,7 @@
     },
     {
       "id": 15,
-      "title": "Tool Decisions",
+      "title": "Tool Decision Outcome",
       "type": "piechart",
       "gridPos": {
         "h": 8,
@@ -1052,7 +1053,8 @@
           "color": {
             "mode": "palette-classic"
           },
-          "unit": "short"
+          "unit": "short",
+          "decimals": 0
         },
         "overrides": [
           {
@@ -1158,7 +1160,7 @@
     },
     {
       "id": 16,
-      "title": "API Latency P95",
+      "title": "API Latency (P50/P95)",
       "type": "timeseries",
       "gridPos": {
         "h": 8,
@@ -1259,7 +1261,7 @@
     },
     {
       "id": 17,
-      "title": "Success Rate",
+      "title": "Tool Success / Error",
       "type": "piechart",
       "gridPos": {
         "h": 8,
@@ -1300,7 +1302,8 @@
           "color": {
             "mode": "palette-classic"
           },
-          "unit": "short"
+          "unit": "short",
+          "decimals": 0
         },
         "overrides": [
           {
@@ -1366,19 +1369,19 @@
         "y": 20
       },
       "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
+        "type": "loki",
+        "uid": "loki"
       },
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
+            "type": "loki",
+            "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "sum(sum_over_time(shepherd:codex:tool_results:1m{model=~\"$model\"}[$__range]))",
+          "expr": "count(sum by (tool_name) (count_over_time({service_name=\"codex_cli_rs\"} | event_name=\"codex.tool_result\" | model=~\"$model\" [$__range])))",
           "queryType": "instant",
-          "legendFormat": "Tool Calls",
+          "legendFormat": "Unique Tools",
           "refId": "A"
         }
       ],
@@ -2042,6 +2045,57 @@
         "sortOrder": "Descending",
         "dedupStrategy": "none"
       }
+    },
+    {
+      "id": 25,
+      "title": "Top 10 Tools",
+      "type": "piechart",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 29
+      },
+      "targets": [
+        {
+          "expr": "topk(10, sum by (tool_name) (sum_over_time(shepherd:codex:tool_calls_by_tool:1m[$__range])) > 0)",
+          "legendFormat": "{{tool_name}}",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": [
+            "value"
+          ]
+        },
+        "pieType": "donut",
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      }
     }
   ],
   "refresh": "30s",
@@ -2056,8 +2110,12 @@
       {
         "current": {
           "selected": true,
-          "text": "All",
-          "value": "$__all"
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
         },
         "datasource": {
           "type": "prometheus",
@@ -2067,7 +2125,7 @@
         "hide": 0,
         "includeAll": true,
         "label": "Model",
-        "multi": false,
+        "multi": true,
         "name": "model",
         "options": [],
         "query": {

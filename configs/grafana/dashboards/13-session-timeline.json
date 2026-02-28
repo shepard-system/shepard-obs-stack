@@ -43,7 +43,7 @@
             "uid": "tempo"
           },
           "queryType": "traceql",
-          "query": "{resource.service.name=~\"$provider\" && name=~\".*\\\\.session\"} | count_over_time()",
+          "query": "{resource.service.name=~\"$provider\" && name=~\".*\\\\.session\\\\.meta\"} | count_over_time()",
           "refId": "A"
         }
       ],
@@ -217,7 +217,7 @@
             "uid": "tempo"
           },
           "queryType": "traceql",
-          "query": "{resource.service.name=~\"$provider\" && name=~\".*\\\\.(agent|compaction)\\\\..*\"} | count_over_time()",
+          "query": "{resource.service.name=~\"$provider\" && name=~\".*\\\\.(agent|compaction)(\\\\..+)?\"} | count_over_time()",
           "refId": "A"
         }
       ],
