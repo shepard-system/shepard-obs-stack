@@ -33,16 +33,17 @@
         "y": 1
       },
       "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
+        "type": "tempo",
+        "uid": "tempo"
       },
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
+            "type": "tempo",
+            "uid": "tempo"
           },
-          "expr": "round(sum(increase(traces_spanmetrics_calls_total{service=~\"$provider\", span_name=~\"(claude|codex|gemini)\\\\.session\"}[$__range]))) or vector(0)",
+          "queryType": "traceql",
+          "query": "{resource.service.name=~\"$provider\" && name=~\".*\\\\.session\"} | count_over_time()",
           "refId": "A"
         }
       ],
@@ -70,7 +71,7 @@
         "reduceOptions": {
           "values": false,
           "calcs": [
-            "lastNotNull"
+            "sum"
           ],
           "fields": ""
         },
@@ -90,16 +91,17 @@
         "y": 1
       },
       "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
+        "type": "tempo",
+        "uid": "tempo"
       },
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
+            "type": "tempo",
+            "uid": "tempo"
           },
-          "expr": "round(sum(increase(traces_spanmetrics_calls_total{service=~\"$provider\", span_name=~\"(claude|codex|gemini)\\\\.tool\\\\..*\"}[$__range]))) or vector(0)",
+          "queryType": "traceql",
+          "query": "{resource.service.name=~\"$provider\" && name=~\".*\\\\.tool\\\\..*\"} | count_over_time()",
           "refId": "A"
         }
       ],
@@ -127,7 +129,7 @@
         "reduceOptions": {
           "values": false,
           "calcs": [
-            "lastNotNull"
+            "sum"
           ],
           "fields": ""
         },
@@ -147,16 +149,17 @@
         "y": 1
       },
       "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
+        "type": "tempo",
+        "uid": "tempo"
       },
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
+            "type": "tempo",
+            "uid": "tempo"
           },
-          "expr": "round(sum(increase(traces_spanmetrics_calls_total{service=~\"$provider\", span_name=~\"(claude|codex|gemini)\\\\.tool\\\\..*\", status_code=\"STATUS_CODE_ERROR\"}[$__range]))) or vector(0)",
+          "queryType": "traceql",
+          "query": "{resource.service.name=~\"$provider\" && name=~\".*\\\\.tool\\\\..*\" && status=error} | count_over_time()",
           "refId": "A"
         }
       ],
@@ -184,7 +187,7 @@
         "reduceOptions": {
           "values": false,
           "calcs": [
-            "lastNotNull"
+            "sum"
           ],
           "fields": ""
         },
@@ -204,16 +207,17 @@
         "y": 1
       },
       "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
+        "type": "tempo",
+        "uid": "tempo"
       },
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
+            "type": "tempo",
+            "uid": "tempo"
           },
-          "expr": "round(sum(increase(traces_spanmetrics_calls_total{service=~\"$provider\", span_name=~\"(claude|codex|gemini)\\\\.(agent|compaction)\\\\.?.*\"}[$__range]))) or vector(0)",
+          "queryType": "traceql",
+          "query": "{resource.service.name=~\"$provider\" && name=~\".*\\\\.(agent|compaction)\\\\..*\"} | count_over_time()",
           "refId": "A"
         }
       ],
@@ -241,7 +245,7 @@
         "reduceOptions": {
           "values": false,
           "calcs": [
-            "lastNotNull"
+            "sum"
           ],
           "fields": ""
         },
@@ -367,18 +371,17 @@
         "y": 19
       },
       "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
+        "type": "tempo",
+        "uid": "tempo"
       },
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
+            "type": "tempo",
+            "uid": "tempo"
           },
-          "expr": "topk(20, round(sum by (span_name) (increase(traces_spanmetrics_calls_total{service=~\"$provider\", span_name=~\"(claude|codex|gemini)\\\\.tool\\\\..*\"}[$__range]))))",
-          "format": "table",
-          "instant": true,
+          "queryType": "traceql",
+          "query": "{resource.service.name=~\"$provider\" && name=~\".*\\\\.tool\\\\..*\"} | count_over_time() by (name)",
           "refId": "A"
         }
       ],
@@ -412,44 +415,7 @@
             "mode": "thresholds"
           }
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "span_name"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "Tool"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Value"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "Invocations"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Time"
-            },
-            "properties": [
-              {
-                "id": "custom.hidden",
-                "value": true
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "options": {
         "showHeader": true,
@@ -463,20 +429,34 @@
       },
       "transformations": [
         {
+          "id": "reduce",
+          "options": {
+            "reducers": [
+              "sum"
+            ],
+            "labelsToFields": true
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Sum",
+                "desc": true
+              }
+            ]
+          }
+        },
+        {
           "id": "organize",
           "options": {
             "excludeByName": {
-              "__name__": true,
-              "service": true,
-              "span_kind": true,
-              "status_code": true,
-              "__metrics_gen_instance": true,
-              "cluster": true,
-              "source": true
+              "Field": true
             },
             "renameByName": {
-              "span_name": "Tool",
-              "Value": "Invocations"
+              "name": "Tool",
+              "Sum": "Invocations"
             }
           }
         }
@@ -556,18 +536,17 @@
         "y": 29
       },
       "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
+        "type": "tempo",
+        "uid": "tempo"
       },
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
+            "type": "tempo",
+            "uid": "tempo"
           },
-          "expr": "topk(20, round(sum by (span_name, service) (increase(traces_spanmetrics_calls_total{service=~\"$provider\", span_name=~\"(claude|codex|gemini)\\\\.tool\\\\..*\", status_code=\"STATUS_CODE_ERROR\"}[$__range]))))",
-          "format": "table",
-          "instant": true,
+          "queryType": "traceql",
+          "query": "{resource.service.name=~\"$provider\" && name=~\".*\\\\.tool\\\\..*\" && status=error} | count_over_time() by (name, resource.service.name)",
           "refId": "A"
         }
       ],
@@ -593,26 +572,13 @@
             "mode": "thresholds"
           }
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Time"
-            },
-            "properties": [
-              {
-                "id": "custom.hidden",
-                "value": true
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "options": {
         "showHeader": true,
         "sortBy": [
           {
-            "displayName": "Value",
+            "displayName": "Errors",
             "desc": true
           }
         ],
@@ -620,20 +586,35 @@
       },
       "transformations": [
         {
+          "id": "reduce",
+          "options": {
+            "reducers": [
+              "sum"
+            ],
+            "labelsToFields": true
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Sum",
+                "desc": true
+              }
+            ]
+          }
+        },
+        {
           "id": "organize",
           "options": {
             "excludeByName": {
-              "__name__": true,
-              "span_kind": true,
-              "status_code": true,
-              "__metrics_gen_instance": true,
-              "cluster": true,
-              "source": true
+              "Field": true
             },
             "renameByName": {
-              "span_name": "Tool",
-              "service": "Provider",
-              "Value": "Errors"
+              "name": "Tool",
+              "resource.service.name": "Provider",
+              "Sum": "Errors"
             }
           }
         }
