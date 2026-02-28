@@ -2047,9 +2047,9 @@
   "refresh": "30s",
   "schemaVersion": 39,
   "tags": [
+    "deep-dive",
     "shepherd",
-    "codex",
-    "prometheus"
+    "codex"
   ],
   "templating": {
     "list": [

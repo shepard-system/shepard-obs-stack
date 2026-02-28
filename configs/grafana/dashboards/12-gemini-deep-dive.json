@@ -1664,14 +1664,20 @@
               "type": "special",
               "options": {
                 "match": "nan",
-                "result": { "text": "-", "index": 0 }
+                "result": {
+                  "text": "-",
+                  "index": 0
+                }
               }
             },
             {
               "type": "special",
               "options": {
                 "match": "null",
-                "result": { "text": "-", "index": 1 }
+                "result": {
+                  "text": "-",
+                  "index": 1
+                }
               }
             }
           ],
@@ -2495,9 +2501,9 @@
   "refresh": "30s",
   "schemaVersion": 39,
   "tags": [
+    "deep-dive",
     "shepherd",
-    "gemini",
-    "deep-dive"
+    "gemini"
   ],
   "templating": {
     "list": [
