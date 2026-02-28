@@ -9,7 +9,7 @@
 # Then launches session-parser.sh in background to generate synthetic traces → Tempo.
 # All token/cost/session metrics come from Claude's native OTel export.
 
-set -euo pipefail
+set -u
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../lib/git-context.sh"

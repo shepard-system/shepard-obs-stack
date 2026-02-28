@@ -8,7 +8,7 @@
 # Emits: tool_calls_total + events_total counters to Prometheus via OTel Collector.
 # Loki logs and Tempo traces are handled by Claude's native OTel export.
 
-set -euo pipefail
+set -u
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../lib/git-context.sh"
