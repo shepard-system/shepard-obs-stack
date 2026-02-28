@@ -2,6 +2,8 @@
 server:
   http_listen_port: 3200
   grpc_listen_port: 9095
+  grpc_server_max_recv_msg_size: 33554432
+  grpc_server_max_send_msg_size: 33554432
 
 distributor:
   receivers:
@@ -39,6 +41,9 @@ metrics_generator:
       source: tempo
       cluster: shepherd-obs
     stale_duration: 30m
+  processor:
+    local_blocks:
+      filter_server_spans: false
   traces_storage:
     path: /var/tempo/generator/traces
   storage:
@@ -54,6 +59,13 @@ overrides:
         - service-graphs
         - span-metrics
         - local-blocks
+      processor:
+        local_blocks:
+          complete_block_timeout: 168h
+
+query_frontend:
+  metrics:
+    max_duration: 168h
 
 usage_report:
   reporting_enabled: false
