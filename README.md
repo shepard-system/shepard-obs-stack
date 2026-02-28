@@ -58,7 +58,7 @@ Open [localhost:3000](http://localhost:3000) (admin / shepherd). Use your CLI as
 
 | Dashboard              | What you see                                          |
 |------------------------|-------------------------------------------------------|
-| **Session Timeline**   | Synthetic traces from Claude Code session logs — tool call waterfall, MCP timing, sub-agents |
+| **Session Timeline**   | Synthetic traces from all 3 CLI session logs — tool call waterfall, MCP timing, sub-agents |
 
 Click any Trace ID to open the full waterfall in Grafana Explore → Tempo.
 
@@ -103,7 +103,7 @@ The installer auto-detects installed CLIs and merges hook configuration into the
 |-------------|----------------------------------------|------------------------------|
 | Claude Code | `PostToolUse`, `Stop`                  | metrics + logs               |
 | Codex CLI   | `agent-turn-complete`                  | logs                         |
-| Gemini CLI  | `AfterTool`, `AfterAgent`, `SessionEnd`| metrics + logs + traces      |
+| Gemini CLI  | `AfterTool`, `AfterAgent`, `AfterModel`, `SessionEnd` | metrics + logs + traces      |
 
 ## Alerting
 
@@ -152,7 +152,7 @@ shepard-obs-stack/
 │   ├── lib/                   # shared: git context, OTLP metrics + traces, session parser
 │   ├── claude/                # PostToolUse + Stop
 │   ├── codex/                 # agent-turn-complete
-│   ├── gemini/                # AfterTool + AfterAgent + SessionEnd
+│   ├── gemini/                # AfterTool + AfterAgent + AfterModel + SessionEnd
 │   ├── install.sh             # auto-detect + inject
 │   └── uninstall.sh           # clean removal
 ├── scripts/

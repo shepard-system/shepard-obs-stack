@@ -252,7 +252,7 @@ Alert rule files in `configs/prometheus/alerts/`:
 3. Confirm Prometheus scrape target is up: `curl -s http://localhost:9090/api/v1/targets | jq '.data.activeTargets[] | {job: .labels.job, health}'`
 
 **No logs in Loki:**
-Native OTel logs won't appear until you actually use a CLI with hooks installed. Loki labels to check: `{job="claude-code"}`, `{job="codex_cli_rs"}`, `{job="gemini-cli"}`.
+Native OTel logs won't appear until you actually use a CLI with hooks installed. Loki labels to check: `{service_name="claude-code"}`, `{service_name="codex_cli_rs"}`, `{service_name="gemini-cli"}`.
 
 **Dashboard shows "No data":**
 Ensure time range is correct (dashboards default to "Last 1 hour"). Hook metrics require at least one tool call or session event. Native OTel metrics require a real CLI session.
@@ -299,6 +299,7 @@ All 3 CLI hooks parse session logs into synthetic OTLP traces → Tempo via OTel
 - Session Timeline stat/table panels use Prometheus `traces_spanmetrics_calls_total` with `round(sum(increase(...[$__range])))` pattern. Session counting uses `*.session` root spans (not `*.session.meta` — zero-duration marker spans are unreliable in span-metrics).
 - Tempo `overrides.defaults.global.max_bytes_per_trace: 0` — disables trace size limit (default 5MB drops large session traces). MUST be at `overrides.defaults.global` — placing at `overrides.defaults` directly crashes Tempo.
 - Tempo `metrics_generator.processors`: only `service-graphs` and `span-metrics`. `local-blocks` was removed to eliminate OOM risk (parquet block copies in RAM).
+- Tempo compactor: `max_compaction_objects: 4`, `compaction_window: 1h` — limits RAM usage during block merges. Pool: `max_workers: 10`, `queue_depth: 100` (cluster defaults of 100/10000 cause OOM on local).
 
 ## Known Limitations
 
