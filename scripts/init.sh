@@ -23,6 +23,14 @@ if ! docker compose version &> /dev/null; then
 fi
 
 echo "✓ Docker and Docker Compose found"
+
+for cmd in curl jq; do
+    if ! command -v "$cmd" &> /dev/null; then
+        echo "⚠ ${cmd} not found. Hooks and test-signal.sh require it."
+        echo "  Install: brew install ${cmd}  (macOS) or apt install ${cmd}  (Linux)"
+    fi
+done
+
 echo ""
 
 # Create .env if it doesn't exist
