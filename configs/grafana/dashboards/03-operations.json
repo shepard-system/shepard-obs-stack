@@ -276,7 +276,7 @@
           "color": {
             "mode": "palette-classic"
           },
-          "decimals": 0
+          "decimals": 2
         },
         "overrides": []
       },

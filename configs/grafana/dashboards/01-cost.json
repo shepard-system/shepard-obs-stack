@@ -494,7 +494,8 @@
         "defaults": {
           "color": {
             "mode": "palette-classic"
-          }
+          },
+          "decimals": 2
         },
         "overrides": []
       },
@@ -574,7 +575,7 @@
           "color": {
             "mode": "palette-classic"
           },
-          "decimals": 0
+          "decimals": 2
         },
         "overrides": []
       },
@@ -774,7 +775,7 @@
           "color": {
             "mode": "palette-classic"
           },
-          "decimals": 0
+          "decimals": 2
         },
         "overrides": []
       },

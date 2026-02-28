@@ -958,7 +958,7 @@
               }
             ]
           },
-          "decimals": 0
+          "decimals": 2
         },
         "overrides": []
       },
@@ -1054,7 +1054,7 @@
             "mode": "palette-classic"
           },
           "unit": "short",
-          "decimals": 0
+          "decimals": 2
         },
         "overrides": [
           {
@@ -1303,7 +1303,7 @@
             "mode": "palette-classic"
           },
           "unit": "short",
-          "decimals": 0
+          "decimals": 2
         },
         "overrides": [
           {
@@ -1357,64 +1357,6 @@
         }
       },
       "transformations": []
-    },
-    {
-      "id": 18,
-      "title": "Unique Tools",
-      "type": "stat",
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 12,
-        "y": 20
-      },
-      "datasource": {
-        "type": "loki",
-        "uid": "loki"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "loki",
-            "uid": "loki"
-          },
-          "editorMode": "code",
-          "expr": "count(sum by (tool_name) (count_over_time({service_name=\"codex_cli_rs\"} | event_name=\"codex.tool_result\" | model=~\"$model\" [$__range])))",
-          "queryType": "instant",
-          "legendFormat": "Unique Tools",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "purple",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": ""
-        },
-        "colorMode": "value",
-        "graphMode": "none",
-        "textMode": "auto"
-      }
     },
     {
       "id": 19,
@@ -2047,7 +1989,7 @@
       }
     },
     {
-      "id": 25,
+      "id": 27,
       "title": "Top 10 Tools",
       "type": "piechart",
       "datasource": {
@@ -2056,9 +1998,9 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 29
+        "w": 8,
+        "x": 12,
+        "y": 20
       },
       "targets": [
         {
@@ -2079,7 +2021,8 @@
           "displayMode": "table",
           "placement": "right",
           "values": [
-            "value"
+            "value",
+            "percent"
           ]
         },
         "pieType": "donut",
@@ -2092,7 +2035,7 @@
           "color": {
             "mode": "palette-classic"
           },
-          "decimals": 0
+          "decimals": 2
         },
         "overrides": []
       }

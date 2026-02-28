@@ -228,7 +228,8 @@
         "defaults": {
           "color": {
             "mode": "palette-classic"
-          }
+          },
+          "decimals": 2
         },
         "overrides": [
           {
@@ -387,18 +388,37 @@
       },
       "options": {
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": [],
           "fields": "",
-          "values": false
+          "values": true
         },
         "orientation": "horizontal",
         "displayMode": "gradient",
         "showUnfilled": true,
         "minVizWidth": 8,
         "minVizHeight": 16
-      }
+      },
+      "transformations": [
+        {
+          "id": "reduce",
+          "options": {
+            "reducers": ["lastNotNull"],
+            "includeTimeField": false
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Last *",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ]
     },
     {
       "id": 6,

@@ -881,10 +881,8 @@
       },
       "options": {
         "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ],
+          "values": true,
+          "calcs": [],
           "fields": ""
         },
         "orientation": "horizontal",
@@ -894,7 +892,30 @@
         "minVizWidth": 8,
         "minVizHeight": 16,
         "namePlacement": "auto"
-      }
+      },
+      "transformations": [
+        {
+          "id": "reduce",
+          "options": {
+            "reducers": [
+              "lastNotNull"
+            ],
+            "includeTimeField": false
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Last *",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ]
     },
     {
       "id": 14,
@@ -938,7 +959,7 @@
               }
             ]
           },
-          "decimals": 0
+          "decimals": 2
         },
         "overrides": []
       },
@@ -1009,7 +1030,7 @@
               }
             ]
           },
-          "decimals": 0
+          "decimals": 2
         },
         "overrides": []
       },
@@ -1093,7 +1114,7 @@
               }
             ]
           },
-          "decimals": 0
+          "decimals": 2
         },
         "overrides": []
       },
@@ -1176,7 +1197,7 @@
               }
             ]
           },
-          "decimals": 0
+          "decimals": 2
         },
         "overrides": [
           {
@@ -1279,7 +1300,7 @@
               }
             ]
           },
-          "decimals": 0
+          "decimals": 2
         },
         "overrides": []
       },
@@ -1362,7 +1383,7 @@
               }
             ]
           },
-          "decimals": 0
+          "decimals": 2
         },
         "overrides": [
           {
@@ -2099,9 +2120,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "rate(shepherd_gemini_cli_tool_call_latency_milliseconds_sum[5m]) / rate(shepherd_gemini_cli_tool_call_latency_milliseconds_count[5m])",
+          "expr": "(sum by (function_name) (rate(shepherd_gemini_cli_tool_call_latency_milliseconds_sum[5m])) / sum by (function_name) (rate(shepherd_gemini_cli_tool_call_latency_milliseconds_count[5m]))) > 0",
           "queryType": "range",
-          "legendFormat": "Avg Tool Latency",
+          "legendFormat": "{{function_name}}",
           "refId": "A"
         }
       ],

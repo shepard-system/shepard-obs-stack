@@ -284,7 +284,7 @@
       "type": "stat",
       "gridPos": {
         "h": 4,
-        "w": 4,
+        "w": 3,
         "x": 16,
         "y": 1
       },
@@ -348,7 +348,7 @@
       "gridPos": {
         "h": 4,
         "w": 2,
-        "x": 20,
+        "x": 19,
         "y": 1
       },
       "datasource": {
@@ -410,8 +410,8 @@
       "type": "stat",
       "gridPos": {
         "h": 4,
-        "w": 2,
-        "x": 22,
+        "w": 3,
+        "x": 21,
         "y": 1
       },
       "datasource": {
@@ -942,10 +942,8 @@
       },
       "options": {
         "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ],
+          "values": true,
+          "calcs": [],
           "fields": ""
         },
         "orientation": "horizontal",
@@ -955,7 +953,30 @@
         "minVizWidth": 8,
         "minVizHeight": 16,
         "namePlacement": "auto"
-      }
+      },
+      "transformations": [
+        {
+          "id": "reduce",
+          "options": {
+            "reducers": [
+              "lastNotNull"
+            ],
+            "includeTimeField": false
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Last *",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ]
     },
     {
       "id": 14,
@@ -1145,6 +1166,7 @@
             "mode": "palette-classic"
           },
           "unit": "s",
+          "decimals": 2,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -1382,7 +1404,7 @@
               }
             ]
           },
-          "decimals": 0
+          "decimals": 2
         },
         "overrides": [
           {
