@@ -10,7 +10,7 @@
 # Loki logs are handled by Codex native OTel export ({job="codex_cli_rs"}).
 # Note: Codex notify payload has no token data — tokens always 0.
 
-set -euo pipefail
+set -u
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../lib/git-context.sh"
@@ -37,8 +37,7 @@ emit_counter "events"  "1"  "$evt_labels"
 # --- Session log parser → synthetic traces to Tempo ---
 # Locate JSONL: ~/.codex/sessions/YYYY/MM/DD/rollout-*-{thread_id}.jsonl
 if [[ -n "$thread_id" ]]; then
-  session_dir="${HOME}/.codex/sessions/$(date -u +%Y/%m/%d)"
-  session_file=$(ls -t "${session_dir}"/rollout-*-"${thread_id}".jsonl 2>/dev/null | head -1)
+  session_file=$(find "${HOME}/.codex/sessions" -name "rollout-*-${thread_id}.jsonl" -type f 2>/dev/null | head -1)
 
   if [[ -n "$session_file" && -f "$session_file" ]]; then
     (
