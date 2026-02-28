@@ -9,7 +9,7 @@
 # All token/cost/session metrics come from Gemini's native OTel export.
 # Must output valid JSON to stdout.
 
-set -euo pipefail
+set -u
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../lib/git-context.sh"

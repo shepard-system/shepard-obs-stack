@@ -9,7 +9,7 @@
 # Emits: events_total counter to Prometheus via OTel Collector.
 # Loki logs are handled by Gemini's native OTel export.
 
-set -euo pipefail
+set -u
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../lib/git-context.sh"
