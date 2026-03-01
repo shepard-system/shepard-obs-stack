@@ -5,7 +5,7 @@
 set -e
 
 echo "╔════════════════════════════════════════════════════════════════╗"
-echo "║          Shepherd Observability - Local Bootstrap             ║"
+echo "║          Shepherd Observability - Local Bootstrap              ║"
 echo "╚════════════════════════════════════════════════════════════════╝"
 echo ""
 
@@ -54,14 +54,14 @@ docker compose up --wait -d 2>/dev/null || sleep 15
 
 echo ""
 echo "╔════════════════════════════════════════════════════════════════╗"
-echo "║                      Service Status                          ║"
+echo "║                      Service Status                            ║"
 echo "╚════════════════════════════════════════════════════════════════╝"
 
 docker compose ps
 
 echo ""
 echo "╔════════════════════════════════════════════════════════════════╗"
-echo "║                      Access URLs                             ║"
+echo "║                      Access URLs                               ║"
 echo "╚════════════════════════════════════════════════════════════════╝"
 echo ""
 echo "  Grafana:          http://localhost:3000"
@@ -77,7 +77,7 @@ echo "    └─ OTLP HTTP:   localhost:4318"
 echo "    └─ Metrics:     http://localhost:8888/metrics"
 echo ""
 echo "╔════════════════════════════════════════════════════════════════╗"
-echo "║                      Next Steps                              ║"
+echo "║                      Next Steps                                ║"
 echo "╚════════════════════════════════════════════════════════════════╝"
 echo ""
 echo "  1. Open Grafana at http://localhost:3000"
