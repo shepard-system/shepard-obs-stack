@@ -27,13 +27,13 @@ System_Ext(cli_hooks, "AI CLI Hooks", "Shell scripts emitting OTLP metrics\n(git
 System_Ext(apps, "Instrumented Services", "Applications sending OTLP telemetry")
 
 System_Boundary(eye, "The Eye — shepard-obs-stack") {
-    Container(grafana, "Grafana", "grafana:12.4.0", "7 dashboards: 4 unified + 3 deep-dive.\nPre-provisioned datasources.\nLog-to-trace correlation via traceID.")
+    Container(grafana, "Grafana", "grafana:12.4.0", "8 dashboards: 4 unified + 3 deep-dive\n+ session timeline.\nPre-provisioned datasources.\nLog-to-trace correlation via traceID.")
 
     Container(loki, "Loki", "grafana/loki:3.6.7", "Log aggregation with LogQL.\nRuler + recording rules (Codex metrics).\nFilesystem storage, 7d retention.")
 
     Container(prometheus, "Prometheus", "prom/prometheus:v3.9.1", "Metrics storage and alerting.\nRemote-write receiver (Loki rules).\nScrapes collector and self, 7d retention.")
 
-    Container(alertmanager, "Alertmanager", "prom/alertmanager:v0.30.1", "Alert routing and deduplication.\nWebhook receiver (Telegram/Slack).\nInhibit rules for cascade suppression.")
+    Container(alertmanager, "Alertmanager", "prom/alertmanager:v0.30.1", "Alert routing and deduplication.\nTelegram/Slack/Discord receivers.\n14 rules, inhibit cascades.")
 
     Container(tempo, "Tempo", "grafana/tempo:2.10.1", "Distributed tracing.\nLocal WAL + blocks, 7d retention.\nSession timeline view per traceID.")
 
@@ -51,6 +51,7 @@ Rel(collector, tempo, "Export traces", "OTLP gRPC :4317")
 
 Rel(loki, prometheus, "Recording rules\n(Codex metrics)", "remote write :9090")
 Rel(prometheus, alertmanager, "Fire alerts", "HTTP :9093")
+Rel(prometheus, tempo, "Scrape metrics", "HTTP :3200")
 Rel(tempo, prometheus, "Span metrics", "remote write :9090")
 
 Rel(grafana, prometheus, "Query metrics", "PromQL")

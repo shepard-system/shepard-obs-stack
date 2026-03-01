@@ -111,8 +111,17 @@ The installer auto-detects installed CLIs and merges hook configuration into the
 
 ## Alerting
 
-Alertmanager runs on :9093 with alert rules for infrastructure, pipeline health, and service quality. 
-Native Telegram and Slack receivers are included — uncomment and configure in `configs/alertmanager/alertmanager.yaml`:
+Alertmanager runs on :9093 with 14 alert rules in three tiers:
+
+| Tier               | Alerts | Examples                                                                                                       |
+|--------------------|--------|----------------------------------------------------------------------------------------------------------------|
+| **Infrastructure** | 6      | `OTelCollectorDown`, `TempoDown`, `CollectorHighMemory`, export failures                                       |
+| **Pipeline**       | 4      | `LokiDown`, `PrometheusTargetDown`, `TempoDown`, `LokiRecordingRulesFailing`                                   |
+| **Business logic** | 4      | `HighSessionCost` (>$10/hr), `HighTokenBurn` (>50k tok/min), `HighToolErrorRate` (>10%), `NoTelemetryReceived` |
+
+Inhibit rules suppress business-logic alerts when infrastructure is down.
+
+Native Telegram, Slack, and Discord receivers are included — uncomment and configure in `configs/alertmanager/alertmanager.yaml`:
 
 ```yaml
 # telegram_configs:
@@ -167,7 +176,7 @@ shepard-obs-stack/
 ├── configs/
 │   ├── otel-collector/        # receivers → processors → exporters
 │   ├── prometheus/            # scrape targets + alert rules
-│   ├── alertmanager/          # routing, Telegram/Slack receivers
+│   ├── alertmanager/          # routing, Telegram/Slack/Discord receivers
 │   ├── loki/                  # storage + 15 recording rules
 │   ├── tempo/                 # trace storage, 7d retention
 │   └── grafana/               # provisioning + 8 dashboard JSONs

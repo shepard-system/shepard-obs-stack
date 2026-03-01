@@ -86,8 +86,8 @@ Grafana dashboards:
     Deep-Dive (10-12): native OTel metrics + logs (provider-specific)
     Session Timeline (13): synthetic traces from JSONL parser
     ▲
-Prometheus :9090 ← scrapes OTel Collector :8889
-    └─→ Alertmanager :9093 → webhook
+Prometheus :9090 ← scrapes OTel Collector :8889 + Tempo :3200
+    └─→ Alertmanager :9093 → Telegram/Slack/Discord
 ```
 
 **Key pipeline detail:** Hooks emit DELTA sum metrics. OTel Collector's `deltatocumulative` processor converts them to cumulative counters before Prometheus scrapes them. 
@@ -241,9 +241,9 @@ Session Traces table uses Tempo trace search. Tool Duration Distribution uses Pr
 configs/
 ├── otel-collector/config.yaml          ← OTLP receivers → deltatocumulative → batch → exporters
 ├── prometheus/
-│   ├── prometheus.yaml                 ← Scrape targets (self, collector:8888, collector:8889)
+│   ├── prometheus.yaml                 ← Scrape targets (self, collector:8888, collector:8889, tempo:3200)
 │   └── alerts/                         ← infra.yaml, pipeline.yaml, services.yaml
-├── alertmanager/alertmanager.yaml      ← Route + webhook receiver + inhibit rules
+├── alertmanager/alertmanager.yaml      ← Route + Telegram/Slack/Discord receivers + inhibit rules
 ├── loki/
 │   ├── loki-config.yaml               ← Filesystem storage, TSDB schema v13, 7d retention, ruler config
 │   └── rules/fake/codex.yaml          ← 15 recording rules (counts, tokens, latency)
@@ -257,13 +257,15 @@ configs/
 
 ## Alerting
 
-Alertmanager on :9093. Default config routes critical alerts to a webhook receiver (placeholder URL — configure in `configs/alertmanager/alertmanager.yaml`). 
-Inhibit rules suppress NoEventsReceived/HighTokenBurn when LokiDown fires.
+Alertmanager on :9093 with 14 alert rules in three tiers.
+Telegram, Slack, and Discord receivers included (commented out — configure in `configs/alertmanager/alertmanager.yaml`).
 
 Alert rule files in `configs/prometheus/alerts/`:
-- **infra.yaml** — OTelCollectorDown, CollectorHighMemory, export failures
-- **pipeline.yaml** — LokiDown, PrometheusTargetDown
-- **services.yaml** — HighErrorRate, HighLatencyP99, NoTelemetryReceived
+- **infra.yaml** — `OTelCollectorDown`, `CollectorExportFailed{Spans,Metrics,Logs}`, `CollectorHighMemory`, `PrometheusHighMemory`
+- **pipeline.yaml** — `LokiDown`, `TempoDown`, `PrometheusTargetDown`, `LokiRecordingRulesFailing`
+- **services.yaml** — `HighSessionCost` (>$10/hr), `HighTokenBurn` (>50k tok/min), `HighToolErrorRate` (>10%), `NoTelemetryReceived`
+
+Inhibit rules: `OTelCollectorDown` suppresses all business-logic alerts. `LokiDown` suppresses `LokiRecordingRulesFailing` and `HighTokenBurn`.
 
 ## Troubleshooting
 

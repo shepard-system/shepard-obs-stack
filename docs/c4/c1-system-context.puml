@@ -29,9 +29,9 @@ System_Ext(gemini, "Gemini CLI", "Google AI assistant.\nHooks: AfterTool, AfterA
 System_Ext(apps, "Instrumented Services", "Any application emitting OTLP telemetry")
 
 Rel(developer, eye, "Views dashboards, explores traces")
-Rel(claude, eye, "Hooks push logs + OTLP spans", "curl → Loki + OTel")
-Rel(codex, eye, "Hook pushes JSON logs", "curl → Loki HTTP")
-Rel(gemini, eye, "Hooks push logs + OTLP spans", "curl → Loki + OTel")
+Rel(claude, eye, "Hooks + native OTel", "OTLP HTTP + gRPC")
+Rel(codex, eye, "Hook + native OTel", "OTLP HTTP + gRPC")
+Rel(gemini, eye, "Hooks + native OTel", "OTLP HTTP + gRPC")
 Rel(apps, eye, "Sends metrics, logs, traces", "OTLP gRPC/HTTP")
 
 @enduml

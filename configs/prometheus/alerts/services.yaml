@@ -15,6 +15,24 @@ groups:
           summary: "High tool error rate across all sources"
           description: "Tool error rate is above 10%. Current: {{ $value | humanizePercentage }}"
 
+      - alert: HighSessionCost
+        expr: increase(shepherd_claude_code_cost_usage_USD_total[1h]) > 10
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High cost in the last hour"
+          description: "Claude Code cost exceeded $10 in the last hour. Current: ${{ $value | printf \"%.2f\" }}. Check active sessions."
+
+      - alert: HighTokenBurn
+        expr: rate(shepherd_claude_code_token_usage_tokens_total[5m]) * 60 > 50000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High token burn rate"
+          description: "Token consumption exceeds 50k tokens/min for 5 minutes. Current: {{ $value | printf \"%.0f\" }} tokens/min."
+
       - alert: NoTelemetryReceived
         expr: |
           sum by (receiver) (rate(otelcol_receiver_accepted_spans{transport="grpc"}[10m])) == 0

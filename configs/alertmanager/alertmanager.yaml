@@ -61,10 +61,32 @@ receivers:
     #       {{ .Annotations.description }}
     #       {{ end }}
 
+    # ── Discord (native, Alertmanager v0.25.0+) ─────────────
+    # 1. Server Settings → Integrations → Webhooks → New Webhook
+    # 2. Copy webhook URL, uncomment below, restart:
+    #    docker compose restart alertmanager
+    #
+    # discord_configs:
+    #   - webhook_url: 'https://discord.com/api/webhooks/REPLACE_ME'
+    #     send_resolved: true
+    #     title: '{{ if eq .Status "firing" }}🔴 {{ .Status | toUpper }}{{ else }}✅ {{ .Status | toUpper }}{{ end }}'
+    #     message: >-
+    #       {{ range .Alerts }}
+    #       **{{ .Labels.alertname }}** ({{ .Labels.severity }})
+    #       {{ .Annotations.summary }}
+    #       {{ .Annotations.description }}
+    #       {{ end }}
+
 # Inhibit noisy alerts when the whole pipeline is down
 inhibit_rules:
   - source_match:
       alertname: 'LokiDown'
     target_match_re:
-      alertname: 'NoEventsReceived|HighTokenBurn'
+      alertname: 'LokiRecordingRulesFailing|HighTokenBurn'
+    equal: ['cluster']
+
+  - source_match:
+      alertname: 'OTelCollectorDown'
+    target_match_re:
+      alertname: 'NoTelemetryReceived|HighToolErrorRate|HighSessionCost|HighTokenBurn'
     equal: ['cluster']

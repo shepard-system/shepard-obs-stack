@@ -37,3 +37,10 @@ scrape_configs:
       - targets: ['otel-collector:8889']
         labels:
           service: 'shepherd'
+
+  # Scrape Tempo metrics
+  - job_name: 'tempo'
+    static_configs:
+      - targets: ['tempo:3200']
+        labels:
+          service: 'tempo'

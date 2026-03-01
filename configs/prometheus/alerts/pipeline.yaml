@@ -14,6 +14,15 @@ groups:
           summary: "Loki exporter endpoint is down"
           description: "The Loki metrics endpoint exposed via OTel Collector is unreachable."
 
+      - alert: TempoDown
+        expr: up{job="tempo"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Tempo is down"
+          description: "Tempo tracing backend has been unreachable for more than 5 minutes. Session Timeline and trace views are unavailable."
+
       - alert: PrometheusTargetDown
         expr: up == 0
         for: 5m
@@ -22,3 +31,15 @@ groups:
         annotations:
           summary: "Scrape target {{ $labels.job }} is down"
           description: "Prometheus cannot scrape {{ $labels.instance }} for job {{ $labels.job }}."
+
+      - alert: LokiRecordingRulesFailing
+        expr: |
+          absent(shepherd:codex:sessions:1m)
+          and
+          count(count_over_time({service_name="codex_cli_rs"}[1h])) > 0
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Loki recording rules not producing Codex metrics"
+          description: "Codex logs exist in Loki but recording rules are not writing metrics to Prometheus. Codex dashboard will show no data."
