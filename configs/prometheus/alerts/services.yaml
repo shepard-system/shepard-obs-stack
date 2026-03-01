@@ -33,6 +33,15 @@ groups:
           summary: "High token burn rate"
           description: "Token consumption exceeds 50k tokens/min for 5 minutes. Current: {{ $value | printf \"%.0f\" }} tokens/min."
 
+      - alert: SensitiveFileAccess
+        expr: increase(shepherd_sensitive_file_access_total[5m]) > 0
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Sensitive file accessed by {{ $labels.source }}"
+          description: "{{ $labels.source }} accessed a sensitive file via {{ $labels.tool }} tool. Check session logs."
+
       - alert: NoTelemetryReceived
         expr: |
           sum by (receiver) (rate(otelcol_receiver_accepted_spans{transport="grpc"}[10m])) == 0

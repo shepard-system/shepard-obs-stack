@@ -131,17 +131,20 @@ hooks/
 ├── lib/
 │   ├── git-context.sh            ← get_git_context(cwd) → $GIT_REPO, $GIT_BRANCH
 │   ├── metrics.sh                ← emit_counter(name, value, labels_json) → OTLP HTTP
+│   ├── sensitive-patterns.sh     ← check_sensitive_access(tool_input) → detects .env, credentials, keys
 │   ├── traces.sh                 ← emit_spans(service_name) → OTLP HTTP /v1/traces
 │   ├── session-parser.sh         ← parse Claude JSONL → enriched span JSONL (jq)
 │   ├── codex-session-parser.sh   ← parse Codex JSONL → span JSONL (jq)
 │   └── gemini-session-parser.sh  ← parse Gemini JSON → span JSONL (jq)
 ├── claude/
-│   ├── post-tool-use.sh          ← tool_calls_total + events_total (tool_use)
-│   └── stop.sh                   ← events_total (session_end) + session parser → Tempo
+│   ├── pre-tool-use.sh           ← PreToolUse guard: blocks sensitive file access (exit 2)
+│   ├── post-tool-use.sh          ← tool_calls_total + events_total (tool_use) + sensitive_file_access
+│   ├── session-start.sh          ← SessionStart (compact): re-injects project conventions after compaction
+│   └── stop.sh                   ← events_total (session_end) + compaction_events + session parser → Tempo
 ├── codex/
 │   └── notify.sh                 ← events_total (turn_end) + session parser → Tempo
 ├── gemini/
-│   ├── after-tool.sh             ← tool_calls_total + events_total (tool_use)
+│   ├── after-tool.sh             ← tool_calls_total + events_total (tool_use) + sensitive_file_access
 │   ├── after-agent.sh            ← events_total (turn_end)
 │   ├── after-model.sh            ← events_total (model_call)
 │   └── session-end.sh            ← events_total (session_end) + session parser → Tempo
@@ -151,12 +154,16 @@ hooks/
 
 ### Hook Metrics (Prometheus)
 
-| Metric                      | Dimensions                          | Emitted by     |
-|-----------------------------|-------------------------------------|----------------|
-| `shepherd_events_total`     | source, event_type, git_repo        | all hooks      |
-| `shepherd_tool_calls_total` | source, tool, tool_status, git_repo | tool_use hooks |
+| Metric                                | Dimensions                          | Emitted by             |
+|---------------------------------------|-------------------------------------|------------------------|
+| `shepherd_events_total`               | source, event_type, git_repo        | all hooks              |
+| `shepherd_tool_calls_total`           | source, tool, tool_status, git_repo | tool_use hooks         |
+| `shepherd_sensitive_file_access_total` | source, tool, git_repo              | tool_use hooks         |
+| `shepherd_compaction_events_total`    | source, git_repo                    | Claude stop hook       |
 
 Tool status detection: hooks grep `tool_response` for error patterns (exit code, traceback, FAILED, panic) → `tool_status="error"` or `"success"`.
+
+Sensitive file detection: hooks check `tool_input` for patterns (`.env`, `credentials`, `secrets`, `.pem`, `.key`, `id_rsa`, `.aws/`) via `lib/sensitive-patterns.sh`.
 
 ### Native OTel Integration
 
@@ -257,13 +264,13 @@ configs/
 
 ## Alerting
 
-Alertmanager on :9093 with 14 alert rules in three tiers.
+Alertmanager on :9093 with 15 alert rules in three tiers.
 Telegram, Slack, and Discord receivers included (commented out — configure in `configs/alertmanager/alertmanager.yaml`).
 
 Alert rule files in `configs/prometheus/alerts/`:
 - **infra.yaml** — `OTelCollectorDown`, `CollectorExportFailed{Spans,Metrics,Logs}`, `CollectorHighMemory`, `PrometheusHighMemory`
 - **pipeline.yaml** — `LokiDown`, `TempoDown`, `PrometheusTargetDown`, `LokiRecordingRulesFailing`
-- **services.yaml** — `HighSessionCost` (>$10/hr), `HighTokenBurn` (>50k tok/min), `HighToolErrorRate` (>10%), `NoTelemetryReceived`
+- **services.yaml** — `HighSessionCost` (>$10/hr), `HighTokenBurn` (>50k tok/min), `HighToolErrorRate` (>10%), `SensitiveFileAccess`, `NoTelemetryReceived`
 
 Inhibit rules: `OTelCollectorDown` suppresses all business-logic alerts. `LokiDown` suppresses `LokiRecordingRulesFailing` and `HighTokenBurn`.
 

@@ -13,6 +13,7 @@ set -u
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../lib/git-context.sh"
 source "${SCRIPT_DIR}/../lib/metrics.sh"
+source "${SCRIPT_DIR}/../lib/sensitive-patterns.sh"
 
 input="$(cat)"
 
@@ -21,6 +22,15 @@ cwd="$(jq -r '.cwd // ""' <<< "$input")"
 
 # Git context
 get_git_context "$cwd"
+
+# Sensitive file access detection
+tool_input="$(jq -r '.tool_input // "{}" | if type == "string" then . else tostring end' <<< "$input" 2>/dev/null || echo "{}")"
+sensitive_match=$(check_sensitive_access "$tool_input")
+if [[ -n "$sensitive_match" ]]; then
+  sens_labels=$(jq -n -c --arg s "claude-code" --arg t "$tool_name" --arg g "$GIT_REPO" \
+    '{source:$s, tool:$t, git_repo:$g}')
+  emit_counter "sensitive_file_access" "1" "$sens_labels"
+fi
 
 # Tool status: check tool_response for error patterns
 tool_status="success"

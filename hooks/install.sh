@@ -42,14 +42,29 @@ install_claude() {
   # Merge hooks into existing config
   local hook_config
   hook_config=$(jq -n \
+    --arg pre_tool "${HOOKS_DIR}/claude/pre-tool-use.sh" \
     --arg post_tool "${HOOKS_DIR}/claude/post-tool-use.sh" \
+    --arg session_start "${HOOKS_DIR}/claude/session-start.sh" \
     --arg stop "${HOOKS_DIR}/claude/stop.sh" \
     '{
       hooks: {
+        PreToolUse: [{
+          hooks: [{
+            type: "command",
+            command: $pre_tool
+          }]
+        }],
         PostToolUse: [{
           hooks: [{
             type: "command",
             command: $post_tool
+          }]
+        }],
+        SessionStart: [{
+          matcher: "compact",
+          hooks: [{
+            type: "command",
+            command: $session_start
           }]
         }],
         Stop: [{
