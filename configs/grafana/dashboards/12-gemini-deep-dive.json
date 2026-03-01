@@ -1514,7 +1514,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_gemini_cli_model_routing_latency_milliseconds_sum[$__range])) / sum(increase(shepherd_gemini_cli_model_routing_latency_milliseconds_count[$__range]))",
+          "expr": "sum(max_over_time(shepherd_gemini_cli_model_routing_latency_milliseconds_sum[$__range])) / sum(max_over_time(shepherd_gemini_cli_model_routing_latency_milliseconds_count[$__range]))",
           "queryType": "instant",
           "legendFormat": "__auto",
           "refId": "A"

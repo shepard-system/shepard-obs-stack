@@ -91,6 +91,17 @@
           "legendFormat": "{{source}}",
           "queryType": "instant",
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(sum_over_time(shepherd:codex:tool_calls_by_tool:1m[$__range])) > 0",
+          "legendFormat": "codex-cli",
+          "queryType": "instant",
+          "refId": "B"
         }
       ],
       "fieldConfig": {
@@ -206,7 +217,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_tool_calls_total{source=~\"$source\",git_repo=~\"$git_repo\",tool_status=\"success\"}[$__range])) > 0",
+          "expr": "round(sum(increase(shepherd_tool_calls_total{source=~\"$source\",git_repo=~\"$git_repo\",tool_status=\"success\"}[$__range]))) > 0",
           "legendFormat": "Success",
           "queryType": "instant",
           "refId": "A"
@@ -217,7 +228,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_tool_calls_total{source=~\"$source\",git_repo=~\"$git_repo\",tool_status=\"error\"}[$__range])) > 0",
+          "expr": "round(sum(increase(shepherd_tool_calls_total{source=~\"$source\",git_repo=~\"$git_repo\",tool_status=\"error\"}[$__range]))) > 0",
           "legendFormat": "Error",
           "queryType": "instant",
           "refId": "B"
@@ -228,7 +239,7 @@
           "color": {
             "mode": "palette-classic"
           },
-          "decimals": 2
+          "decimals": 0
         },
         "overrides": [
           {
@@ -446,6 +457,17 @@
           "legendFormat": "{{source}}",
           "queryType": "range",
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(shepherd:codex:tool_calls_by_tool:1m) > 0",
+          "legendFormat": "codex-cli",
+          "queryType": "range",
+          "refId": "B"
         }
       ],
       "fieldConfig": {
@@ -479,7 +501,7 @@
     {
       "id": 8,
       "title": "Failing Tools",
-      "type": "table",
+      "type": "bargauge",
       "gridPos": {
         "h": 8,
         "w": 12,
@@ -499,7 +521,7 @@
           "editorMode": "code",
           "expr": "topk(10, sum by (tool, source) (increase(shepherd_tool_calls_total{source=~\"$source\",git_repo=~\"$git_repo\",tool_status=\"error\"}[$__range])) > 0)",
           "legendFormat": "{{tool}} ({{source}})",
-          "queryType": "range",
+          "queryType": "instant",
           "refId": "A"
         }
       ],
@@ -509,19 +531,37 @@
             "mode": "fixed",
             "fixedColor": "red"
           },
-          "decimals": 0
+          "decimals": 0,
+          "unit": "short"
         },
         "overrides": []
       },
       "options": {
-        "showHeader": true,
-        "sortBy": [
-          {
-            "displayName": "Value",
-            "desc": true
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizWidth": 8,
+        "minVizHeight": 16
+      },
+      "transformations": [
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Value",
+                "desc": true
+              }
+            ]
           }
-        ]
-      }
+        }
+      ]
     },
     {
       "id": 9,

@@ -573,7 +573,7 @@
           "color": {
             "mode": "palette-classic"
           },
-          "decimals": 2
+          "decimals": 0
         },
         "overrides": []
       },
