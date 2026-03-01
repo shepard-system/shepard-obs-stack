@@ -1,12 +1,10 @@
 {
-  "annotations": {
-    "list": []
-  },
+  "uid": "shepherd-claude-deep-dive",
+  "id": null,
+  "title": "Shepherd / Claude Code Deep Dive",
   "description": "Claude Code native OTel telemetry: tokens, cost, cache, tool decisions, prompts.",
   "editable": true,
-  "graphTooltip": 1,
-  "id": null,
-  "links": [],
+  "refresh": "1m",
   "panels": [
     {
       "id": 100,
@@ -1981,13 +1979,6 @@
       }
     }
   ],
-  "refresh": "30s",
-  "schemaVersion": 39,
-  "tags": [
-    "deep-dive",
-    "shepherd",
-    "claude"
-  ],
   "templating": {
     "list": [
       {
@@ -2023,14 +2014,23 @@
       }
     ]
   },
+  "tags": [
+    "deep-dive",
+    "shepherd",
+    "claude"
+  ],
+  "weekStart": "Monday",
+  "timezone": "browser",
   "time": {
     "from": "now-24h",
     "to": "now"
   },
-  "timepicker": {},
-  "timezone": "browser",
-  "title": "Shepherd / Claude Code Deep Dive",
-  "uid": "shepherd-claude-deep-dive",
   "version": 1,
-  "weekStart": ""
+  "schemaVersion": 39,
+  "graphTooltip": 1,
+  "links": [],
+  "timepicker": {},
+  "annotations": {
+    "list": []
+  }
 }
