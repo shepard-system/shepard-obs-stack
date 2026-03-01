@@ -1,12 +1,11 @@
 {
-  "annotations": {
-    "list": []
-  },
+  "uid": "shepherd-codex-deep-dive",
+  "id": null,
+  "title": "Shepherd / 03 Codex Deep Dive",
   "description": "Codex telemetry via Loki recording rules (PromQL) + native logs.",
   "editable": true,
-  "graphTooltip": 1,
-  "id": null,
-  "links": [],
+  "refresh": "1m",
+  "weekStart": "monday",
   "panels": [
     {
       "id": 100,
@@ -1359,7 +1358,7 @@
       "transformations": []
     },
     {
-      "id": 19,
+      "id": 18,
       "title": "Tool Error Rate",
       "type": "stat",
       "gridPos": {
@@ -1443,7 +1442,7 @@
       "panels": []
     },
     {
-      "id": 20,
+      "id": 19,
       "title": "Token Usage Over Time",
       "type": "timeseries",
       "gridPos": {
@@ -1580,7 +1579,7 @@
       "interval": "1m"
     },
     {
-      "id": 21,
+      "id": 20,
       "title": "API Latency Over Time",
       "type": "timeseries",
       "gridPos": {
@@ -1681,7 +1680,7 @@
       "interval": "1m"
     },
     {
-      "id": 22,
+      "id": 21,
       "title": "Conversations Over Time",
       "type": "timeseries",
       "gridPos": {
@@ -1771,7 +1770,7 @@
       "interval": "1m"
     },
     {
-      "id": 23,
+      "id": 22,
       "title": "Tool Calls Over Time",
       "type": "timeseries",
       "gridPos": {
@@ -1877,7 +1876,7 @@
       "panels": []
     },
     {
-      "id": 24,
+      "id": 23,
       "title": "Tool Execution Details",
       "type": "logs",
       "gridPos": {
@@ -1914,7 +1913,7 @@
       }
     },
     {
-      "id": 25,
+      "id": 24,
       "title": "API Call Details",
       "type": "logs",
       "gridPos": {
@@ -1951,7 +1950,7 @@
       }
     },
     {
-      "id": 26,
+      "id": 25,
       "title": "Event Stream",
       "type": "logs",
       "gridPos": {
@@ -1989,7 +1988,7 @@
       }
     },
     {
-      "id": 27,
+      "id": 26,
       "title": "Top 10 Tools",
       "type": "piechart",
       "datasource": {
@@ -2041,13 +2040,6 @@
       }
     }
   ],
-  "refresh": "30s",
-  "schemaVersion": 39,
-  "tags": [
-    "deep-dive",
-    "shepherd",
-    "codex"
-  ],
   "templating": {
     "list": [
       {
@@ -2085,14 +2077,22 @@
       }
     ]
   },
+  "tags": [
+    "codex",
+    "deep-dive",
+    "shepherd"
+  ],
+  "timezone": "browser",
   "time": {
     "from": "now-24h",
     "to": "now"
   },
-  "timepicker": {},
-  "timezone": "browser",
-  "title": "Shepherd / Codex Deep Dive",
-  "uid": "shepherd-codex-deep-dive",
   "version": 1,
-  "weekStart": ""
+  "schemaVersion": 39,
+  "graphTooltip": 1,
+  "links": [],
+  "timepicker": {},
+  "annotations": {
+    "list": []
+  }
 }

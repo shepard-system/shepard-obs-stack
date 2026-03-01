@@ -1,12 +1,11 @@
 {
-  "annotations": {
-    "list": []
-  },
+  "uid": "shepherd-tools",
+  "id": null,
+  "title": "Shepherd / 05 Tools",
   "description": "Who is performing and who is wandering? Tool call patterns, frequency, top tools, error rates.",
   "editable": true,
-  "graphTooltip": 1,
-  "id": null,
-  "links": [],
+  "refresh": "1m",
+  "weekStart": "monday",
   "panels": [
     {
       "id": 1,
@@ -187,7 +186,7 @@
       }
     },
     {
-      "id": 9,
+      "id": 4,
       "title": "Tool Error Rate",
       "type": "piechart",
       "gridPos": {
@@ -287,7 +286,7 @@
       }
     },
     {
-      "id": 4,
+      "id": 5,
       "title": "Tool Calls Over Time",
       "type": "timeseries",
       "gridPos": {
@@ -350,7 +349,7 @@
       }
     },
     {
-      "id": 5,
+      "id": 6,
       "title": "Top 10 Tools",
       "type": "bargauge",
       "gridPos": {
@@ -402,7 +401,9 @@
         {
           "id": "reduce",
           "options": {
-            "reducers": ["lastNotNull"],
+            "reducers": [
+              "lastNotNull"
+            ],
             "includeTimeField": false
           }
         },
@@ -421,7 +422,7 @@
       ]
     },
     {
-      "id": 6,
+      "id": 7,
       "title": "Tool Calls by Source Over Time",
       "type": "timeseries",
       "gridPos": {
@@ -476,7 +477,7 @@
       }
     },
     {
-      "id": 10,
+      "id": 8,
       "title": "Failing Tools",
       "type": "table",
       "gridPos": {
@@ -523,7 +524,7 @@
       }
     },
     {
-      "id": 7,
+      "id": 9,
       "title": "Recent Tool Calls",
       "type": "logs",
       "gridPos": {
@@ -570,12 +571,6 @@
       }
     }
   ],
-  "refresh": "30s",
-  "schemaVersion": 39,
-  "tags": [
-    "tools",
-    "shepherd"
-  ],
   "templating": {
     "list": [
       {
@@ -615,13 +610,21 @@
       }
     ]
   },
+  "tags": [
+    "tools",
+    "shepherd"
+  ],
+  "timezone": "browser",
   "time": {
     "from": "now-6h",
     "to": "now"
   },
+  "version": 2,
+  "schemaVersion": 39,
+  "graphTooltip": 1,
+  "links": [],
   "timepicker": {},
-  "timezone": "browser",
-  "title": "Shepherd / Tools",
-  "uid": "shepherd-tools",
-  "version": 2
+  "annotations": {
+    "list": []
+  }
 }

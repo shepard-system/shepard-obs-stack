@@ -1,12 +1,11 @@
 {
-  "annotations": {
-    "list": []
-  },
+  "uid": "shepherd-session-timeline",
+  "id": null,
+  "title": "Shepherd / 08 Session Timeline",
   "description": "Session Timeline: synthetic OpenTelemetry traces parsed from AI CLI session logs (Claude, Codex, Gemini). Visualizes tool calls, sub-agents, compactions, and MCP operations as a waterfall.",
   "editable": true,
-  "graphTooltip": 1,
-  "id": null,
-  "links": [],
+  "refresh": "1m",
+  "weekStart": "monday",
   "panels": [
     {
       "id": 100,
@@ -142,7 +141,7 @@
       }
     },
     {
-      "id": 7,
+      "id": 3,
       "title": "Error Spans",
       "description": "Tool spans with error status across all sessions.",
       "type": "stat",
@@ -202,7 +201,7 @@
       }
     },
     {
-      "id": 3,
+      "id": 4,
       "title": "Agent Spans",
       "description": "Sub-agent and compaction spans across all sessions.",
       "type": "stat",
@@ -275,7 +274,7 @@
       "panels": []
     },
     {
-      "id": 4,
+      "id": 5,
       "title": "Session Traces",
       "description": "Search and browse session traces. Click a Trace ID to open the waterfall in Explore.",
       "type": "table",
@@ -368,7 +367,7 @@
       "panels": []
     },
     {
-      "id": 5,
+      "id": 6,
       "title": "Top Tools by Invocation Count",
       "description": "Tools ranked by number of invocations across all session traces.",
       "type": "table",
@@ -464,7 +463,7 @@
       ]
     },
     {
-      "id": 6,
+      "id": 7,
       "title": "Tool Duration Distribution (p95)",
       "description": "P95 tool span durations over time by tool name.",
       "type": "timeseries",
@@ -615,13 +614,6 @@
       ]
     }
   ],
-  "refresh": "30s",
-  "schemaVersion": 39,
-  "tags": [
-    "session-timeline",
-    "traces",
-    "shepherd"
-  ],
   "templating": {
     "list": [
       {
@@ -662,14 +654,22 @@
       }
     ]
   },
+  "tags": [
+    "session-timeline",
+    "traces",
+    "shepherd"
+  ],
+  "timezone": "browser",
   "time": {
     "from": "now-24h",
     "to": "now"
   },
-  "timepicker": {},
-  "timezone": "browser",
-  "title": "Shepherd / Session Timeline",
-  "uid": "shepherd-session-timeline",
   "version": 2,
-  "weekStart": ""
+  "schemaVersion": 39,
+  "graphTooltip": 1,
+  "links": [],
+  "timepicker": {},
+  "annotations": {
+    "list": []
+  }
 }

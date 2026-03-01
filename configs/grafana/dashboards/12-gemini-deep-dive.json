@@ -1,12 +1,11 @@
 {
-  "annotations": {
-    "list": []
-  },
+  "uid": "shepherd-gemini-deep-dive",
+  "id": null,
+  "title": "Shepherd / 02 Gemini CLI Deep Dive",
   "description": "Gemini CLI native OTel telemetry: tokens, thought tokens, latency, tool heatmap.",
   "editable": true,
-  "graphTooltip": 1,
-  "id": null,
-  "links": [],
+  "refresh": "1m",
+  "weekStart": "monday",
   "panels": [
     {
       "id": 100,
@@ -1073,7 +1072,7 @@
       "panels": []
     },
     {
-      "id": 18,
+      "id": 16,
       "title": "Top 10 Tools",
       "type": "piechart",
       "gridPos": {
@@ -1144,7 +1143,7 @@
       }
     },
     {
-      "id": 19,
+      "id": 17,
       "title": "Tool Success / Error",
       "type": "piechart",
       "gridPos": {
@@ -1259,7 +1258,7 @@
       }
     },
     {
-      "id": 16,
+      "id": 18,
       "title": "Top 10 Commands",
       "type": "piechart",
       "gridPos": {
@@ -1330,7 +1329,7 @@
       }
     },
     {
-      "id": 17,
+      "id": 19,
       "title": "API Success / Error",
       "type": "piechart",
       "gridPos": {
@@ -1445,7 +1444,7 @@
       }
     },
     {
-      "id": 600,
+      "id": 500,
       "title": "Model Routing",
       "type": "row",
       "collapsed": false,
@@ -1458,7 +1457,7 @@
       "panels": []
     },
     {
-      "id": 28,
+      "id": 20,
       "title": "Routing Decisions",
       "type": "logs",
       "gridPos": {
@@ -1495,7 +1494,7 @@
       }
     },
     {
-      "id": 27,
+      "id": 21,
       "title": "Avg Routing Latency",
       "type": "stat",
       "gridPos": {
@@ -1565,7 +1564,7 @@
       }
     },
     {
-      "id": 700,
+      "id": 600,
       "title": "Stats For Nerds",
       "type": "row",
       "collapsed": false,
@@ -1578,7 +1577,7 @@
       "panels": []
     },
     {
-      "id": 50,
+      "id": 22,
       "title": "Model Breakdown",
       "type": "table",
       "gridPos": {
@@ -1804,7 +1803,7 @@
       }
     },
     {
-      "id": 500,
+      "id": 700,
       "title": "Timeseries",
       "type": "row",
       "collapsed": false,
@@ -1817,7 +1816,7 @@
       "panels": []
     },
     {
-      "id": 20,
+      "id": 23,
       "title": "Token Usage Over Time",
       "type": "timeseries",
       "gridPos": {
@@ -1911,7 +1910,7 @@
       "interval": "1m"
     },
     {
-      "id": 21,
+      "id": 24,
       "title": "Token Usage by Model Over Time",
       "type": "timeseries",
       "gridPos": {
@@ -2005,7 +2004,7 @@
       "interval": "1m"
     },
     {
-      "id": 22,
+      "id": 25,
       "title": "API Latency Over Time (P95)",
       "type": "timeseries",
       "gridPos": {
@@ -2100,7 +2099,7 @@
       "interval": "1m"
     },
     {
-      "id": 23,
+      "id": 26,
       "title": "Tool Latency Over Time",
       "type": "timeseries",
       "gridPos": {
@@ -2195,7 +2194,7 @@
       "interval": "1m"
     },
     {
-      "id": 31,
+      "id": 27,
       "title": "Operation Duration (P50/P95/P99)",
       "type": "timeseries",
       "gridPos": {
@@ -2353,7 +2352,7 @@
       "interval": "1m"
     },
     {
-      "id": 32,
+      "id": 28,
       "title": "Tool Latency Heatmap",
       "type": "heatmap",
       "gridPos": {
@@ -2411,7 +2410,7 @@
       "interval": "1m"
     },
     {
-      "id": 700,
+      "id": 800,
       "title": "Native Logs",
       "type": "row",
       "collapsed": false,
@@ -2424,7 +2423,7 @@
       "panels": []
     },
     {
-      "id": 24,
+      "id": 29,
       "title": "Tool Execution Details",
       "type": "logs",
       "gridPos": {
@@ -2461,7 +2460,7 @@
       }
     },
     {
-      "id": 25,
+      "id": 30,
       "title": "API Call Details",
       "type": "logs",
       "gridPos": {
@@ -2498,7 +2497,7 @@
       }
     },
     {
-      "id": 26,
+      "id": 31,
       "title": "Event Stream",
       "type": "logs",
       "gridPos": {
@@ -2540,13 +2539,6 @@
       }
     }
   ],
-  "refresh": "30s",
-  "schemaVersion": 39,
-  "tags": [
-    "deep-dive",
-    "shepherd",
-    "gemini"
-  ],
   "templating": {
     "list": [
       {
@@ -2583,14 +2575,22 @@
       }
     ]
   },
+  "tags": [
+    "gemini",
+    "deep-dive",
+    "shepherd"
+  ],
+  "timezone": "browser",
   "time": {
     "from": "now-24h",
     "to": "now"
   },
-  "timepicker": {},
-  "timezone": "browser",
-  "title": "Shepherd / Gemini CLI Deep Dive",
-  "uid": "shepherd-gemini-deep-dive",
   "version": 1,
-  "weekStart": ""
+  "schemaVersion": 39,
+  "graphTooltip": 1,
+  "links": [],
+  "timepicker": {},
+  "annotations": {
+    "list": []
+  }
 }

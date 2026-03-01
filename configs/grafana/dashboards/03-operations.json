@@ -1,12 +1,11 @@
 {
-  "annotations": {
-    "list": []
-  },
+  "uid": "shepherd-operations",
+  "id": null,
+  "title": "Shepherd / 06 Operations",
   "description": "What is happening right now? Live event stream, activity rates, source breakdown.",
   "editable": true,
-  "graphTooltip": 1,
-  "id": null,
-  "links": [],
+  "refresh": "1m",
+  "weekStart": "monday",
   "panels": [
     {
       "id": 1,
@@ -400,12 +399,6 @@
       }
     }
   ],
-  "refresh": "10s",
-  "schemaVersion": 39,
-  "tags": [
-    "operations",
-    "shepherd"
-  ],
   "templating": {
     "list": [
       {
@@ -445,13 +438,21 @@
       }
     ]
   },
+  "tags": [
+    "operations",
+    "shepherd"
+  ],
+  "timezone": "browser",
   "time": {
     "from": "now-1h",
     "to": "now"
   },
+  "version": 2,
+  "schemaVersion": 39,
+  "graphTooltip": 1,
+  "links": [],
   "timepicker": {},
-  "timezone": "browser",
-  "title": "Shepherd / Operations",
-  "uid": "shepherd-operations",
-  "version": 2
+  "annotations": {
+    "list": []
+  }
 }

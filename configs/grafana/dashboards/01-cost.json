@@ -1,12 +1,11 @@
 {
-  "annotations": {
-    "list": []
-  },
+  "uid": "shepherd-cost",
+  "id": null,
+  "title": "Shepherd / 04 Cost",
   "description": "How much is this costing me? Token usage, cost breakdown, cache efficiency across all providers.",
   "editable": true,
-  "graphTooltip": 1,
-  "id": null,
-  "links": [],
+  "refresh": "1m",
+  "weekStart": "monday",
   "panels": [
     {
       "id": 100,
@@ -388,7 +387,7 @@
       }
     },
     {
-      "id": 101,
+      "id": 200,
       "title": "Cost & Sessions",
       "type": "row",
       "collapsed": false,
@@ -601,7 +600,7 @@
       }
     },
     {
-      "id": 102,
+      "id": 300,
       "title": "Tokens",
       "type": "row",
       "collapsed": false,
@@ -905,7 +904,7 @@
       }
     },
     {
-      "id": 103,
+      "id": 400,
       "title": "Reasoning",
       "type": "row",
       "collapsed": false,
@@ -918,7 +917,7 @@
       "panels": []
     },
     {
-      "id": 14,
+      "id": 13,
       "title": "Reasoning Tokens Over Time",
       "description": "Gemini thought tokens + Codex reasoning tokens. Claude does not distinguish reasoning from output.",
       "type": "timeseries",
@@ -1023,7 +1022,7 @@
       }
     },
     {
-      "id": 15,
+      "id": 14,
       "title": "Reasoning Ratio",
       "description": "Reasoning tokens / total output tokens (Gemini + Codex only)",
       "type": "gauge",
@@ -1087,7 +1086,7 @@
       }
     },
     {
-      "id": 104,
+      "id": 500,
       "title": "Logs",
       "type": "row",
       "collapsed": false,
@@ -1100,7 +1099,7 @@
       "panels": []
     },
     {
-      "id": 13,
+      "id": 15,
       "title": "Session Log",
       "type": "logs",
       "gridPos": {
@@ -1137,22 +1136,24 @@
       }
     }
   ],
-  "refresh": "30s",
-  "schemaVersion": 39,
+  "templating": {
+    "list": []
+  },
   "tags": [
     "cost",
     "shepherd"
   ],
-  "templating": {
-    "list": []
-  },
+  "timezone": "browser",
   "time": {
     "from": "now-24h",
     "to": "now"
   },
+  "version": 4,
+  "schemaVersion": 39,
+  "graphTooltip": 1,
+  "links": [],
   "timepicker": {},
-  "timezone": "browser",
-  "title": "Shepherd / Cost",
-  "uid": "shepherd-cost",
-  "version": 4
+  "annotations": {
+    "list": []
+  }
 }
