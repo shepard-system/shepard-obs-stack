@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-**shepard-obs-stack** ("The Eye") — Docker-based observability for AI coding assistants (Claude Code, Codex, Gemini CLI). Hybrid telemetry: bash hooks emit OTLP metrics (git context + tool/event counters); native OTel export provides logs, traces, and richer provider-specific metrics. All data flows through OTel Collector into Prometheus, Loki, and Tempo; 8 Grafana dashboards auto-provision on startup.
+**shepard-obs-stack** ("The Eye") — Docker-based observability for AI coding assistants (Claude Code, Codex, Gemini CLI). 
+Hybrid telemetry: bash hooks emit OTLP metrics (git context + tool/event counters); native OTel export provides logs, traces, and richer provider-specific metrics. 
+All data flows through OTel Collector into Prometheus, Loki, and Tempo; 8 Grafana dashboards auto-provision on startup.
 
 ## Quick Start
 
@@ -88,27 +90,41 @@ Prometheus :9090 ← scrapes OTel Collector :8889
     └─→ Alertmanager :9093 → webhook
 ```
 
-**Key pipeline detail:** Hooks emit DELTA sum metrics. OTel Collector's `deltatocumulative` processor converts them to cumulative counters before Prometheus scrapes them. The Prometheus exporter applies `shepherd` namespace, so all metrics get the `shepherd_` prefix.
+**Key pipeline detail:** Hooks emit DELTA sum metrics. OTel Collector's `deltatocumulative` processor converts them to cumulative counters before Prometheus scrapes them. 
+The Prometheus exporter applies `shepherd` namespace, so all metrics get the `shepherd_` prefix.
 
 ## Key Conventions
 
-**Metrics naming:** All metrics in Prometheus have `shepherd_` prefix (applied by OTel Collector's Prometheus exporter namespace). Hook metrics additionally have `_total` suffix (counters). Native OTel metrics: dots become underscores (e.g., `claude_code.cost_usage.USD` → `shepherd_claude_code_cost_usage_USD_total`).
+**Metrics naming:** All metrics in Prometheus have `shepherd_` prefix (applied by OTel Collector's Prometheus exporter namespace). 
+Hook metrics additionally have `_total` suffix (counters). 
+Native OTel metrics: dots become underscores (e.g., `claude_code.cost_usage.USD` → `shepherd_claude_code_cost_usage_USD_total`).
 
-**Fire-and-forget hooks:** `hooks/lib/metrics.sh:emit_counter()` uses `curl -s & disown` to avoid blocking the CLI. Hooks must never block or slow down the AI assistant.
+**Fire-and-forget hooks:** `hooks/lib/metrics.sh:emit_counter()` uses `curl -s & disown` to avoid blocking the CLI. 
+Hooks must never block or slow down the AI assistant.
 
-**Dashboard provisioning:** Dashboards in `configs/grafana/dashboards/*.json` are auto-loaded by Grafana on startup. Edits made in the Grafana UI are **lost on container restart**. Always edit the JSON files directly. Tools and Operations dashboards use `$source` and `$git_repo` variables. Deep Dive dashboards use `$model`. Session Timeline uses `$provider`. Cost and Quality have no template variables.
+**Dashboard provisioning:** Dashboards in `configs/grafana/dashboards/*.json` are auto-loaded by Grafana on startup. 
+Edits made in the Grafana UI are **lost on container restart**. 
+Always edit the JSON files directly. 
+Tools and Operations dashboards use `$source` and `$git_repo` variables. 
+Deep Dive dashboards use `$model`. Session Timeline uses `$provider`. 
+Cost and Quality have no template variables.
 
-**Install backups:** `hooks/install.sh` creates `.bak.<timestamp>` backups of CLI config files before modifying them. Uninstall does NOT restore backups.
+**Install backups:** `hooks/install.sh` creates `.bak.<timestamp>` backups of CLI config files before modifying them. 
+Uninstall does NOT restore backups.
 
 **jq deep-merge in install.sh:** Hook and native OTel config is merged into existing CLI settings using jq's `*` (recursive merge), preserving user's existing config.
 
-**Dashboard query convention:** PromQL for all numeric panels (rates, totals, gauges). LogQL only for log stream/table panels. Deep-dive dashboards may use LogQL `| json | unwrap` for providers that only emit logs (Codex). Session Timeline (13) uses PromQL `traces_spanmetrics_calls_total` for stat/table panels and Tempo trace search for the Session Traces table only.
+**Dashboard query convention:** PromQL for all numeric panels (rates, totals, gauges). LogQL only for log stream/table panels. 
+Deep-dive dashboards may use LogQL `| json | unwrap` for providers that only emit logs (Codex). 
+Session Timeline (13) uses PromQL `traces_spanmetrics_calls_total` for stat/table panels and Tempo trace search for the Session Traces table only.
 
-**Hook shell options:** All hooks use `set -u` (not `set -euo pipefail`). `set -e` causes silent SIGPIPE kills in fire-and-forget pipelines; `set -o pipefail` amplifies this. Hooks must never fail or block the CLI.
+**Hook shell options:** All hooks use `set -u` (not `set -euo pipefail`). `set -e` causes silent SIGPIPE kills in fire-and-forget pipelines; 
+`set -o pipefail` amplifies this. Hooks must never fail or block the CLI.
 
 ## Hooks
 
-Hooks provide what native OTel cannot: **git context** (`git_repo`, `git_branch`) and **labeled tool/event counters**. All token/cost/session metrics come from native OTel.
+Hooks provide what native OTel cannot: **git context** (`git_repo`, `git_branch`) and **labeled tool/event counters**. 
+All token/cost/session metrics come from native OTel.
 
 ```
 hooks/
@@ -146,40 +162,41 @@ Tool status detection: hooks grep `tool_response` for error patterns (exit code,
 
 `install.sh` also enables native OTel export from each CLI:
 
-| CLI         | Transport       | Signals                                        | Config location             |
-|-------------|-----------------|------------------------------------------------|-----------------------------|
-| Claude Code | OTLP gRPC :4317 | metrics (`claude_code.*`) + logs               | `~/.claude/settings.json` `"env"` block |
-| Codex       | OTLP gRPC :4317 | logs (`service_name=codex_cli_rs`) + traces    | `~/.codex/config.toml` `[otel]` section |
+| CLI         | Transport       | Signals                                                     | Config location                               |
+|-------------|-----------------|-------------------------------------------------------------|-----------------------------------------------|
+| Claude Code | OTLP gRPC :4317 | metrics (`claude_code.*`) + logs                            | `~/.claude/settings.json` `"env"` block       |
+| Codex       | OTLP gRPC :4317 | logs (`service_name=codex_cli_rs`) + traces                 | `~/.codex/config.toml` `[otel]` section       |
 | Gemini CLI  | OTLP gRPC :4317 | metrics (`gemini_cli.*`, `gen_ai.client.*`) + logs + traces | `~/.gemini/settings.json` `"telemetry"` block |
 
-Native OTel metric names after Prometheus ingestion follow the pattern: `shepherd_<cli>_<metric>_<unit>_total`. See `configs/otel-collector/config.yaml` for the full pipeline and the Native OTel Metric Catalog section below for the complete list.
+Native OTel metric names after Prometheus ingestion follow the pattern: `shepherd_<cli>_<metric>_<unit>_total`. 
+See `configs/otel-collector/config.yaml` for the full pipeline and the Native OTel Metric Catalog section below for the complete list.
 
 ### Native OTel Metric Catalog
 
 After Prometheus ingestion with `shepherd` namespace (dots→underscores, `_total` suffix):
 
-| Metric                                               | Source | Dimensions                                         |
-|------------------------------------------------------|--------|----------------------------------------------------|
-| `shepherd_claude_code_cost_usage_USD_total`          | Claude | model                                              |
-| `shepherd_claude_code_token_usage_tokens_total`      | Claude | type (input/output/cacheRead/cacheCreation), model |
-| `shepherd_claude_code_session_count_total`           | Claude | —                                                  |
-| `shepherd_claude_code_active_time_seconds_total`     | Claude | model                                              |
-| `shepherd_claude_code_lines_of_code_count_total`     | Claude | —                                                  |
-| `shepherd_claude_code_code_edit_tool_decision_total` | Claude | —                                                  |
-| `shepherd_gemini_cli_token_usage_total`              | Gemini | type (input/output/thought/cache/tool), model      |
-| `shepherd_gemini_cli_tool_call_count_total`          | Gemini | function_name, success, tool_type                  |
-| `shepherd_gemini_cli_session_count_total`            | Gemini | —                                                  |
-| `shepherd_gemini_cli_api_request_count_total`        | Gemini | status_code                                        |
-| `shepherd_gen_ai_client_operation_duration_seconds_*` | Gemini | gen_ai_request_model (histogram)                   |
-| `shepherd_gemini_cli_tool_call_latency_milliseconds_*` | Gemini | function_name (histogram)                        |
+| Metric                                                 | Source | Dimensions                                         |
+|--------------------------------------------------------|--------|----------------------------------------------------|
+| `shepherd_claude_code_cost_usage_USD_total`            | Claude | model                                              |
+| `shepherd_claude_code_token_usage_tokens_total`        | Claude | type (input/output/cacheRead/cacheCreation), model |
+| `shepherd_claude_code_session_count_total`             | Claude | —                                                  |
+| `shepherd_claude_code_active_time_seconds_total`       | Claude | model                                              |
+| `shepherd_claude_code_lines_of_code_count_total`       | Claude | —                                                  |
+| `shepherd_claude_code_code_edit_tool_decision_total`   | Claude | —                                                  |
+| `shepherd_gemini_cli_token_usage_total`                | Gemini | type (input/output/thought/cache/tool), model      |
+| `shepherd_gemini_cli_tool_call_count_total`            | Gemini | function_name, success, tool_type                  |
+| `shepherd_gemini_cli_session_count_total`              | Gemini | —                                                  |
+| `shepherd_gemini_cli_api_request_count_total`          | Gemini | status_code                                        |
+| `shepherd_gen_ai_client_operation_duration_seconds_*`  | Gemini | gen_ai_request_model (histogram)                   |
+| `shepherd_gemini_cli_tool_call_latency_milliseconds_*` | Gemini | function_name (histogram)                          |
 
 ### Native OTel Log Sources
 
-| Service name   | Source    | Event types in Loki                                                                           |
-|----------------|-----------|-----------------------------------------------------------------------------------------------|
-| `claude-code`  | Claude    | `claude_code.api_request`, `claude_code.tool_decision`, `claude_code.tool_result`, `claude_code.user_prompt` |
-| `codex_cli_rs` | Codex     | OTLP logs with token/model attributes                                                         |
-| `gemini-cli`   | Gemini    | metrics + logs + traces                                                                       |
+| Service name   | Source | Event types in Loki                                                                                          |
+|----------------|--------|--------------------------------------------------------------------------------------------------------------|
+| `claude-code`  | Claude | `claude_code.api_request`, `claude_code.tool_decision`, `claude_code.tool_result`, `claude_code.user_prompt` |
+| `codex_cli_rs` | Codex  | OTLP logs with token/model attributes                                                                        |
+| `gemini-cli`   | Gemini | metrics + logs + traces                                                                                      |
 
 ## Loki Recording Rules
 
@@ -188,11 +205,11 @@ Loki ruler evaluates every 1m → remote_write to Prometheus.
 
 3 rule groups:
 
-| Group      | Metrics                                                                                       |
-|------------|-----------------------------------------------------------------------------------------------|
-| **Counts** | `shepherd:codex:{sessions,api_requests,model_calls,tool_results,tool_calls_by_tool,tool_decisions}:1m` |
-| **Tokens** | `shepherd:codex:{tokens_input,tokens_output,tokens_cached,tokens_reasoning,tokens_tool}:1m`   |
-| **Latency**| `shepherd:codex:{api_latency_ms_sum,api_latency_ms_count,api_latency_ms_p50,api_latency_ms_p95}:1m`  |
+| Group       | Metrics                                                                                                |
+|-------------|--------------------------------------------------------------------------------------------------------|
+| **Counts**  | `shepherd:codex:{sessions,api_requests,model_calls,tool_results,tool_calls_by_tool,tool_decisions}:1m` |
+| **Tokens**  | `shepherd:codex:{tokens_input,tokens_output,tokens_cached,tokens_reasoning,tokens_tool}:1m`            |
+| **Latency** | `shepherd:codex:{api_latency_ms_sum,api_latency_ms_count,api_latency_ms_p50,api_latency_ms_p95}:1m`    |
 
 Key config requirements:
 - `ruler.wal.dir: /tmp/loki/ruler-wal` (must be writable)
@@ -202,18 +219,21 @@ Key config requirements:
 
 ## Dashboards
 
-| Dashboard            | UID                         | Data Source                          | File                                              |
-|----------------------|-----------------------------|--------------------------------------|----------------------------------------------------|
-| Cost                 | `shepherd-cost`             | Prometheus                           | `configs/grafana/dashboards/01-cost.json`          |
-| Tools                | `shepherd-tools`            | Prometheus                           | `configs/grafana/dashboards/02-tools.json`         |
-| Operations           | `shepherd-operations`       | Prometheus + Loki                    | `configs/grafana/dashboards/03-operations.json`    |
-| Quality              | `shepherd-quality`          | Prometheus                           | `configs/grafana/dashboards/04-quality.json`       |
-| Claude Deep Dive     | `shepherd-claude-deep-dive` | Prometheus + Loki                    | `configs/grafana/dashboards/10-claude-deep-dive.json` |
-| Codex Deep Dive      | `shepherd-codex-deep-dive`  | Prometheus (recording rules) + Loki  | `configs/grafana/dashboards/11-codex-deep-dive.json`  |
-| Gemini Deep Dive     | `shepherd-gemini-deep-dive` | Prometheus + Loki                    | `configs/grafana/dashboards/12-gemini-deep-dive.json` |
-| Session Timeline     | `shepherd-session-timeline` | Prometheus (span-metrics) + Tempo    | `configs/grafana/dashboards/13-session-timeline.json` |
+| Dashboard        | UID                         | Data Source                         | File                                                  |
+|------------------|-----------------------------|-------------------------------------|-------------------------------------------------------|
+| Cost             | `shepherd-cost`             | Prometheus                          | `configs/grafana/dashboards/01-cost.json`             |
+| Tools            | `shepherd-tools`            | Prometheus                          | `configs/grafana/dashboards/02-tools.json`            |
+| Operations       | `shepherd-operations`       | Prometheus + Loki                   | `configs/grafana/dashboards/03-operations.json`       |
+| Quality          | `shepherd-quality`          | Prometheus                          | `configs/grafana/dashboards/04-quality.json`          |
+| Claude Deep Dive | `shepherd-claude-deep-dive` | Prometheus + Loki                   | `configs/grafana/dashboards/10-claude-deep-dive.json` |
+| Codex Deep Dive  | `shepherd-codex-deep-dive`  | Prometheus (recording rules) + Loki | `configs/grafana/dashboards/11-codex-deep-dive.json`  |
+| Gemini Deep Dive | `shepherd-gemini-deep-dive` | Prometheus + Loki                   | `configs/grafana/dashboards/12-gemini-deep-dive.json` |
+| Session Timeline | `shepherd-session-timeline` | Prometheus (span-metrics) + Tempo   | `configs/grafana/dashboards/13-session-timeline.json` |
 
-Unified dashboards (01–04) aggregate across providers. Deep-dive dashboards (10–12) are provider-specific using native OTel. Session Timeline (13) shows synthetic traces parsed from all 3 CLI session logs with `$provider` variable. Stat/table panels use Prometheus `traces_spanmetrics_calls_total` counters (generated by Tempo's span-metrics processor). Session Traces table uses Tempo trace search. Tool Duration Distribution uses Prometheus `traces_spanmetrics_latency_bucket`.
+Unified dashboards (01–04) aggregate across providers. Deep-dive dashboards (10–12) are provider-specific using native OTel. 
+Session Timeline (13) shows synthetic traces parsed from all 3 CLI session logs with `$provider` variable.
+Stat/table panels use Prometheus `traces_spanmetrics_calls_total` counters (generated by Tempo's span-metrics processor).
+Session Traces table uses Tempo trace search. Tool Duration Distribution uses Prometheus `traces_spanmetrics_latency_bucket`.
 
 ## Config Structure
 
@@ -237,7 +257,8 @@ configs/
 
 ## Alerting
 
-Alertmanager on :9093. Default config routes critical alerts to a webhook receiver (placeholder URL — configure in `configs/alertmanager/alertmanager.yaml`). Inhibit rules suppress NoEventsReceived/HighTokenBurn when LokiDown fires.
+Alertmanager on :9093. Default config routes critical alerts to a webhook receiver (placeholder URL — configure in `configs/alertmanager/alertmanager.yaml`). 
+Inhibit rules suppress NoEventsReceived/HighTokenBurn when LokiDown fires.
 
 Alert rule files in `configs/prometheus/alerts/`:
 - **infra.yaml** — OTelCollectorDown, CollectorHighMemory, export failures
@@ -252,17 +273,20 @@ Alert rule files in `configs/prometheus/alerts/`:
 3. Confirm Prometheus scrape target is up: `curl -s http://localhost:9090/api/v1/targets | jq '.data.activeTargets[] | {job: .labels.job, health}'`
 
 **No logs in Loki:**
-Native OTel logs won't appear until you actually use a CLI with hooks installed. Loki labels to check: `{service_name="claude-code"}`, `{service_name="codex_cli_rs"}`, `{service_name="gemini-cli"}`.
+Native OTel logs won't appear until you actually use a CLI with hooks installed.
+Loki labels to check: `{service_name="claude-code"}`, `{service_name="codex_cli_rs"}`, `{service_name="gemini-cli"}`.
 
 **Dashboard shows "No data":**
-Ensure time range is correct (dashboards default to "Last 1 hour"). Hook metrics require at least one tool call or session event. Native OTel metrics require a real CLI session.
+Ensure time range is correct (dashboards default to "Last 1 hour"). 
+Hook metrics require at least one tool call or session event. Native OTel metrics require a real CLI session.
 
 **Hooks not firing:**
 Verify hooks are installed: check `~/.claude/settings.json` for `.hooks` key, `~/.codex/config.toml` for `notify` line, `~/.gemini/settings.json` for `.hooks` key. Re-run `./hooks/install.sh`.
 
 ## Session Timeline (Synthetic Traces)
 
-All 3 CLI hooks parse session logs into synthetic OTLP traces → Tempo via OTel Collector. Each provider has its own parser, all producing the same unified span schema.
+All 3 CLI hooks parse session logs into synthetic OTLP traces → Tempo via OTel Collector.
+Each provider has its own parser, all producing the same unified span schema.
 
 **Pipelines:**
 - Claude: `stop.sh` → `session-parser.sh` (JSONL) → Tempo service `claude-code-session`
@@ -271,19 +295,23 @@ All 3 CLI hooks parse session logs into synthetic OTLP traces → Tempo via OTel
 
 **Span types generated:**
 
-| Span Name | Claude | Codex | Gemini |
-|-----------|--------|-------|--------|
-| `{provider}.session` | root span | root span | root span |
-| `{provider}.session.meta` | marker child | marker child | marker child |
-| `{provider}.tool.*` | tool calls | function calls | tool calls |
-| `claude.mcp.*` | MCP calls | — | — |
-| `claude.agent.*` | sub-agents | — | — |
-| `{provider}.compaction` | context compaction | context compaction | — |
+| Span Name                 | Claude             | Codex              | Gemini       |
+|---------------------------|--------------------|--------------------|--------------|
+| `{provider}.session`      | root span          | root span          | root span    |
+| `{provider}.session.meta` | marker child       | marker child       | marker child |
+| `{provider}.tool.*`       | tool calls         | function calls     | tool calls   |
+| `claude.mcp.*`            | MCP calls          | —                  | —            |
+| `claude.agent.*`          | sub-agents         | —                  | —            |
+| `{provider}.compaction`   | context compaction | context compaction | —            |
 
-**Session meta marker span:** Each parser emits a zero-duration `{provider}.session.meta` child span (span_id=0x02, parent=root). This was originally needed because Tempo's local-blocks processor does not index root spans. Now that Session Timeline uses Prometheus span-metrics (which DO index root spans), the `session.meta` spans are no longer required for dashboard queries but are kept for backward compatibility in trace views.
+**Session meta marker span:** Each parser emits a zero-duration `{provider}.session.meta` child span (span_id=0x02, parent=root). 
+This was originally needed because Tempo's local-blocks processor does not index root spans. 
+Now that Session Timeline uses Prometheus span-metrics (which DO index root spans), the `session.meta` spans 
+are no longer required for dashboard queries but are kept for backward compatibility in trace views.
 
 **Root span attributes (all providers):**
-`session.id`, `model`, `provider`, `git.branch`, `git.repo`, `tokens.input`, `tokens.output`, `tokens.cache_read`, `tokens.total`, `tool.count`, `tool.error_count`, `turn.count`, `compaction.count`, `stop_reason`, `has_interruption`
+`session.id`, `model`, `provider`, `git.branch`, `git.repo`, `tokens.input`, `tokens.output`, `tokens.cache_read`, 
+`tokens.total`, `tool.count`, `tool.error_count`, `turn.count`, `compaction.count`, `stop_reason`, `has_interruption`
 
 **Tool span attributes:** `tool.name`, `tool.is_error`, `tool.input.file_path`, `tool.input.command`, `tool.input.pattern`
 

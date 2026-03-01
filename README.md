@@ -8,7 +8,9 @@
 
 **The Eye** — self-hosted observability for AI coding assistants.
 
-You use Claude Code, Codex, or Gemini CLI every day. You have no idea how much they cost, which tools they call, or whether they're actually helping. This fixes that.
+You use Claude Code, Codex, or Gemini CLI every day. 
+You have no idea how much they cost, which tools they call, or whether they're actually helping. 
+This fixes that.
 
 ## Highlights
 
@@ -48,21 +50,22 @@ Open [localhost:3000](http://localhost:3000) (admin / shepherd). Use your CLI as
 
 ### Deep Dive (per-provider)
 
-| Dashboard            | What you see                                          |
-|----------------------|-------------------------------------------------------|
-| **Claude Code**      | Token usage, cost by model, tool decisions, active time |
-| **Codex**            | Sessions, API latency percentiles, reasoning tokens    |
-| **Gemini CLI**       | Token breakdown, latency heatmap, tool call routing    |
+| Dashboard       | What you see                                            |
+|-----------------|---------------------------------------------------------|
+| **Claude Code** | Token usage, cost by model, tool decisions, active time |
+| **Codex**       | Sessions, API latency percentiles, reasoning tokens     |
+| **Gemini CLI**  | Token breakdown, latency heatmap, tool call routing     |
 
 ### Session Timeline
 
-| Dashboard              | What you see                                          |
-|------------------------|-------------------------------------------------------|
-| **Session Timeline**   | Synthetic traces from all 3 CLI session logs — tool call waterfall, MCP timing, sub-agents |
+| Dashboard            | What you see                                                                               |
+|----------------------|--------------------------------------------------------------------------------------------|
+| **Session Timeline** | Synthetic traces from all 3 CLI session logs — tool call waterfall, MCP timing, sub-agents |
 
 Click any Trace ID to open the full waterfall in Grafana Explore → Tempo.
 
-Dashboard template variables: **Tools** and **Operations** support `$source` and `$git_repo` filtering. **Deep Dive** dashboards use `$model`. **Session Timeline** uses `$provider`. **Cost** and **Quality** show aggregated data without filters.
+Dashboard template variables: **Tools** and **Operations** support `$source` and `$git_repo` filtering. 
+**Deep Dive** dashboards use `$model`. **Session Timeline** uses `$provider`. **Cost** and **Quality** show aggregated data without filters.
 
 ## How It Works
 
@@ -86,7 +89,8 @@ Loki recording rules ──── remote_write ───→ Prometheus
 Grafana :3000 ←── PromQL + LogQL ──────────┘
 ```
 
-**Hooks** provide what native OTel cannot: git repo context and labeled tool/event counters. Everything else (tokens, cost, sessions) comes from native OTel export.
+**Hooks** provide what native OTel cannot: git repo context and labeled tool/event counters. 
+Everything else (tokens, cost, sessions) comes from native OTel export.
 
 ## Hook Setup
 
@@ -99,15 +103,16 @@ Grafana :3000 ←── PromQL + LogQL ──────────┘
 
 The installer auto-detects installed CLIs and merges hook configuration into their config files (creating backups first).
 
-| CLI         | Hooks                                  | Native OTel signals          |
-|-------------|----------------------------------------|------------------------------|
-| Claude Code | `PostToolUse`, `Stop`                  | metrics + logs               |
-| Codex CLI   | `agent-turn-complete`                  | logs                         |
-| Gemini CLI  | `AfterTool`, `AfterAgent`, `AfterModel`, `SessionEnd` | metrics + logs + traces      |
+| CLI         | Hooks                                                 | Native OTel signals     |
+|-------------|-------------------------------------------------------|-------------------------|
+| Claude Code | `PostToolUse`, `Stop`                                 | metrics + logs          |
+| Codex CLI   | `agent-turn-complete`                                 | logs                    |
+| Gemini CLI  | `AfterTool`, `AfterAgent`, `AfterModel`, `SessionEnd` | metrics + logs + traces |
 
 ## Alerting
 
-Alertmanager runs on :9093 with alert rules for infrastructure, pipeline health, and service quality. Native Telegram and Slack receivers are included — uncomment and configure in `configs/alertmanager/alertmanager.yaml`:
+Alertmanager runs on :9093 with alert rules for infrastructure, pipeline health, and service quality. 
+Native Telegram and Slack receivers are included — uncomment and configure in `configs/alertmanager/alertmanager.yaml`:
 
 ```yaml
 # telegram_configs:
@@ -118,13 +123,13 @@ Alertmanager runs on :9093 with alert rules for infrastructure, pipeline health,
 
 ## Services
 
-| Service        | Port | Purpose                   |
-|----------------|------|---------------------------|
-| Grafana        | 3000 | Dashboards & explore      |
-| Prometheus     | 9090 | Metrics & alerts          |
-| Loki           | 3100 | Log aggregation           |
-| Tempo          | 3200 | Distributed tracing       |
-| Alertmanager   | 9093 | Alert routing             |
+| Service        | Port      | Purpose              |
+|----------------|-----------|----------------------|
+| Grafana        | 3000      | Dashboards & explore |
+| Prometheus     | 9090      | Metrics & alerts     |
+| Loki           | 3100      | Log aggregation      |
+| Tempo          | 3200      | Distributed tracing  |
+| Alertmanager   | 9093      | Alert routing        |
 | OTel Collector | 4317/4318 | OTLP gRPC + HTTP     |
 
 ## Architecture
