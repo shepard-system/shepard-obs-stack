@@ -1,12 +1,11 @@
 {
-  "annotations": {
-    "list": []
-  },
+  "uid": "shepherd-codex-deep-dive",
+  "id": null,
+  "title": "Shepherd / 03 Codex Deep Dive",
   "description": "Codex telemetry via Loki recording rules (PromQL) + native logs.",
   "editable": true,
-  "graphTooltip": 1,
-  "id": null,
-  "links": [],
+  "refresh": "1m",
+  "weekStart": "monday",
   "panels": [
     {
       "id": 100,
@@ -2041,13 +2040,6 @@
       }
     }
   ],
-  "refresh": "30s",
-  "schemaVersion": 39,
-  "tags": [
-    "deep-dive",
-    "shepherd",
-    "codex"
-  ],
   "templating": {
     "list": [
       {
@@ -2085,14 +2077,22 @@
       }
     ]
   },
+  "tags": [
+    "deep-dive",
+    "shepherd",
+    "codex"
+  ],
+  "timezone": "browser",
   "time": {
     "from": "now-24h",
     "to": "now"
   },
-  "timepicker": {},
-  "timezone": "browser",
-  "title": "Shepherd / Codex Deep Dive",
-  "uid": "shepherd-codex-deep-dive",
   "version": 1,
-  "weekStart": ""
+  "schemaVersion": 39,
+  "graphTooltip": 1,
+  "links": [],
+  "timepicker": {},
+  "annotations": {
+    "list": []
+  }
 }

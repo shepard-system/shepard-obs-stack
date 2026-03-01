@@ -1,12 +1,11 @@
 {
-  "annotations": {
-    "list": []
-  },
+  "uid": "shepherd-gemini-deep-dive",
+  "id": null,
+  "title": "Shepherd / 02 Gemini CLI Deep Dive",
   "description": "Gemini CLI native OTel telemetry: tokens, thought tokens, latency, tool heatmap.",
   "editable": true,
-  "graphTooltip": 1,
-  "id": null,
-  "links": [],
+  "refresh": "1m",
+  "weekStart": "monday",
   "panels": [
     {
       "id": 100,
@@ -2540,13 +2539,6 @@
       }
     }
   ],
-  "refresh": "30s",
-  "schemaVersion": 39,
-  "tags": [
-    "deep-dive",
-    "shepherd",
-    "gemini"
-  ],
   "templating": {
     "list": [
       {
@@ -2583,14 +2575,22 @@
       }
     ]
   },
+  "tags": [
+    "deep-dive",
+    "shepherd",
+    "gemini"
+  ],
+  "timezone": "browser",
   "time": {
     "from": "now-24h",
     "to": "now"
   },
-  "timepicker": {},
-  "timezone": "browser",
-  "title": "Shepherd / Gemini CLI Deep Dive",
-  "uid": "shepherd-gemini-deep-dive",
   "version": 1,
-  "weekStart": ""
+  "schemaVersion": 39,
+  "graphTooltip": 1,
+  "links": [],
+  "timepicker": {},
+  "annotations": {
+    "list": []
+  }
 }

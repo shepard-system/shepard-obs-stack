@@ -1,12 +1,11 @@
 {
-  "annotations": {
-    "list": []
-  },
+  "uid": "shepherd-cost",
+  "id": null,
+  "title": "Shepherd / 04 Cost",
   "description": "How much is this costing me? Token usage, cost breakdown, cache efficiency across all providers.",
   "editable": true,
-  "graphTooltip": 1,
-  "id": null,
-  "links": [],
+  "refresh": "1m",
+  "weekStart": "monday",
   "panels": [
     {
       "id": 100,
@@ -1137,22 +1136,24 @@
       }
     }
   ],
-  "refresh": "30s",
-  "schemaVersion": 39,
+  "templating": {
+    "list": []
+  },
   "tags": [
     "cost",
     "shepherd"
   ],
-  "templating": {
-    "list": []
-  },
+  "timezone": "browser",
   "time": {
     "from": "now-24h",
     "to": "now"
   },
+  "version": 4,
+  "schemaVersion": 39,
+  "graphTooltip": 1,
+  "links": [],
   "timepicker": {},
-  "timezone": "browser",
-  "title": "Shepherd / Cost",
-  "uid": "shepherd-cost",
-  "version": 4
+  "annotations": {
+    "list": []
+  }
 }

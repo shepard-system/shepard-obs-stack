@@ -1,12 +1,11 @@
 {
-  "annotations": {
-    "list": []
-  },
+  "uid": "shepherd-session-timeline",
+  "id": null,
+  "title": "Shepherd / 08 Session Timeline",
   "description": "Session Timeline: synthetic OpenTelemetry traces parsed from AI CLI session logs (Claude, Codex, Gemini). Visualizes tool calls, sub-agents, compactions, and MCP operations as a waterfall.",
   "editable": true,
-  "graphTooltip": 1,
-  "id": null,
-  "links": [],
+  "refresh": "1m",
+  "weekStart": "monday",
   "panels": [
     {
       "id": 100,
@@ -615,13 +614,6 @@
       ]
     }
   ],
-  "refresh": "30s",
-  "schemaVersion": 39,
-  "tags": [
-    "session-timeline",
-    "traces",
-    "shepherd"
-  ],
   "templating": {
     "list": [
       {
@@ -662,14 +654,22 @@
       }
     ]
   },
+  "tags": [
+    "session-timeline",
+    "traces",
+    "shepherd"
+  ],
+  "timezone": "browser",
   "time": {
     "from": "now-24h",
     "to": "now"
   },
-  "timepicker": {},
-  "timezone": "browser",
-  "title": "Shepherd / Session Timeline",
-  "uid": "shepherd-session-timeline",
   "version": 2,
-  "weekStart": ""
+  "schemaVersion": 39,
+  "graphTooltip": 1,
+  "links": [],
+  "timepicker": {},
+  "annotations": {
+    "list": []
+  }
 }

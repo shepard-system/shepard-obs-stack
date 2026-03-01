@@ -1,12 +1,11 @@
 {
-  "annotations": {
-    "list": []
-  },
+  "uid": "shepherd-tools",
+  "id": null,
+  "title": "Shepherd / 05 Tools",
   "description": "Who is performing and who is wandering? Tool call patterns, frequency, top tools, error rates.",
   "editable": true,
-  "graphTooltip": 1,
-  "id": null,
-  "links": [],
+  "refresh": "1m",
+  "weekStart": "monday",
   "panels": [
     {
       "id": 1,
@@ -402,7 +401,9 @@
         {
           "id": "reduce",
           "options": {
-            "reducers": ["lastNotNull"],
+            "reducers": [
+              "lastNotNull"
+            ],
             "includeTimeField": false
           }
         },
@@ -570,12 +571,6 @@
       }
     }
   ],
-  "refresh": "30s",
-  "schemaVersion": 39,
-  "tags": [
-    "tools",
-    "shepherd"
-  ],
   "templating": {
     "list": [
       {
@@ -615,13 +610,21 @@
       }
     ]
   },
+  "tags": [
+    "tools",
+    "shepherd"
+  ],
+  "timezone": "browser",
   "time": {
     "from": "now-6h",
     "to": "now"
   },
+  "version": 2,
+  "schemaVersion": 39,
+  "graphTooltip": 1,
+  "links": [],
   "timepicker": {},
-  "timezone": "browser",
-  "title": "Shepherd / Tools",
-  "uid": "shepherd-tools",
-  "version": 2
+  "annotations": {
+    "list": []
+  }
 }

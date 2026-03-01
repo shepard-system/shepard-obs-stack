@@ -1,12 +1,11 @@
 {
-  "annotations": {
-    "list": []
-  },
+  "uid": "shepherd-quality",
+  "id": null,
+  "title": "Shepherd / 07 Quality",
   "description": "How well is the system working? Session quality, token efficiency, cache performance, active time across providers.",
   "editable": true,
-  "graphTooltip": 1,
-  "id": null,
-  "links": [],
+  "refresh": "1m",
+  "weekStart": "monday",
   "panels": [
     {
       "id": 100,
@@ -1148,7 +1147,9 @@
         {
           "id": "reduce",
           "options": {
-            "reducers": ["lastNotNull"],
+            "reducers": [
+              "lastNotNull"
+            ],
             "includeTimeField": false
           }
         },
@@ -1167,22 +1168,24 @@
       ]
     }
   ],
-  "refresh": "30s",
-  "schemaVersion": 39,
+  "templating": {
+    "list": []
+  },
   "tags": [
     "quality",
     "shepherd"
   ],
-  "templating": {
-    "list": []
-  },
+  "timezone": "browser",
   "time": {
     "from": "now-24h",
     "to": "now"
   },
+  "version": 4,
+  "schemaVersion": 39,
+  "graphTooltip": 1,
+  "links": [],
   "timepicker": {},
-  "timezone": "browser",
-  "title": "Shepherd / Quality",
-  "uid": "shepherd-quality",
-  "version": 4
+  "annotations": {
+    "list": []
+  }
 }
