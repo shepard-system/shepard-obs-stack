@@ -1,33 +1,19 @@
 groups:
   - name: services
     rules:
-      - alert: HighErrorRate
+      - alert: HighToolErrorRate
         expr: |
           (
-            sum by (service_name, team, project) (rate(shepherd_http_server_request_duration_seconds_count{http_status_code=~"5.."}[5m]))
+            sum(rate(shepherd_tool_calls_total{tool_status="error"}[5m]))
             /
-            sum by (service_name, team, project) (rate(shepherd_http_server_request_duration_seconds_count[5m]))
-          ) > 0.05
+            sum(rate(shepherd_tool_calls_total[5m]))
+          ) > 0.1
         for: 5m
         labels:
           severity: warning
         annotations:
-          summary: "High error rate for {{ $labels.service_name }}"
-          description: "Service {{ $labels.service_name }} (team={{ $labels.team }}, project={{ $labels.project }}) has >5% error rate. Current: {{ $value | humanizePercentage }}"
-
-      - alert: HighLatencyP99
-        expr: |
-          histogram_quantile(0.99,
-            sum by (le, service_name, team, project) (
-              rate(shepherd_http_server_request_duration_seconds_bucket[5m])
-            )
-          ) > 5
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High P99 latency for {{ $labels.service_name }}"
-          description: "Service {{ $labels.service_name }} P99 latency is above 5s. Current: {{ $value }}s"
+          summary: "High tool error rate across all sources"
+          description: "Tool error rate is above 10%. Current: {{ $value | humanizePercentage }}"
 
       - alert: NoTelemetryReceived
         expr: |

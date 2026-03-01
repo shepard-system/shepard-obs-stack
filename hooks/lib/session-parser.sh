@@ -204,7 +204,7 @@ if $session_id == null then empty else
    else {} end)
  )},
 
-# 1b. Session meta marker (child of root — root spans are not indexed by Tempo local-blocks)
+# 1b. Session meta marker (zero-duration child of root, kept for backward compatibility in trace views)
 {trace_id: $trace_id, span_id: $meta_sid, parent_span_id: $root_sid,
  name: "claude.session.meta",
  start_ns: ($t_start | ts_to_ns), end_ns: ($t_start | ts_to_ns),

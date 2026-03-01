@@ -31,10 +31,19 @@ uninstall_claude() {
     return
   fi
 
-  # Remove hooks + native OTel env block, keep everything else
+  # Remove hooks + shepherd OTel env vars only, keep user's other env vars
   local tmp
   tmp=$(mktemp)
-  jq 'del(.hooks) | del(.env)' "$config_file" > "$tmp" && mv "$tmp" "$config_file"
+  jq 'del(.hooks) |
+      del(.env.CLAUDE_CODE_ENABLE_TELEMETRY,
+          .env.OTEL_METRICS_EXPORTER,
+          .env.OTEL_LOGS_EXPORTER,
+          .env.OTEL_EXPORTER_OTLP_PROTOCOL,
+          .env.OTEL_EXPORTER_OTLP_ENDPOINT,
+          .env.OTEL_METRIC_EXPORT_INTERVAL,
+          .env.OTEL_LOGS_EXPORT_INTERVAL,
+          .env.OTEL_LOG_TOOL_DETAILS) |
+      if .env == {} then del(.env) else . end' "$config_file" > "$tmp" && mv "$tmp" "$config_file"
 
   green "Claude Code  — hooks + native OTel removed from $config_file"
   REMOVED=$((REMOVED + 1))
