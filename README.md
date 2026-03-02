@@ -188,7 +188,7 @@ shepard-obs-stack/
 Issues and pull requests are welcome. Before submitting changes, run the test pipeline:
 
 ```bash
-./scripts/test-signal.sh    # should pass 3/11 checks (others need live CLI data)
+./scripts/test-signal.sh    # pass count depends on which CLIs have sent data
 ```
 
 ## License
