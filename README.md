@@ -103,20 +103,20 @@ Everything else (tokens, cost, sessions) comes from native OTel export.
 
 The installer auto-detects installed CLIs and merges hook configuration into their config files (creating backups first).
 
-| CLI         | Hooks                                                          | Native OTel signals     |
-|-------------|----------------------------------------------------------------|-------------------------|
-| Claude Code | `PreToolUse`, `PostToolUse`, `SessionStart`, `Stop`            | metrics + logs          |
-| Codex CLI   | `agent-turn-complete`                                          | logs                    |
-| Gemini CLI  | `AfterTool`, `AfterAgent`, `AfterModel`, `SessionEnd`         | metrics + logs + traces |
+| CLI         | Hooks                                                 | Native OTel signals     |
+|-------------|-------------------------------------------------------|-------------------------|
+| Claude Code | `PreToolUse`, `PostToolUse`, `SessionStart`, `Stop`   | metrics + logs          |
+| Codex CLI   | `agent-turn-complete`                                 | logs                    |
+| Gemini CLI  | `AfterTool`, `AfterAgent`, `AfterModel`, `SessionEnd` | metrics + logs + traces |
 
 ## Alerting
 
 Alertmanager runs on :9093 with 15 alert rules in three tiers:
 
-| Tier               | Alerts | Examples                                                                                                                          |
-|--------------------|--------|-----------------------------------------------------------------------------------------------------------------------------------|
-| **Infrastructure** | 6      | `OTelCollectorDown`, `TempoDown`, `CollectorHighMemory`, export failures                                                          |
-| **Pipeline**       | 4      | `LokiDown`, `PrometheusTargetDown`, `TempoDown`, `LokiRecordingRulesFailing`                                                      |
+| Tier               | Alerts | Examples                                                                                                                              |
+|--------------------|--------|---------------------------------------------------------------------------------------------------------------------------------------|
+| **Infrastructure** | 6      | `OTelCollectorDown`, `TempoDown`, `CollectorHighMemory`, export failures                                                              |
+| **Pipeline**       | 4      | `LokiDown`, `PrometheusTargetDown`, `TempoDown`, `LokiRecordingRulesFailing`                                                          |
 | **Business logic** | 5      | `HighSessionCost` (>$10/hr), `HighTokenBurn` (>50k tok/min), `HighToolErrorRate` (>10%), `SensitiveFileAccess`, `NoTelemetryReceived` |
 
 Inhibit rules suppress business-logic alerts when infrastructure is down.
