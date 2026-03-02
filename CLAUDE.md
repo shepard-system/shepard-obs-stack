@@ -154,12 +154,12 @@ hooks/
 
 ### Hook Metrics (Prometheus)
 
-| Metric                                | Dimensions                          | Emitted by             |
-|---------------------------------------|-------------------------------------|------------------------|
-| `shepherd_events_total`               | source, event_type, git_repo        | all hooks              |
-| `shepherd_tool_calls_total`           | source, tool, tool_status, git_repo | tool_use hooks         |
-| `shepherd_sensitive_file_access_total` | source, tool, git_repo              | tool_use hooks         |
-| `shepherd_compaction_events_total`    | source, git_repo                    | Claude stop hook       |
+| Metric                                 | Dimensions                          | Emitted by       |
+|----------------------------------------|-------------------------------------|------------------|
+| `shepherd_events_total`                | source, event_type, git_repo        | all hooks        |
+| `shepherd_tool_calls_total`            | source, tool, tool_status, git_repo | tool_use hooks   |
+| `shepherd_sensitive_file_access_total` | source, tool, git_repo              | tool_use hooks   |
+| `shepherd_compaction_events_total`     | source, git_repo                    | Claude stop hook |
 
 Tool status detection: hooks grep `tool_response` for error patterns (exit code, traceback, FAILED, panic) → `tool_status="error"` or `"success"`.
 
@@ -226,19 +226,19 @@ Key config requirements:
 
 ## Dashboards
 
-| Dashboard        | UID                         | Data Source                         | File                                                  |
-|------------------|-----------------------------|-------------------------------------|-------------------------------------------------------|
-| Cost             | `shepherd-cost`             | Prometheus                          | `configs/grafana/dashboards/01-cost.json`             |
-| Tools            | `shepherd-tools`            | Prometheus                          | `configs/grafana/dashboards/02-tools.json`            |
-| Operations       | `shepherd-operations`       | Prometheus + Loki                   | `configs/grafana/dashboards/03-operations.json`       |
-| Quality          | `shepherd-quality`          | Prometheus                          | `configs/grafana/dashboards/04-quality.json`          |
-| Claude Deep Dive | `shepherd-claude-deep-dive` | Prometheus + Loki                   | `configs/grafana/dashboards/10-claude-deep-dive.json` |
-| Codex Deep Dive  | `shepherd-codex-deep-dive`  | Prometheus (recording rules) + Loki | `configs/grafana/dashboards/11-codex-deep-dive.json`  |
-| Gemini Deep Dive | `shepherd-gemini-deep-dive` | Prometheus + Loki                   | `configs/grafana/dashboards/12-gemini-deep-dive.json` |
-| Session Timeline | `shepherd-session-timeline` | Prometheus (span-metrics) + Tempo   | `configs/grafana/dashboards/13-session-timeline.json` |
+| Grafana Title (sort order) | UID                         | Data Source                         | File                                                  |
+|----------------------------|-----------------------------|-------------------------------------|-------------------------------------------------------|
+| 01 Claude Code Deep Dive   | `shepherd-claude-deep-dive` | Prometheus + Loki                   | `configs/grafana/dashboards/10-claude-deep-dive.json` |
+| 02 Gemini CLI Deep Dive    | `shepherd-gemini-deep-dive` | Prometheus + Loki                   | `configs/grafana/dashboards/12-gemini-deep-dive.json` |
+| 03 Codex Deep Dive         | `shepherd-codex-deep-dive`  | Prometheus (recording rules) + Loki | `configs/grafana/dashboards/11-codex-deep-dive.json`  |
+| 04 Cost                    | `shepherd-cost`             | Prometheus                          | `configs/grafana/dashboards/01-cost.json`             |
+| 05 Tools                   | `shepherd-tools`            | Prometheus                          | `configs/grafana/dashboards/02-tools.json`            |
+| 06 Operations              | `shepherd-operations`       | Prometheus + Loki                   | `configs/grafana/dashboards/03-operations.json`       |
+| 07 Quality                 | `shepherd-quality`          | Prometheus                          | `configs/grafana/dashboards/04-quality.json`          |
+| 08 Session Timeline        | `shepherd-session-timeline` | Prometheus (span-metrics) + Tempo   | `configs/grafana/dashboards/13-session-timeline.json` |
 
-Unified dashboards (01–04) aggregate across providers. Deep-dive dashboards (10–12) are provider-specific using native OTel. 
-Session Timeline (13) shows synthetic traces parsed from all 3 CLI session logs with `$provider` variable.
+Deep-dive dashboards (01–03) are provider-specific using native OTel. Unified dashboards (04–07) aggregate across providers.
+Session Timeline (08) shows synthetic traces parsed from all 3 CLI session logs with `$provider` variable.
 Stat/table panels use Prometheus `traces_spanmetrics_calls_total` counters (generated by Tempo's span-metrics processor).
 Session Traces table uses Tempo trace search. Tool Duration Distribution uses Prometheus `traces_spanmetrics_latency_bucket`.
 
