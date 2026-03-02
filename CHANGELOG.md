@@ -16,11 +16,17 @@ Initial public release. Docker-based observability for AI coding assistants
 
 ### Hooks
 
-- **Claude Code**: `PostToolUse` + `Stop` hooks — tool calls, events, session traces
+- **Claude Code**: `PreToolUse` + `PostToolUse` + `SessionStart` + `Stop` hooks
+  - PreToolUse guard blocks access to sensitive files (`.env`, credentials, keys) with exit 2
+  - SessionStart (matcher: compact) re-injects project conventions after context compaction
+  - PostToolUse emits tool calls, events, and sensitive file access counters
+  - Stop emits session end events, compaction counts, and triggers session trace parser
 - **Codex CLI**: `notify` hook — events, session traces
 - **Gemini CLI**: `AfterTool` + `AfterAgent` + `AfterModel` + `SessionEnd` hooks
 - Auto-installer: `./hooks/install.sh` (detects installed CLIs, merges config via jq)
 - Clean uninstall: `./hooks/uninstall.sh`
+- Sensitive file detection: shared `lib/sensitive-patterns.sh` for `.env`, credentials,
+  keys, `.aws/` etc. — separate patterns for file paths vs commands to avoid false positives
 - Fire-and-forget: hooks never block the AI assistant (`curl -s & disown`)
 - Git context enrichment: `git_repo` + `git_branch` labels on all metrics
 
@@ -51,13 +57,16 @@ Initial public release. Docker-based observability for AI coding assistants
 - Tempo span-metrics generate `traces_spanmetrics_calls_total` and
   `traces_spanmetrics_latency_bucket` for stat/table panels
 
-### Alerting
+### Alerting (15 rules, 3 tiers)
 
-- Infrastructure: OTelCollectorDown, CollectorHighMemory, export failures
-- Pipeline: LokiDown, PrometheusTargetDown
-- Services: HighToolErrorRate, NoTelemetryReceived
-- Inhibit rules: suppress downstream alerts when Loki is down
-- Alertmanager with webhook receiver (configurable)
+- **Infrastructure** (6): OTelCollectorDown, CollectorExportFailed{Spans,Metrics,Logs},
+  CollectorHighMemory, PrometheusHighMemory
+- **Pipeline** (4): LokiDown, TempoDown, PrometheusTargetDown, LokiRecordingRulesFailing
+- **Services** (5): HighSessionCost (>$10/hr), HighTokenBurn (>50k tok/min),
+  HighToolErrorRate (>10%), SensitiveFileAccess, NoTelemetryReceived
+- Inhibit rules: OTelCollectorDown suppresses business-logic alerts;
+  LokiDown suppresses LokiRecordingRulesFailing + HighTokenBurn
+- Alertmanager with Telegram, Slack, and Discord receivers (configurable)
 
 ### Documentation
 
