@@ -8,9 +8,11 @@
 
 **The Eye** — self-hosted observability for AI coding assistants.
 
-You use Claude Code, Codex, or Gemini CLI every day. 
-You have no idea how much they cost, which tools they call, or whether they're actually helping. 
+You use Claude Code, Codex, or Gemini CLI every day.
+You have no idea how much they cost, which tools they call, or whether they're actually helping.
 This fixes that.
+
+![Cost Dashboard](docs/screenshots/cost-dashboard.png)
 
 ## Highlights
 
@@ -63,6 +65,27 @@ Open [localhost:3000](http://localhost:3000) (admin / shepherd). Use your CLI as
 | **Session Timeline** | Synthetic traces from all 3 CLI session logs — tool call waterfall, MCP timing, sub-agents |
 
 Click any Trace ID to open the full waterfall in Grafana Explore → Tempo.
+
+<details>
+<summary>Screenshots</summary>
+
+**Tools** — 5K calls across all three CLIs, top tools ranked, failing tools by error count:
+
+![Tools Dashboard](docs/screenshots/tools-dashboard.png)
+
+**Operations** — live event rate, breakdown by source and event type:
+
+![Operations Dashboard](docs/screenshots/operations-dashboard.png)
+
+**Claude Code Deep Dive** — per-model cost, token breakdown, cache efficiency, productivity ratio:
+
+![Claude Deep Dive](docs/screenshots/claude-deep-dive.png)
+
+**Quality** — cache hit rates, error rates, session trends:
+
+![Quality Dashboard](docs/screenshots/quality-dashboard.png)
+
+</details>
 
 Dashboard template variables: **Tools** and **Operations** support `$source` and `$git_repo` filtering. 
 **Deep Dive** dashboards use `$model`. **Session Timeline** uses `$provider`. **Cost** and **Quality** show aggregated data without filters.
