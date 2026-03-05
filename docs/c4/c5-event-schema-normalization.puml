@@ -19,7 +19,7 @@ UpdateElementStyle("system_boundary", $fontColor="#8b949e", $borderColor="#30363
 
 LAYOUT_WITH_LEGEND()
 
-title Component Diagram — Cross-CLI Event Schema Normalization
+title Component Diagram — Cross-CLI Event Schema Normalization (Target Architecture)
 
 System_Ext(claude_raw, "Claude Raw Events", "PostToolUse / Stop payloads + transcript")
 System_Ext(codex_raw, "Codex Raw Events", "agent-turn-complete notify payload")
