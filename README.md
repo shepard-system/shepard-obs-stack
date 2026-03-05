@@ -39,6 +39,21 @@ This fixes that.
 
 </details>
 
+## Table of Contents
+
+- [Highlights](#highlights)
+- [Quick Start](#quick-start)
+- [Dashboards](#dashboards)
+- [How It Works](#how-it-works)
+- [Hook Setup](#hook-setup)
+- [Rust Accelerator](#rust-accelerator-optional)
+- [Alerting](#alerting)
+- [Services](#services)
+- [Architecture](#architecture)
+- [Project Structure](#project-structure)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Highlights
 
 - **One command** to start: `./scripts/init.sh` — 6 services, 8 dashboards, under a minute
