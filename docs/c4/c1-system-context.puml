@@ -23,7 +23,7 @@ Person(developer, "Developer", "Uses AI coding assistants and monitors their tel
 
 System(eye, "The Eye", "Observability stack that collects, stores, and visualizes telemetry from AI CLI tools and instrumented services")
 
-System_Ext(claude, "Claude Code", "AI coding assistant.\nHooks: PostToolUse, Stop")
+System_Ext(claude, "Claude Code", "AI coding assistant.\nHooks: PreToolUse, PostToolUse,\nSessionStart, Stop")
 System_Ext(codex, "Codex CLI", "OpenAI coding assistant.\nHook: agent-turn-complete")
 System_Ext(gemini, "Gemini CLI", "Google AI assistant.\nHooks: AfterTool, AfterAgent,\nAfterModel, SessionEnd")
 System_Ext(apps, "Instrumented Services", "Any application emitting OTLP telemetry")
