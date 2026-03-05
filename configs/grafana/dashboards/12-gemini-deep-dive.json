@@ -1059,6 +1059,101 @@
       }
     },
     {
+      "id": 32,
+      "title": "Error Rate by Model",
+      "type": "bargauge",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 19
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (gen_ai_request_model) (increase(shepherd_gemini_cli_api_request_count_total{status_code!=\"200\",gen_ai_request_model=~\"$model\",gen_ai_request_model!=\"\"}[$__range])) / sum by (gen_ai_request_model) (increase(shepherd_gemini_cli_api_request_count_total{gen_ai_request_model=~\"$model\",gen_ai_request_model!=\"\"}[$__range]))",
+          "queryType": "instant",
+          "legendFormat": "{{gen_ai_request_model}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "unit": "percentunit",
+          "decimals": 1,
+          "min": 0,
+          "max": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.05
+              },
+              {
+                "color": "red",
+                "value": 0.15
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": true,
+          "calcs": [],
+          "fields": ""
+        },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "valueMode": "color",
+        "minVizWidth": 8,
+        "minVizHeight": 16,
+        "namePlacement": "auto"
+      },
+      "transformations": [
+        {
+          "id": "reduce",
+          "options": {
+            "reducers": [
+              "lastNotNull"
+            ],
+            "includeTimeField": false
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "field": "Last *",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
       "id": 400,
       "title": "Tools & Commands",
       "type": "row",
@@ -1067,7 +1162,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 19
+        "y": 27
       },
       "panels": []
     },
@@ -1079,7 +1174,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 20
+        "y": 28
       },
       "datasource": {
         "type": "prometheus",
@@ -1150,7 +1245,7 @@
         "h": 8,
         "w": 4,
         "x": 8,
-        "y": 20
+        "y": 28
       },
       "datasource": {
         "type": "prometheus",
@@ -1265,7 +1360,7 @@
         "h": 8,
         "w": 8,
         "x": 12,
-        "y": 20
+        "y": 28
       },
       "datasource": {
         "type": "loki",
@@ -1336,7 +1431,7 @@
         "h": 8,
         "w": 4,
         "x": 20,
-        "y": 20
+        "y": 28
       },
       "datasource": {
         "type": "prometheus",
@@ -1444,6 +1539,291 @@
       }
     },
     {
+      "id": 33,
+      "title": "Calls by Tool Type",
+      "type": "piechart",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 36
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (tool_type) (increase(shepherd_gemini_cli_tool_call_count_total{model=~\"$model\"}[$__range])) > 0",
+          "queryType": "instant",
+          "legendFormat": "{{tool_type}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "pieType": "donut",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value",
+            "percent"
+          ]
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "displayLabels": []
+      }
+    },
+    {
+      "id": 450,
+      "title": "Tool Stats",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 44
+      },
+      "panels": []
+    },
+    {
+      "id": 34,
+      "title": "Tool Stats",
+      "type": "table",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 45
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "round(sum by (function_name) (increase(shepherd_gemini_cli_tool_call_count_total{model=~\"$model\"}[$__range])))",
+          "queryType": "instant",
+          "legendFormat": "{{function_name}}",
+          "refId": "Calls",
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (function_name) (increase(shepherd_gemini_cli_tool_call_count_total{success=\"true\",model=~\"$model\"}[$__range])) / sum by (function_name) (increase(shepherd_gemini_cli_tool_call_count_total{model=~\"$model\"}[$__range]))",
+          "queryType": "instant",
+          "legendFormat": "{{function_name}}",
+          "refId": "SuccessRate",
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (function_name) (increase(shepherd_gemini_cli_tool_call_latency_milliseconds_sum{model=~\"$model\"}[$__range])) / sum by (function_name) (increase(shepherd_gemini_cli_tool_call_latency_milliseconds_count{model=~\"$model\"}[$__range]))",
+          "queryType": "instant",
+          "legendFormat": "{{function_name}}",
+          "refId": "AvgDuration",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "function_name"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Tool"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #Calls"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Calls"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #SuccessRate"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Success Rate"
+              },
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 0.8
+                    },
+                    {
+                      "color": "green",
+                      "value": 0.95
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #AvgDuration"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Avg Duration"
+              },
+              {
+                "id": "unit",
+                "value": "ms"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ]
+        },
+        "sortBy": [
+          {
+            "displayName": "Calls",
+            "desc": true
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        }
+      ]
+    },
+    {
       "id": 500,
       "title": "Model Routing",
       "type": "row",
@@ -1452,7 +1832,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 28
+        "y": 53
       },
       "panels": []
     },
@@ -1464,7 +1844,7 @@
         "h": 8,
         "w": 17,
         "x": 0,
-        "y": 29
+        "y": 54
       },
       "datasource": {
         "type": "loki",
@@ -1501,7 +1881,7 @@
         "h": 8,
         "w": 7,
         "x": 17,
-        "y": 29
+        "y": 54
       },
       "datasource": {
         "type": "prometheus",
@@ -1572,7 +1952,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 37
+        "y": 62
       },
       "panels": []
     },
@@ -1584,7 +1964,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 38
+        "y": 63
       },
       "datasource": {
         "type": "prometheus",
@@ -1811,7 +2191,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 46
+        "y": 71
       },
       "panels": []
     },
@@ -1823,7 +2203,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 47
+        "y": 72
       },
       "datasource": {
         "type": "prometheus",
@@ -1917,7 +2297,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 47
+        "y": 72
       },
       "datasource": {
         "type": "prometheus",
@@ -2011,7 +2391,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 55
+        "y": 80
       },
       "datasource": {
         "type": "prometheus",
@@ -2106,7 +2486,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 55
+        "y": 80
       },
       "datasource": {
         "type": "prometheus",
@@ -2201,7 +2581,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 63
+        "y": 88
       },
       "datasource": {
         "type": "prometheus",
@@ -2359,7 +2739,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 63
+        "y": 88
       },
       "datasource": {
         "type": "prometheus",
@@ -2418,7 +2798,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 71
+        "y": 96
       },
       "panels": []
     },
@@ -2430,7 +2810,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 72
+        "y": 97
       },
       "datasource": {
         "type": "loki",
@@ -2467,7 +2847,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 72
+        "y": 97
       },
       "datasource": {
         "type": "loki",
@@ -2504,7 +2884,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 72
+        "y": 97
       },
       "datasource": {
         "type": "loki",
