@@ -1064,7 +1064,7 @@
       "type": "bargauge",
       "gridPos": {
         "h": 8,
-        "w": 8,
+        "w": 12,
         "x": 0,
         "y": 19
       },
@@ -1079,9 +1079,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (gen_ai_request_model) (increase(shepherd_gemini_cli_api_request_count_total{status_code!=\"200\",gen_ai_request_model=~\"$model\",gen_ai_request_model!=\"\"}[$__range])) / sum by (gen_ai_request_model) (increase(shepherd_gemini_cli_api_request_count_total{gen_ai_request_model=~\"$model\",gen_ai_request_model!=\"\"}[$__range]))",
+          "expr": "sum by (model) (increase(shepherd_gemini_cli_api_request_count_total{status_code!=\"200\",model=~\"$model\",model!=\"\"}[$__range])) / sum by (model) (increase(shepherd_gemini_cli_api_request_count_total{model=~\"$model\",model!=\"\"}[$__range]))",
           "queryType": "instant",
-          "legendFormat": "{{gen_ai_request_model}}",
+          "legendFormat": "{{model}}",
           "refId": "A"
         }
       ],
@@ -1152,6 +1152,77 @@
           }
         }
       ]
+    },
+    {
+      "id": 33,
+      "title": "Calls by Tool Type",
+      "type": "piechart",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 19
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (tool_type) (increase(shepherd_gemini_cli_tool_call_count_total[$__range])) > 0",
+          "queryType": "instant",
+          "legendFormat": "{{tool_type}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "pieType": "donut",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value",
+            "percent"
+          ]
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "displayLabels": []
+      }
     },
     {
       "id": 400,
@@ -1539,77 +1610,6 @@
       }
     },
     {
-      "id": 33,
-      "title": "Calls by Tool Type",
-      "type": "piechart",
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 0,
-        "y": 36
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "sum by (tool_type) (increase(shepherd_gemini_cli_tool_call_count_total{model=~\"$model\"}[$__range])) > 0",
-          "queryType": "instant",
-          "legendFormat": "{{tool_type}}",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "decimals": 2
-        },
-        "overrides": []
-      },
-      "options": {
-        "pieType": "donut",
-        "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": ""
-        },
-        "legend": {
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "values": [
-            "value",
-            "percent"
-          ]
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        },
-        "displayLabels": []
-      }
-    },
-    {
       "id": 450,
       "title": "Tool Stats",
       "type": "row",
@@ -1618,7 +1618,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 44
+        "y": 36
       },
       "panels": []
     },
@@ -1630,7 +1630,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 45
+        "y": 37
       },
       "datasource": {
         "type": "prometheus",
@@ -1643,7 +1643,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "round(sum by (function_name) (increase(shepherd_gemini_cli_tool_call_count_total{model=~\"$model\"}[$__range])))",
+          "expr": "round(sum by (function_name) (increase(shepherd_gemini_cli_tool_call_count_total[$__range])))",
           "queryType": "instant",
           "legendFormat": "{{function_name}}",
           "refId": "Calls",
@@ -1655,7 +1655,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (function_name) (increase(shepherd_gemini_cli_tool_call_count_total{success=\"true\",model=~\"$model\"}[$__range])) / sum by (function_name) (increase(shepherd_gemini_cli_tool_call_count_total{model=~\"$model\"}[$__range]))",
+          "expr": "sum by (function_name) (increase(shepherd_gemini_cli_tool_call_count_total{success=\"true\"}[$__range])) / sum by (function_name) (increase(shepherd_gemini_cli_tool_call_count_total[$__range]))",
           "queryType": "instant",
           "legendFormat": "{{function_name}}",
           "refId": "SuccessRate",
@@ -1667,7 +1667,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (function_name) (increase(shepherd_gemini_cli_tool_call_latency_milliseconds_sum{model=~\"$model\"}[$__range])) / sum by (function_name) (increase(shepherd_gemini_cli_tool_call_latency_milliseconds_count{model=~\"$model\"}[$__range]))",
+          "expr": "sum by (function_name) (increase(shepherd_gemini_cli_tool_call_latency_milliseconds_sum[$__range])) / sum by (function_name) (increase(shepherd_gemini_cli_tool_call_latency_milliseconds_count[$__range]))",
           "queryType": "instant",
           "legendFormat": "{{function_name}}",
           "refId": "AvgDuration",
@@ -1679,7 +1679,28 @@
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [],
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "nan",
+                "result": {
+                  "text": "-",
+                  "index": 0
+                }
+              }
+            },
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "-",
+                  "index": 1
+                }
+              }
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1694,25 +1715,9 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "function_name"
+              "options": "Calls"
             },
             "properties": [
-              {
-                "id": "displayName",
-                "value": "Tool"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Value #Calls"
-            },
-            "properties": [
-              {
-                "id": "displayName",
-                "value": "Calls"
-              },
               {
                 "id": "decimals",
                 "value": 0
@@ -1722,13 +1727,9 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Value #SuccessRate"
+              "options": "Success Rate"
             },
             "properties": [
-              {
-                "id": "displayName",
-                "value": "Success Rate"
-              },
               {
                 "id": "unit",
                 "value": "percentunit"
@@ -1769,13 +1770,9 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Value #AvgDuration"
+              "options": "Avg Duration"
             },
             "properties": [
-              {
-                "id": "displayName",
-                "value": "Avg Duration"
-              },
               {
                 "id": "unit",
                 "value": "ms"
@@ -1783,18 +1780,6 @@
               {
                 "id": "decimals",
                 "value": 1
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Time"
-            },
-            "properties": [
-              {
-                "id": "custom.hidden",
-                "value": true
               }
             ]
           }
@@ -1818,8 +1803,28 @@
       },
       "transformations": [
         {
-          "id": "merge",
-          "options": {}
+          "id": "seriesToColumns",
+          "options": {
+            "byField": "function_name"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Time 1": true,
+              "Time 2": true,
+              "Time 3": true
+            },
+            "indexByName": {},
+            "renameByName": {
+              "function_name": "Tool",
+              "Value #Calls": "Calls",
+              "Value #SuccessRate": "Success Rate",
+              "Value #AvgDuration": "Avg Duration"
+            }
+          }
         }
       ]
     },
@@ -1832,7 +1837,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 53
+        "y": 45
       },
       "panels": []
     },
@@ -1844,7 +1849,7 @@
         "h": 8,
         "w": 17,
         "x": 0,
-        "y": 54
+        "y": 46
       },
       "datasource": {
         "type": "loki",
@@ -1881,7 +1886,7 @@
         "h": 8,
         "w": 7,
         "x": 17,
-        "y": 54
+        "y": 46
       },
       "datasource": {
         "type": "prometheus",
@@ -1952,7 +1957,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 62
+        "y": 54
       },
       "panels": []
     },
@@ -1964,7 +1969,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 63
+        "y": 55
       },
       "datasource": {
         "type": "prometheus",
@@ -2191,7 +2196,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 71
+        "y": 63
       },
       "panels": []
     },
@@ -2203,7 +2208,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 72
+        "y": 64
       },
       "datasource": {
         "type": "prometheus",
@@ -2297,7 +2302,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 72
+        "y": 64
       },
       "datasource": {
         "type": "prometheus",
@@ -2391,7 +2396,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 80
+        "y": 72
       },
       "datasource": {
         "type": "prometheus",
@@ -2486,7 +2491,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 80
+        "y": 72
       },
       "datasource": {
         "type": "prometheus",
@@ -2581,7 +2586,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 88
+        "y": 80
       },
       "datasource": {
         "type": "prometheus",
@@ -2739,7 +2744,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 88
+        "y": 80
       },
       "datasource": {
         "type": "prometheus",
@@ -2798,7 +2803,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 96
+        "y": 88
       },
       "panels": []
     },
@@ -2810,7 +2815,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 97
+        "y": 89
       },
       "datasource": {
         "type": "loki",
@@ -2847,7 +2852,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 97
+        "y": 89
       },
       "datasource": {
         "type": "loki",
@@ -2884,7 +2889,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 97
+        "y": 89
       },
       "datasource": {
         "type": "loki",
