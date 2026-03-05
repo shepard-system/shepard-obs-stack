@@ -89,4 +89,4 @@ mv "${tmp_dir}/shepard-hook-${platform}-${arch}" "${INSTALL_DIR}/shepard-hook"
 chmod +x "${INSTALL_DIR}/shepard-hook"
 
 green "shepard-hook ${version} → ${INSTALL_DIR}/shepard-hook"
-"${INSTALL_DIR}/shepard-hook" --help 2>/dev/null | head -1 || true
+"${INSTALL_DIR}/shepard-hook" --version 2>/dev/null || true

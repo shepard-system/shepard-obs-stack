@@ -256,43 +256,6 @@ install_gemini() {
   INSTALLED=$((INSTALLED + 1))
 }
 
-# ── Rust Accelerator (optional) ──────────────────────────────────────
-
-install_rust_accelerator() {
-  local bin_dir="${HOOKS_DIR}/bin"
-
-  # Already installed project-locally?
-  if [[ -x "${bin_dir}/shepard-hook" ]]; then
-    local current
-    current="$("${bin_dir}/shepard-hook" --version 2>/dev/null | awk '{print $2}')"
-    green "shepard-hook — already installed (${current:-unknown}) → ${bin_dir}/shepard-hook"
-    return 0
-  fi
-
-  # Also accept globally installed
-  if command -v shepard-hook &>/dev/null; then
-    local current
-    current="$(shepard-hook --version 2>/dev/null | awk '{print $2}')"
-    green "shepard-hook — found on PATH (${current:-unknown})"
-    return 0
-  fi
-
-  # Delegate to standalone installer
-  local installer="${HOOKS_DIR}/../scripts/install-accelerator.sh"
-  if [[ -x "$installer" ]]; then
-    local version="${SHEPARD_HOOK_VERSION:-latest}"
-    if "$installer" "$version"; then
-      return 0
-    else
-      yellow "shepard-hook — install failed, hooks will use bash fallback"
-      return 0
-    fi
-  else
-    yellow "shepard-hook — installer not found, skipping (hooks will use bash fallback)"
-    return 0
-  fi
-}
-
 # ── Main ─────────────────────────────────────────────────────────────
 
 PROVIDERS=("$@")
@@ -331,9 +294,6 @@ chmod +x "${HOOKS_DIR}"/claude/*.sh 2>/dev/null || true
 chmod +x "${HOOKS_DIR}"/codex/*.sh 2>/dev/null || true
 chmod +x "${HOOKS_DIR}"/gemini/*.sh 2>/dev/null || true
 chmod +x "${HOOKS_DIR}"/lib/*.sh 2>/dev/null || true
-
-# Install Rust accelerator (optional — hooks fall back to bash if absent)
-install_rust_accelerator
 
 for provider in "${PROVIDERS[@]}"; do
   "install_${provider}"

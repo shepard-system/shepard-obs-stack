@@ -177,6 +177,14 @@ for provider in "${PROVIDERS[@]}"; do
   "uninstall_${provider}"
 done
 
+# Remove Rust accelerator binary (project-local only)
+HOOKS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -x "${HOOKS_DIR}/bin/shepard-hook" ]]; then
+  rm -f "${HOOKS_DIR}/bin/shepard-hook"
+  rmdir "${HOOKS_DIR}/bin" 2>/dev/null || true
+  green "shepard-hook — removed from ${HOOKS_DIR}/bin/"
+fi
+
 echo ""
 if [[ $REMOVED -eq 0 ]]; then
   echo "Nothing to remove."
