@@ -22,7 +22,7 @@ LAYOUT_WITH_LEGEND()
 
 title Component Diagram — Hooks Runtime (shepard-obs-stack)
 
-System_Ext(claude, "Claude Code", "Hook events: PostToolUse, Stop")
+System_Ext(claude, "Claude Code", "Hook events: PreToolUse, PostToolUse, SessionStart, Stop")
 System_Ext(codex, "Codex CLI", "notify event: agent-turn-complete")
 System_Ext(gemini, "Gemini CLI", "Hook events: AfterTool, AfterAgent, AfterModel, SessionEnd")
 
@@ -38,7 +38,10 @@ System_Boundary(hooks_runtime, "Hooks Runtime") {
     Component(enricher, "Context Enricher", "hooks/lib/git-context.sh", "Adds git_repo, git_branch, cwd context")
     Component(emit_metrics, "Metrics Emitter", "hooks/lib/metrics.sh", "Builds OTLP Sum metrics and posts to Collector")
     Component(emit_traces, "Trace Emitter", "hooks/lib/traces.sh", "Builds OTLP spans and posts to Collector")
-    Component(session_parser, "Session Parser", "hooks/lib/session-parser.sh", "Parses Claude JSONL logs into synthetic trace spans")
+    Component(sensitive, "Sensitive Patterns", "hooks/lib/sensitive-patterns.sh", "Detects .env, credentials, keys, secrets access")
+    Component(session_parser_claude, "Claude Session Parser", "hooks/lib/session-parser.sh", "Parses Claude JSONL logs into synthetic trace spans")
+    Component(session_parser_codex, "Codex Session Parser", "hooks/lib/codex-session-parser.sh", "Parses Codex JSONL logs into synthetic trace spans")
+    Component(session_parser_gemini, "Gemini Session Parser", "hooks/lib/gemini-session-parser.sh", "Parses Gemini JSON logs into synthetic trace spans")
 }
 
 Rel(claude, adapter_claude, "stdin JSON")
@@ -49,12 +52,19 @@ Rel(adapter_claude, enricher, "resolve git context")
 Rel(adapter_codex, enricher, "resolve git context")
 Rel(adapter_gemini, enricher, "resolve git context")
 
+Rel(adapter_claude, sensitive, "check file access")
+Rel(adapter_gemini, sensitive, "check file access")
+
 Rel(adapter_claude, emit_metrics, "emit counters")
 Rel(adapter_codex, emit_metrics, "emit counters")
 Rel(adapter_gemini, emit_metrics, "emit counters")
 
-Rel(adapter_claude, session_parser, "parse JSONL session log")
-Rel(session_parser, emit_traces, "emit spans")
+Rel(adapter_claude, session_parser_claude, "parse JSONL session log")
+Rel(adapter_codex, session_parser_codex, "parse JSONL session log")
+Rel(adapter_gemini, session_parser_gemini, "parse JSON session log")
+Rel(session_parser_claude, emit_traces, "emit spans")
+Rel(session_parser_codex, emit_traces, "emit spans")
+Rel(session_parser_gemini, emit_traces, "emit spans")
 
 Rel(emit_metrics, collector, "OTLP HTTP /v1/metrics")
 Rel(emit_traces, collector, "OTLP HTTP /v1/traces")
