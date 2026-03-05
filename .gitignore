@@ -15,5 +15,8 @@
 # Environment
 .env
 
+# Rust accelerator binary (downloaded, not tracked)
+hooks/bin/
+
 # Private notes (not for repo)
 private/

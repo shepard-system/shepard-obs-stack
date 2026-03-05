@@ -100,8 +100,12 @@ The Prometheus exporter applies `shepherd` namespace, so all metrics get the `sh
 Hook metrics additionally have `_total` suffix (counters). 
 Native OTel metrics: dots become underscores (e.g., `claude_code.cost_usage.USD` → `shepherd_claude_code_cost_usage_USD_total`).
 
-**Fire-and-forget hooks:** `hooks/lib/metrics.sh:emit_counter()` uses `curl -s & disown` to avoid blocking the CLI. 
+**Fire-and-forget hooks:** `hooks/lib/metrics.sh:emit_counter()` uses `curl -s & disown` to avoid blocking the CLI.
 Hooks must never block or slow down the AI assistant.
+
+**Rust accelerator resolution:** All hooks source `hooks/lib/accelerator.sh` which sets `$SHEPARD_HOOK` via 3-step lookup:
+`hooks/bin/shepard-hook` (project-local) → `command -v shepard-hook` (PATH) → empty (bash fallback).
+Install with `./scripts/install-accelerator.sh` — downloads to `hooks/bin/` (gitignored, no sudo).
 
 **Dashboard provisioning:** Dashboards in `configs/grafana/dashboards/*.json` are auto-loaded by Grafana on startup. 
 Edits made in the Grafana UI are **lost on container restart**. 
@@ -129,7 +133,10 @@ All token/cost/session metrics come from native OTel.
 
 ```
 hooks/
+├── bin/
+│   └── shepard-hook              ← downloaded Rust accelerator (gitignored)
 ├── lib/
+│   ├── accelerator.sh            ← resolve $SHEPARD_HOOK (project-local → PATH → empty)
 │   ├── git-context.sh            ← get_git_context(cwd) → $GIT_REPO, $GIT_BRANCH
 │   ├── metrics.sh                ← emit_counter(name, value, labels_json) → OTLP HTTP
 │   ├── sensitive-patterns.sh     ← check_sensitive_access(tool_input) → detects .env, credentials, keys

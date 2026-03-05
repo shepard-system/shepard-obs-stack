@@ -13,6 +13,15 @@
 set -u
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Rust accelerator: full hook replacement
+# Note: Codex passes event JSON as $1, not stdin.
+# shepard-hook reads stdin, so pipe the argument.
+source "${SCRIPT_DIR}/../lib/accelerator.sh"
+if [[ -n "$SHEPARD_HOOK" ]]; then
+  echo "${1:-}" | "$SHEPARD_HOOK" hook codex notify
+  exit $?
+fi
 source "${SCRIPT_DIR}/../lib/git-context.sh"
 source "${SCRIPT_DIR}/../lib/metrics.sh"
 source "${SCRIPT_DIR}/../lib/traces.sh"

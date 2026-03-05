@@ -311,6 +311,48 @@ check_tempo_trace "Claude session trace"  "$CLAUDE_TRACE_ID"
 check_tempo_trace "Codex session trace"   "$CODEX_TRACE_ID"
 check_tempo_trace "Gemini session trace"  "$GEMINI_TRACE_ID"
 
+# ── 5. Rust accelerator smoke test (if available) ──────────────────
+
+if command -v shepard-hook &>/dev/null; then
+  echo ""
+  echo "Rust accelerator (shepard-hook):"
+
+  # PreToolUse guard — should block .env access
+  if echo '{"tool_name":"Read","tool_input":{"file_path":"/app/.env"}}' \
+    | shepard-hook hook claude pre-tool-use 2>/dev/null; then
+    red "  ✗ PreToolUse guard — .env was NOT blocked"
+    FAIL=$((FAIL + 1))
+  else
+    green "  ✓ PreToolUse guard — .env blocked (exit 2)"
+    PASS=$((PASS + 1))
+  fi
+
+  # emit-metric — should succeed (collector is running)
+  if shepard-hook emit-metric "test_rust" "1" '{"source":"test","tool":"smoke"}' 2>/dev/null; then
+    green "  ✓ emit-metric — sent to OTel Collector"
+    PASS=$((PASS + 1))
+  else
+    red "  ✗ emit-metric — failed"
+    FAIL=$((FAIL + 1))
+  fi
+
+  # parse-session | emit-traces
+  FIXTURES_DIR="${SCRIPT_DIR}/../../shepard-hooks-rs/tests/fixtures"
+  if [[ -f "${FIXTURES_DIR}/claude-session.jsonl" ]]; then
+    if shepard-hook parse-session claude "${FIXTURES_DIR}/claude-session.jsonl" \
+      | shepard-hook emit-traces "test-rust-session" 2>/dev/null; then
+      green "  ✓ parse-session | emit-traces — sent to Tempo"
+      PASS=$((PASS + 1))
+    else
+      red "  ✗ parse-session | emit-traces — failed"
+      FAIL=$((FAIL + 1))
+    fi
+  else
+    yellow "  ~ parse-session — fixture not found (shepard-hooks-rs not cloned)"
+    WARN=$((WARN + 1))
+  fi
+fi
+
 # ── Summary ──────────────────────────────────────────────────────────
 
 echo ""
@@ -319,7 +361,7 @@ echo "Results: ${PASS} passed, ${WARN} waiting for data, ${FAIL} failed (${TOTAL
 
 if [[ $FAIL -gt 0 ]]; then
   echo ""
-  red "Hook metrics did not arrive. Debug:"
+  red "Some checks failed. Debug:"
   echo "  docker compose logs otel-collector --tail=20"
   echo "  curl -s http://localhost:8889/metrics | grep shepherd_"
   echo "  curl -s http://localhost:9090/api/v1/targets | jq '.data.activeTargets[] | {job: .labels.job, health}'"

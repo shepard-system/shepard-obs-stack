@@ -44,6 +44,7 @@ This fixes that.
 - **One command** to start: `./scripts/init.sh` — 6 services, 8 dashboards, under a minute
 - **Three CLIs supported**: Claude Code, Codex, Gemini CLI — hooks + native OpenTelemetry
 - **Eight Grafana dashboards** auto-provisioned: cost, tools, operations, quality, per-provider deep dives, and session timeline
+- **Optional Rust accelerator** — `shepard-hook` binary replaces bash+jq+curl for faster hooks. Install with `./scripts/install-accelerator.sh` (no sudo). Falls back to bash if absent
 - **Minimal dependencies** — Docker, plus `bash`, `curl`, and `jq` on the host for hooks and tests. No Python, no Node, no cloud accounts
 - **Works offline** — everything runs on localhost, your data stays on your machine
 
@@ -128,7 +129,12 @@ Everything else (tokens, cost, sessions) comes from native OTel export.
 ./hooks/uninstall.sh            # clean removal
 ```
 
-The installer auto-detects installed CLIs and merges hook configuration into their config files (creating backups first).
+The installer auto-detects installed CLIs, merges hook configuration into their config files (creating backups first), and optionally downloads the [Rust accelerator](https://github.com/shepard-system/shepard-hooks-rs) for faster hook execution.
+
+```bash
+./scripts/install-accelerator.sh           # standalone: download to hooks/bin/ (no sudo)
+./scripts/install-accelerator.sh v0.1.0    # specific version
+```
 
 | CLI         | Hooks                                                 | Native OTel signals     |
 |-------------|-------------------------------------------------------|-------------------------|
@@ -202,7 +208,8 @@ shepard-obs-stack/
 ├── docker-compose.yaml
 ├── .env.example
 ├── hooks/
-│   ├── lib/                   # shared: git context, OTLP metrics + traces, sensitive file detection, session parser
+│   ├── bin/                   # Rust accelerator binary (gitignored, downloaded)
+│   ├── lib/                   # shared: accelerator, git context, OTLP metrics + traces, sensitive file detection, session parser
 │   ├── claude/                # PreToolUse + PostToolUse + SessionStart + Stop
 │   ├── codex/                 # notify.sh (agent-turn-complete)
 │   ├── gemini/                # AfterTool + AfterAgent + AfterModel + SessionEnd
@@ -210,6 +217,7 @@ shepard-obs-stack/
 │   └── uninstall.sh           # clean removal
 ├── scripts/
 │   ├── init.sh                # bootstrap
+│   ├── install-accelerator.sh # download Rust accelerator to hooks/bin/
 │   ├── test-signal.sh         # pipeline verification (11 checks)
 │   └── render-c4.sh           # render PlantUML → SVG
 ├── configs/

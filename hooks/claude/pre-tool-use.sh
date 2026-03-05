@@ -11,6 +11,13 @@
 set -u
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Rust accelerator: full hook replacement
+source "${SCRIPT_DIR}/../lib/accelerator.sh"
+if [[ -n "$SHEPARD_HOOK" ]]; then
+  "$SHEPARD_HOOK" hook claude pre-tool-use
+  exit $?
+fi
 source "${SCRIPT_DIR}/../lib/sensitive-patterns.sh"
 
 input="$(cat)"

@@ -17,6 +17,14 @@ emit_counter() {
   local labels_json="${3:-}"
   [[ -z "$labels_json" ]] && labels_json="{}"
 
+  # Rust accelerator: delegate to shepard-hook if available
+  source "${BASH_SOURCE[0]%/*}/accelerator.sh"
+  if [[ -n "$SHEPARD_HOOK" ]]; then
+    "$SHEPARD_HOOK" emit-metric "$name" "$value" "$labels_json" &
+    disown
+    return
+  fi
+
   local now_ns
   now_ns="$(date +%s)000000000"
 

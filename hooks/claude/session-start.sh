@@ -8,6 +8,15 @@
 # Re-injects project conventions to stdout after context compaction.
 # Claude sees stdout as context. Keep it concise and fast — no jq/curl/git needed.
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Rust accelerator: full hook replacement
+source "${SCRIPT_DIR}/../lib/accelerator.sh"
+if [[ -n "$SHEPARD_HOOK" ]]; then
+  "$SHEPARD_HOOK" hook claude session-start
+  exit $?
+fi
+
 cat <<'EOF'
 [Post-compaction context — shepard-obs-stack]
 - Metrics: shepherd_ prefix (OTel Collector Prometheus exporter namespace)
