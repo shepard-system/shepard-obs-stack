@@ -29,6 +29,10 @@ This fixes that.
 
 ![Claude Deep Dive](docs/screenshots/claude-deep-dive.png)
 
+**Claude Code Deep Dive (Tools)** — tool decisions, active time breakdown:
+
+![Claude Deep Dive Tools](docs/screenshots/claude-deep-dive-tools.png)
+
 **Quality** — cache hit rates, error rates, session trends:
 
 ![Quality Dashboard](docs/screenshots/quality-dashboard.png)
@@ -177,6 +181,18 @@ Native Telegram, Slack, and Discord receivers are included — uncomment and con
 
 ![C2 Container](docs/c4/c2-container.svg)
 
+### Hook Components
+
+![C3 Hook Components](docs/c4/c3-hooks-components.svg)
+
+### Hook Event Flow
+
+![C4 Hook Event Flow](docs/c4/c4-hook-event-flow.svg)
+
+### Event Schema Normalization
+
+![C5 Event Schema Normalization](docs/c4/c5-event-schema-normalization.svg)
+
 </details>
 
 ## Project Structure
@@ -188,7 +204,7 @@ shepard-obs-stack/
 ├── hooks/
 │   ├── lib/                   # shared: git context, OTLP metrics + traces, sensitive file detection, session parser
 │   ├── claude/                # PreToolUse + PostToolUse + SessionStart + Stop
-│   ├── codex/                 # agent-turn-complete
+│   ├── codex/                 # notify.sh (agent-turn-complete)
 │   ├── gemini/                # AfterTool + AfterAgent + AfterModel + SessionEnd
 │   ├── install.sh             # auto-detect + inject
 │   └── uninstall.sh           # clean removal

@@ -61,11 +61,12 @@ curl -s 'http://localhost:3100/loki/api/v1/query_range' \
 | 3100 | Loki           | Log aggregation      |
 | 9090 | Prometheus     | Metrics & alerts     |
 | 9093 | Alertmanager   | Alert routing        |
-| 3200 | Tempo          | Distributed tracing  |
-| 4317 | OTel Collector | OTLP gRPC receiver   |
-| 4318 | OTel Collector | OTLP HTTP receiver   |
-| 8888 | OTel Collector | Collector metrics    |
-| 8889 | OTel Collector | Prometheus exporter  |
+| 3200 | Tempo          | Distributed tracing      |
+| 9095 | Tempo          | gRPC (internal)          |
+| 4317 | OTel Collector | OTLP gRPC receiver       |
+| 4318 | OTel Collector | OTLP HTTP receiver       |
+| 8888 | OTel Collector | Collector metrics        |
+| 8889 | OTel Collector | Prometheus exporter (internal, not host-exposed) |
 
 ## Architecture & Data Flow
 
@@ -186,7 +187,7 @@ After Prometheus ingestion with `shepherd` namespace (dots→underscores, `_tota
 |--------------------------------------------------------|--------|----------------------------------------------------|
 | `shepherd_claude_code_cost_usage_USD_total`            | Claude | model                                              |
 | `shepherd_claude_code_token_usage_tokens_total`        | Claude | type (input/output/cacheRead/cacheCreation), model |
-| `shepherd_claude_code_session_count_total`             | Claude | —                                                  |
+| `shepherd_claude_code_session_count_total`             | Claude | — (not emitted by Claude Code ≤v2.1.63)            |
 | `shepherd_claude_code_active_time_seconds_total`       | Claude | model                                              |
 | `shepherd_claude_code_lines_of_code_count_total`       | Claude | —                                                  |
 | `shepherd_claude_code_code_edit_tool_decision_total`   | Claude | —                                                  |
@@ -246,7 +247,7 @@ Session Traces table uses Tempo trace search. Tool Duration Distribution uses Pr
 
 ```
 configs/
-├── otel-collector/config.yaml          ← OTLP receivers → deltatocumulative → batch → exporters
+├── otel-collector/config.yaml          ← OTLP receivers → deltatocumulative → batch → resource → exporters
 ├── prometheus/
 │   ├── prometheus.yaml                 ← Scrape targets (self, collector:8888, collector:8889, tempo:3200)
 │   └── alerts/                         ← infra.yaml, pipeline.yaml, services.yaml
@@ -319,10 +320,11 @@ Now that Session Timeline uses Prometheus span-metrics (which DO index root span
 are no longer required for dashboard queries but are kept for backward compatibility in trace views.
 
 **Root span attributes (all providers):**
-`session.id`, `model`, `provider`, `git.branch`, `git.repo`, `tokens.input`, `tokens.output`, `tokens.cache_read`, 
+`session.id`, `model`, `provider`, `git.branch`, `git.repo`, `tokens.input`, `tokens.output`, `tokens.cache_read`,
 `tokens.total`, `tool.count`, `tool.error_count`, `turn.count`, `compaction.count`, `stop_reason`, `has_interruption`
+Provider-specific: `tokens.cache_create` (Claude), `thinking.block_count` (Claude, Gemini), `tokens.reasoning` (Codex, Gemini)
 
-**Tool span attributes:** `tool.name`, `tool.is_error`, `tool.input.file_path`, `tool.input.command`, `tool.input.pattern`
+**Tool span attributes:** `tool.name`, `tool.is_error` (Claude, Gemini only — not Codex), `tool.input.file_path`, `tool.input.command`, `tool.input.pattern`
 
 **Key details:**
 - Deterministic IDs: trace_id = UUID without dashes, span_id = sequential hex (pad16)
