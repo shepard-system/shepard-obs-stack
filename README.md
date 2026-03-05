@@ -154,14 +154,16 @@ The installer auto-detects installed CLIs and merges hook configuration into the
 
 ## Rust Accelerator (optional)
 
-All hooks work out of the box with bash + jq + curl. For faster execution, you can optionally install the [Rust accelerator](https://github.com/shepard-system/shepard-hooks-rs) — a single binary that replaces the bash pipeline:
+All hooks work out of the box with bash + jq + curl. For faster execution, you can optionally install the [Rust accelerator](https://github.com/shepard-system/shepard-hooks-rs) — a single static binary that replaces the entire bash pipeline:
 
 ```bash
 ./scripts/install-accelerator.sh           # latest release → hooks/bin/ (no sudo)
 ./scripts/install-accelerator.sh v0.1.0    # specific version
 ```
 
-Hooks auto-detect the binary via `hooks/lib/accelerator.sh` (project-local → PATH → bash fallback). No configuration needed — if the binary is present, hooks use it; if not, they fall back to bash.
+The installer downloads a pre-built binary from [GitHub Releases](https://github.com/shepard-system/shepard-hooks-rs/releases) (linux/macOS, x64/arm64) and verifies it against the `SHA256SUMS` file published with each release. The binary is placed in `hooks/bin/` (gitignored, project-local).
+
+Hooks auto-detect it via `hooks/lib/accelerator.sh` (project-local → PATH → bash fallback). No configuration needed — if the binary is present, hooks use it; if not, they fall back to bash.
 
 Remove with `./hooks/uninstall.sh` or simply delete `hooks/bin/`.
 
