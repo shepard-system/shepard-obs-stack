@@ -36,14 +36,16 @@ esac
 version="${1:-latest}"
 if [[ "$version" == "latest" ]]; then
   version=$(curl -sfL "https://api.github.com/repos/${REPO}/releases/latest" \
-    | grep '"tag_name"' | sed -E 's/.*"tag_name":\s*"([^"]+)".*/\1/')
+    | grep '"tag_name"' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/')
   if [[ -z "$version" ]]; then
     red "No releases found at ${REPO}"
     exit 1
   fi
 fi
 
-asset="shepard-hook-${os}-${arch}.tar.gz"
+platform="$os"
+[[ "$os" == "darwin" ]] && platform="macos"
+asset="shepard-hook-${platform}-${arch}.tar.gz"
 download_url="https://github.com/${REPO}/releases/download/${version}/${asset}"
 sha_url="https://github.com/${REPO}/releases/download/${version}/SHA256SUMS"
 
@@ -83,8 +85,8 @@ fi
 # Extract and install
 mkdir -p "$INSTALL_DIR"
 tar xzf "${tmp_dir}/${asset}" -C "$tmp_dir"
-mv "${tmp_dir}/shepard-hook-${os}-${arch}" "${INSTALL_DIR}/shepard-hook"
+mv "${tmp_dir}/shepard-hook-${platform}-${arch}" "${INSTALL_DIR}/shepard-hook"
 chmod +x "${INSTALL_DIR}/shepard-hook"
 
 green "shepard-hook ${version} → ${INSTALL_DIR}/shepard-hook"
-"${INSTALL_DIR}/shepard-hook" --version 2>/dev/null || true
+"${INSTALL_DIR}/shepard-hook" --help 2>/dev/null | head -1 || true
