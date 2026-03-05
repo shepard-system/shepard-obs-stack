@@ -44,8 +44,8 @@ This fixes that.
 - **One command** to start: `./scripts/init.sh` — 6 services, 8 dashboards, under a minute
 - **Three CLIs supported**: Claude Code, Codex, Gemini CLI — hooks + native OpenTelemetry
 - **Eight Grafana dashboards** auto-provisioned: cost, tools, operations, quality, per-provider deep dives, and session timeline
-- **Optional Rust accelerator** — `shepard-hook` binary replaces bash+jq+curl for faster hooks. Install with `./scripts/install-accelerator.sh` (no sudo). Falls back to bash if absent
 - **Minimal dependencies** — Docker, plus `bash`, `curl`, and `jq` on the host for hooks and tests. No Python, no Node, no cloud accounts
+- **Optional [Rust accelerator](https://github.com/shepard-system/shepard-hooks-rs)** — drop-in `shepard-hook` binary replaces bash+jq+curl. Hooks auto-detect it; falls back to bash if absent
 - **Works offline** — everything runs on localhost, your data stays on your machine
 
 ## Quick Start
@@ -129,18 +129,26 @@ Everything else (tokens, cost, sessions) comes from native OTel export.
 ./hooks/uninstall.sh            # clean removal
 ```
 
-The installer auto-detects installed CLIs, merges hook configuration into their config files (creating backups first), and optionally downloads the [Rust accelerator](https://github.com/shepard-system/shepard-hooks-rs) for faster hook execution.
-
-```bash
-./scripts/install-accelerator.sh           # standalone: download to hooks/bin/ (no sudo)
-./scripts/install-accelerator.sh v0.1.0    # specific version
-```
+The installer auto-detects installed CLIs and merges hook configuration into their config files (creating backups first).
 
 | CLI         | Hooks                                                 | Native OTel signals     |
 |-------------|-------------------------------------------------------|-------------------------|
 | Claude Code | `PreToolUse`, `PostToolUse`, `SessionStart`, `Stop`   | metrics + logs          |
 | Codex CLI   | `agent-turn-complete`                                 | logs                    |
 | Gemini CLI  | `AfterTool`, `AfterAgent`, `AfterModel`, `SessionEnd` | metrics + logs + traces |
+
+## Rust Accelerator (optional)
+
+All hooks work out of the box with bash + jq + curl. For faster execution, you can optionally install the [Rust accelerator](https://github.com/shepard-system/shepard-hooks-rs) — a single binary that replaces the bash pipeline:
+
+```bash
+./scripts/install-accelerator.sh           # latest release → hooks/bin/ (no sudo)
+./scripts/install-accelerator.sh v0.1.0    # specific version
+```
+
+Hooks auto-detect the binary via `hooks/lib/accelerator.sh` (project-local → PATH → bash fallback). No configuration needed — if the binary is present, hooks use it; if not, they fall back to bash.
+
+Remove with `./hooks/uninstall.sh` or simply delete `hooks/bin/`.
 
 ## Alerting
 
