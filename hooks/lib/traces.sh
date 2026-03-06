@@ -73,8 +73,8 @@ emit_spans() {
 
   [[ -z "$payload" ]] && return 1
 
-  # Fire-and-forget
-  curl -s -o /dev/null -w "" \
+  # Fire-and-forget (max 5s to prevent zombie curls)
+  curl -s --max-time 5 -o /dev/null -w "" \
     -H "Content-Type: application/json" \
     -XPOST "${OTEL_HTTP_URL}/v1/traces" \
     -d "$payload" &

@@ -9,5 +9,7 @@ get_git_context() {
   local cwd="${1:-.}"
 
   GIT_BRANCH="$(git -C "$cwd" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")"
+  # Detached HEAD returns literal "HEAD" — fall back to short SHA
+  [[ "$GIT_BRANCH" == "HEAD" ]] && GIT_BRANCH="$(git -C "$cwd" rev-parse --short HEAD 2>/dev/null || echo "")"
   GIT_REPO="$(basename "$(git -C "$cwd" remote get-url origin 2>/dev/null)" .git 2>/dev/null || echo "")"
 }

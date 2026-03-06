@@ -104,14 +104,14 @@ ruler:
     type: local
     local:
       directory: /loki/rules
-  rule_path: /tmp/loki/scratch
+  rule_path: /loki/ruler-scratch
   evaluation_interval: 1m
   alertmanager_url: http://alertmanager:9093
   ring:
     kvstore:
       store: inmemory
   wal:
-    dir: /tmp/loki/ruler-wal
+    dir: /loki/ruler-wal
   remote_write:
     enabled: true
     clients:

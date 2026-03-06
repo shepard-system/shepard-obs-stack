@@ -70,7 +70,8 @@
                 "value": 20
               }
             ]
-          }
+          },
+          "noValue": "–"
         },
         "overrides": []
       },
@@ -129,7 +130,8 @@
               }
             ]
           },
-          "decimals": 0
+          "decimals": 0,
+          "noValue": "–"
         },
         "overrides": []
       },
@@ -188,7 +190,8 @@
               }
             ]
           },
-          "decimals": 0
+          "decimals": 0,
+          "noValue": "–"
         },
         "overrides": []
       },
@@ -247,7 +250,8 @@
               }
             ]
           },
-          "decimals": 0
+          "decimals": 0,
+          "noValue": "–"
         },
         "overrides": []
       },
@@ -306,7 +310,8 @@
               }
             ]
           },
-          "decimals": 0
+          "decimals": 0,
+          "noValue": "–"
         },
         "overrides": []
       },
@@ -370,7 +375,8 @@
                 "value": 0.6
               }
             ]
-          }
+          },
+          "noValue": "–"
         },
         "overrides": []
       },
@@ -1069,7 +1075,8 @@
                 "value": 0.8
               }
             ]
-          }
+          },
+          "noValue": "–"
         },
         "overrides": []
       },

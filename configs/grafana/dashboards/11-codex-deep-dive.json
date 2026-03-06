@@ -62,7 +62,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "noValue": "–"
         },
         "overrides": []
       },
@@ -131,7 +132,8 @@
                 "value": 2000
               }
             ]
-          }
+          },
+          "noValue": "–"
         },
         "overrides": []
       },
@@ -192,7 +194,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "noValue": "–"
         },
         "overrides": []
       },
@@ -253,7 +256,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "noValue": "–"
         },
         "overrides": []
       },
@@ -314,7 +318,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "noValue": "–"
         },
         "overrides": []
       },
@@ -382,7 +387,8 @@
                 "value": 2000
               }
             ]
-          }
+          },
+          "noValue": "–"
         },
         "overrides": []
       },
@@ -466,7 +472,8 @@
                 "value": 0.6
               }
             ]
-          }
+          },
+          "noValue": "–"
         },
         "overrides": []
       },
@@ -527,7 +534,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "noValue": "–"
         },
         "overrides": []
       },
@@ -588,7 +596,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "noValue": "–"
         },
         "overrides": []
       },
@@ -649,7 +658,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "noValue": "–"
         },
         "overrides": []
       },
@@ -710,7 +720,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "noValue": "–"
         },
         "overrides": []
       },
@@ -781,7 +792,8 @@
                 "value": 0.5
               }
             ]
-          }
+          },
+          "noValue": "–"
         },
         "overrides": []
       },
@@ -854,7 +866,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "noValue": "–"
         },
         "overrides": []
       },
@@ -1409,7 +1422,8 @@
                 "value": 0.05
               }
             ]
-          }
+          },
+          "noValue": "–"
         },
         "overrides": []
       },

@@ -11,9 +11,9 @@ services:
     volumes:
       - ./configs/otel-collector/config.yaml:/etc/otel-collector-config.yaml:ro
     ports:
-      - "4317:4317"   # OTLP gRPC
-      - "4318:4318"   # OTLP HTTP
-      - "8888:8888"   # Collector metrics
+      - "127.0.0.1:4317:4317"   # OTLP gRPC
+      - "127.0.0.1:4318:4318"   # OTLP HTTP
+      - "127.0.0.1:8888:8888"   # Collector metrics
     deploy:
       resources:
         limits:
@@ -42,7 +42,7 @@ services:
       - ./configs/prometheus:/etc/prometheus:ro
       - prometheus_data:/prometheus
     ports:
-      - "9090:9090"
+      - "127.0.0.1:9090:9090"
     deploy:
       resources:
         limits:
@@ -66,7 +66,7 @@ services:
       - ./configs/loki/rules:/loki/rules:ro
       - loki_data:/loki
     ports:
-      - "3100:3100"
+      - "127.0.0.1:3100:3100"
     deploy:
       resources:
         limits:
@@ -83,8 +83,8 @@ services:
       - ./configs/tempo/tempo-config.yaml:/etc/tempo/tempo-config.yaml:ro
       - tempo_data:/var/tempo
     ports:
-      - "3200:3200"   # Tempo API
-      - "9095:9095"   # Tempo gRPC
+      - "127.0.0.1:3200:3200"   # Tempo API
+      - "127.0.0.1:9095:9095"   # Tempo gRPC
     deploy:
       resources:
         limits:
@@ -109,7 +109,7 @@ services:
       - ./configs/grafana/dashboards:/var/lib/grafana/dashboards:ro
       - grafana_data:/var/lib/grafana
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     deploy:
       resources:
         limits:
@@ -141,7 +141,7 @@ services:
       - ./configs/alertmanager/alertmanager.yaml:/etc/alertmanager/alertmanager.yaml:ro
       - alertmanager_data:/alertmanager
     ports:
-      - "9093:9093"
+      - "127.0.0.1:9093:9093"
     deploy:
       resources:
         limits:
