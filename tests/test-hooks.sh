@@ -51,7 +51,7 @@ run_hook() {
   shift
   local rc=0
   bash "$REPO_ROOT/$hook" "$@" || rc=$?
-  sleep 0.3  # let background mock curl finish
+  sleep 0.5  # let background mock curl finish (disowned processes)
   return $rc
 }
 
@@ -210,6 +210,47 @@ fi
 
 # ========================================================
 echo ""
+echo "AfterAgent (Gemini) — turn end event"
+# ========================================================
+
+reset_capture
+output=$(echo '{"cwd":"/tmp/project"}' \
+  | GEMINI_CWD="/tmp/project" run_hook hooks/gemini/after-agent.sh)
+if [[ "$output" == *"{}"* ]]; then pass "outputs {} on stdout"; else fail "outputs {}" "got: $output"; fi
+if payload_has '"turn_end"'; then pass "emits events(turn_end)"; else fail "emits events(turn_end)"; fi
+
+# ========================================================
+echo ""
+echo "AfterModel (Gemini) — finishReason filtering"
+# ========================================================
+
+# Without finishReason → no metric
+reset_capture
+output=$(echo '{"llm_response":{"candidates":[{}]},"cwd":"/tmp/project"}' \
+  | run_hook hooks/gemini/after-model.sh)
+if [[ "$output" == *"{}"* ]]; then pass "no finishReason → outputs {} (early exit)"; else fail "no finishReason → outputs {}" "got: $output"; fi
+count=$(payload_count)
+if [[ "$count" -eq 0 ]]; then pass "no finishReason → no metrics"; else fail "no finishReason → no metrics" "got $count"; fi
+
+# With finishReason → emits model_call
+reset_capture
+output=$(echo '{"llm_response":{"candidates":[{"finishReason":"STOP"}]},"cwd":"/tmp/project"}' \
+  | GEMINI_CWD="/tmp/project" run_hook hooks/gemini/after-model.sh)
+if payload_has '"model_call"'; then pass "finishReason=STOP → emits events(model_call)"; else fail "emits events(model_call)"; fi
+
+# ========================================================
+echo ""
+echo "SessionEnd (Gemini) — session end event"
+# ========================================================
+
+reset_capture
+output=$(echo '{"session_id":"gem-sess","cwd":"/tmp/project"}' \
+  | GEMINI_CWD="/tmp/project" HOME="$TEST_HOME" run_hook hooks/gemini/session-end.sh)
+if [[ "$output" == *"{}"* ]]; then pass "outputs {} on stdout"; else fail "outputs {}" "got: $output"; fi
+if payload_has '"session_end"'; then pass "emits events(session_end)"; else fail "emits events(session_end)"; fi
+
+# ========================================================
+echo ""
 echo "Notify (Codex) — event filtering"
 # ========================================================
 
@@ -226,6 +267,100 @@ run_hook hooks/codex/notify.sh '{"type":"other","cwd":"/tmp/project"}' || rc=$?
 if [[ $rc -eq 0 ]]; then pass "non-matching type → exit 0"; else fail "non-matching type" "got exit $rc"; fi
 count=$(payload_count)
 if [[ "$count" -eq 0 ]]; then pass "non-matching type → no metrics"; else fail "non-matching type → no metrics" "got $count"; fi
+
+# ========================================================
+echo ""
+echo "Install / Uninstall — config injection + cleanup"
+# ========================================================
+
+INSTALL_HOME=$(mktemp -d)
+trap 'rm -rf "$MOCK_DIR" "$CAPTURE_DIR" "$TEST_HOME" "$INSTALL_HOME"' EXIT
+
+# Create mock CLI binaries so install.sh detects them
+for cli in claude codex gemini; do
+  echo '#!/bin/bash' > "$MOCK_DIR/$cli"
+  chmod +x "$MOCK_DIR/$cli"
+done
+
+# Run install
+HOME="$INSTALL_HOME" bash "$REPO_ROOT/hooks/install.sh" >/dev/null 2>&1
+rc=$?
+if [[ $rc -eq 0 ]]; then pass "install.sh exits 0"; else fail "install.sh" "got exit $rc"; fi
+
+# Claude: hooks + env injected
+if jq -e '.hooks.PreToolUse' "$INSTALL_HOME/.claude/settings.json" &>/dev/null; then
+  pass "Claude: PreToolUse hook injected"
+else
+  fail "Claude: PreToolUse hook missing"
+fi
+if jq -e '.hooks.Stop' "$INSTALL_HOME/.claude/settings.json" &>/dev/null; then
+  pass "Claude: Stop hook injected"
+else
+  fail "Claude: Stop hook missing"
+fi
+if jq -e '.env.CLAUDE_CODE_ENABLE_TELEMETRY' "$INSTALL_HOME/.claude/settings.json" &>/dev/null; then
+  pass "Claude: native OTel env injected"
+else
+  fail "Claude: native OTel env missing"
+fi
+
+# Codex: notify + otel
+if grep -q 'notify' "$INSTALL_HOME/.codex/config.toml" 2>/dev/null; then
+  pass "Codex: notify hook injected"
+else
+  fail "Codex: notify hook missing"
+fi
+if grep -q '\[otel\]' "$INSTALL_HOME/.codex/config.toml" 2>/dev/null; then
+  pass "Codex: [otel] section injected"
+else
+  fail "Codex: [otel] section missing"
+fi
+
+# Gemini: hooks + telemetry
+if jq -e '.hooks.AfterTool' "$INSTALL_HOME/.gemini/settings.json" &>/dev/null; then
+  pass "Gemini: AfterTool hook injected"
+else
+  fail "Gemini: AfterTool hook missing"
+fi
+if jq -e '.telemetry.enabled' "$INSTALL_HOME/.gemini/settings.json" &>/dev/null; then
+  pass "Gemini: telemetry config injected"
+else
+  fail "Gemini: telemetry config missing"
+fi
+
+# Run uninstall
+HOME="$INSTALL_HOME" bash "$REPO_ROOT/hooks/uninstall.sh" >/dev/null 2>&1
+
+# Claude: hooks + env removed
+if ! jq -e '.hooks' "$INSTALL_HOME/.claude/settings.json" &>/dev/null; then
+  pass "Claude: hooks removed after uninstall"
+else
+  fail "Claude: hooks still present after uninstall"
+fi
+if ! jq -e '.env.CLAUDE_CODE_ENABLE_TELEMETRY' "$INSTALL_HOME/.claude/settings.json" &>/dev/null; then
+  pass "Claude: OTel env removed after uninstall"
+else
+  fail "Claude: OTel env still present after uninstall"
+fi
+
+# Codex: notify + otel removed
+if ! grep -q 'notify' "$INSTALL_HOME/.codex/config.toml" 2>/dev/null; then
+  pass "Codex: notify removed after uninstall"
+else
+  fail "Codex: notify still present after uninstall"
+fi
+
+# Gemini: hooks + telemetry removed
+if ! jq -e '.hooks' "$INSTALL_HOME/.gemini/settings.json" &>/dev/null; then
+  pass "Gemini: hooks removed after uninstall"
+else
+  fail "Gemini: hooks still present after uninstall"
+fi
+if ! jq -e '.telemetry' "$INSTALL_HOME/.gemini/settings.json" &>/dev/null; then
+  pass "Gemini: telemetry removed after uninstall"
+else
+  fail "Gemini: telemetry still present after uninstall"
+fi
 
 # ========================================================
 echo ""

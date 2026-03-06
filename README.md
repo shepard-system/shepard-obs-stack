@@ -250,7 +250,7 @@ shepard-obs-stack/
 │   ├── run-all.sh             # test orchestrator (--e2e for Docker smoke)
 │   ├── test-shell-syntax.sh   # bash -n + shellcheck
 │   ├── test-config-validate.sh # JSON + YAML validation
-│   ├── test-hooks.sh          # behavioral tests (21 tests)
+│   ├── test-hooks.sh          # behavioral tests (41 tests)
 │   ├── test-parsers.sh        # session parser tests (24 tests)
 │   └── fixtures/              # minimal session logs (Claude, Codex, Gemini)
 ├── configs/
@@ -265,7 +265,7 @@ shepard-obs-stack/
 
 ## Testing
 
-87 automated tests across 4 suites, plus a Docker-based E2E smoke test:
+107 automated tests across 4 suites, plus a Docker-based E2E smoke test:
 
 ```bash
 bash tests/run-all.sh         # unit tests: syntax, configs, hooks, parsers
@@ -276,7 +276,7 @@ bash tests/run-all.sh --e2e   # + Docker E2E (starts stack, runs test-signal.sh)
 |-------|-------|----------------|
 | Shell Syntax | 23 | `bash -n` on all scripts, shellcheck (if installed) |
 | Config Validation | 19 | JSON dashboards (jq) + YAML configs (PyYAML) |
-| Hook Behavior | 21 | PreToolUse guard, PostToolUse metrics, Stop compaction, SessionStart, Gemini/Codex |
+| Hook Behavior | 41 | PreToolUse guard, PostToolUse metrics, Stop compaction, all Gemini hooks, Codex, install/uninstall |
 | Session Parsers | 24 | Span count, required fields, attributes, error status, trace_id consistency |
 
 CI runs automatically on push/PR via [GitHub Actions](.github/workflows/test.yml).
