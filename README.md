@@ -5,6 +5,7 @@
 [![Loki](https://img.shields.io/badge/Loki-3.6.7-2C3239?logo=grafana&logoColor=white)](https://grafana.com/oss/loki/)
 [![OTel Collector](https://img.shields.io/badge/OTel_Collector-0.146.0-4B44CE?logo=opentelemetry&logoColor=white)](https://opentelemetry.io/docs/collector/)
 [![License: Elastic-2.0](https://img.shields.io/badge/License-Elastic--2.0-blue.svg)](LICENSE)
+[![Tests](https://github.com/shepard-system/shepard-obs-stack/actions/workflows/test.yml/badge.svg)](https://github.com/shepard-system/shepard-obs-stack/actions/workflows/test.yml)
 
 **The Eye** — self-hosted observability for AI coding assistants.
 
@@ -245,6 +246,13 @@ shepard-obs-stack/
 │   ├── install-accelerator.sh # download Rust accelerator to hooks/bin/
 │   ├── test-signal.sh         # pipeline verification (11 checks)
 │   └── render-c4.sh           # render PlantUML → SVG
+├── tests/
+│   ├── run-all.sh             # test orchestrator (--e2e for Docker smoke)
+│   ├── test-shell-syntax.sh   # bash -n + shellcheck
+│   ├── test-config-validate.sh # JSON + YAML validation
+│   ├── test-hooks.sh          # behavioral tests (21 tests)
+│   ├── test-parsers.sh        # session parser tests (24 tests)
+│   └── fixtures/              # minimal session logs (Claude, Codex, Gemini)
 ├── configs/
 │   ├── otel-collector/        # receivers → processors → exporters
 │   ├── prometheus/            # scrape targets + alert rules
@@ -255,12 +263,30 @@ shepard-obs-stack/
 └── docs/c4/                   # architecture diagrams
 ```
 
-## Contributing
+## Testing
 
-Issues and pull requests are welcome. Before submitting changes, run the test pipeline:
+87 automated tests across 4 suites, plus a Docker-based E2E smoke test:
 
 ```bash
-./scripts/test-signal.sh    # pass count depends on which CLIs have sent data
+bash tests/run-all.sh         # unit tests: syntax, configs, hooks, parsers
+bash tests/run-all.sh --e2e   # + Docker E2E (starts stack, runs test-signal.sh)
+```
+
+| Suite | Tests | What it checks |
+|-------|-------|----------------|
+| Shell Syntax | 23 | `bash -n` on all scripts, shellcheck (if installed) |
+| Config Validation | 19 | JSON dashboards (jq) + YAML configs (PyYAML) |
+| Hook Behavior | 21 | PreToolUse guard, PostToolUse metrics, Stop compaction, SessionStart, Gemini/Codex |
+| Session Parsers | 24 | Span count, required fields, attributes, error status, trace_id consistency |
+
+CI runs automatically on push/PR via [GitHub Actions](.github/workflows/test.yml).
+
+## Contributing
+
+Issues and pull requests are welcome. Before submitting changes, run the tests:
+
+```bash
+bash tests/run-all.sh
 ```
 
 ## License

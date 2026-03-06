@@ -347,6 +347,23 @@ Provider-specific: `tokens.cache_create` (Claude), `thinking.block_count` (Claud
 - Tempo `metrics_generator.processors`: only `service-graphs` and `span-metrics`. `local-blocks` was removed to eliminate OOM risk (parquet block copies in RAM).
 - Tempo compactor: `max_compaction_objects: 4`, `compaction_window: 1h` — limits RAM usage during block merges. Pool: `max_workers: 10`, `queue_depth: 100` (cluster defaults of 100/10000 cause OOM on local).
 
+## Testing
+
+```bash
+bash tests/run-all.sh         # 87 unit tests (syntax, configs, hooks, parsers)
+bash tests/run-all.sh --e2e   # + Docker E2E smoke (starts stack, runs test-signal.sh)
+```
+
+4 test suites:
+- **test-shell-syntax.sh** — `bash -n` on all 23 scripts + shellcheck (if installed)
+- **test-config-validate.sh** — 8 JSON dashboards (jq) + 11 YAML configs (PyYAML/yq)
+- **test-hooks.sh** — 21 behavioral tests with mock curl/git. Uses `SHEPARD_TEST_MODE=1` to bypass Rust accelerator and test bash code path.
+- **test-parsers.sh** — 24 tests against fixtures in `tests/fixtures/`. Verifies span count, required fields, attributes, error status, trace_id consistency.
+
+CI: `.github/workflows/test.yml` runs unit tests on every push/PR, then E2E smoke with Docker Compose.
+
+Always run `bash tests/run-all.sh` before committing changes to hooks, configs, or parsers.
+
 ## Known Limitations
 
 - **Codex**: notify hook payload has no `total_token_usage` — tokens always 0, cost always 0. Events are tracked. Native OTel config accepted but sends zero data.
