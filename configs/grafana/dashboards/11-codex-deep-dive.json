@@ -41,7 +41,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(sum_over_time(shepherd:codex:sessions:1m{model=~\"$model\"}[$__range]))",
+          "expr": "round(sum(sum_over_time(shepherd:codex:sessions:1m{model=~\"$model\"}[$__range])))",
           "queryType": "instant",
           "legendFormat": "Sessions",
           "refId": "A"
@@ -173,7 +173,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(sum_over_time(shepherd:codex:tokens_reasoning:1m{model=~\"$model\"}[$__range]))",
+          "expr": "round(sum(sum_over_time(shepherd:codex:tokens_reasoning:1m{model=~\"$model\"}[$__range])))",
           "queryType": "instant",
           "legendFormat": "Reasoning Tokens",
           "refId": "A"
@@ -235,7 +235,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(sum_over_time(shepherd:codex:tool_results:1m{model=~\"$model\"}[$__range]))",
+          "expr": "round(sum(sum_over_time(shepherd:codex:tool_results:1m{model=~\"$model\"}[$__range])))",
           "queryType": "instant",
           "legendFormat": "Tool Calls",
           "refId": "A"
@@ -297,7 +297,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(sum_over_time(shepherd:codex:api_requests:1m{model=~\"$model\"}[$__range]))",
+          "expr": "round(sum(sum_over_time(shepherd:codex:api_requests:1m{model=~\"$model\"}[$__range])))",
           "queryType": "instant",
           "legendFormat": "API Requests",
           "refId": "A"
@@ -359,7 +359,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(sum_over_time(shepherd:codex:model_calls:1m{model=~\"$model\"}[$__range]))",
+          "expr": "round(sum(sum_over_time(shepherd:codex:model_calls:1m{model=~\"$model\"}[$__range])))",
           "queryType": "instant",
           "legendFormat": "Model Calls",
           "refId": "A"
@@ -513,7 +513,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(sum_over_time(shepherd:codex:tokens_input:1m{model=~\"$model\"}[$__range]))",
+          "expr": "round(sum(sum_over_time(shepherd:codex:tokens_input:1m{model=~\"$model\"}[$__range])))",
           "queryType": "instant",
           "legendFormat": "Input Tokens",
           "refId": "A"
@@ -575,7 +575,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(sum_over_time(shepherd:codex:tokens_output:1m{model=~\"$model\"}[$__range]))",
+          "expr": "round(sum(sum_over_time(shepherd:codex:tokens_output:1m{model=~\"$model\"}[$__range])))",
           "queryType": "instant",
           "legendFormat": "Output Tokens",
           "refId": "A"
@@ -637,7 +637,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(sum_over_time(shepherd:codex:tokens_cached:1m{model=~\"$model\"}[$__range]))",
+          "expr": "round(sum(sum_over_time(shepherd:codex:tokens_cached:1m{model=~\"$model\"}[$__range])))",
           "queryType": "instant",
           "legendFormat": "Cached Tokens",
           "refId": "A"
@@ -699,7 +699,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(sum_over_time(shepherd:codex:tokens_reasoning:1m{model=~\"$model\"}[$__range]))",
+          "expr": "round(sum(sum_over_time(shepherd:codex:tokens_reasoning:1m{model=~\"$model\"}[$__range])))",
           "queryType": "instant",
           "legendFormat": "Reasoning Tokens",
           "refId": "A"
@@ -846,7 +846,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(sum_over_time(shepherd:codex:tokens_input:1m{model=~\"$model\"}[$__range])) + sum(sum_over_time(shepherd:codex:tokens_output:1m{model=~\"$model\"}[$__range])) + sum(sum_over_time(shepherd:codex:tokens_cached:1m{model=~\"$model\"}[$__range])) + sum(sum_over_time(shepherd:codex:tokens_reasoning:1m{model=~\"$model\"}[$__range])) + sum(sum_over_time(shepherd:codex:tokens_tool:1m{model=~\"$model\"}[$__range]))",
+          "expr": "round(sum(sum_over_time(shepherd:codex:tokens_input:1m{model=~\"$model\"}[$__range])) + sum(sum_over_time(shepherd:codex:tokens_output:1m{model=~\"$model\"}[$__range])) + sum(sum_over_time(shepherd:codex:tokens_cached:1m{model=~\"$model\"}[$__range])) + sum(sum_over_time(shepherd:codex:tokens_reasoning:1m{model=~\"$model\"}[$__range])) + sum(sum_over_time(shepherd:codex:tokens_tool:1m{model=~\"$model\"}[$__range])))",
           "queryType": "instant",
           "legendFormat": "Total",
           "refId": "A"
@@ -905,7 +905,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(sum_over_time(shepherd:codex:tokens_input:1m{model=~\"$model\"}[$__range]))",
+          "expr": "round(sum(sum_over_time(shepherd:codex:tokens_input:1m{model=~\"$model\"}[$__range])))",
           "queryType": "instant",
           "legendFormat": "Input",
           "refId": "A"
@@ -916,7 +916,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(sum_over_time(shepherd:codex:tokens_output:1m{model=~\"$model\"}[$__range]))",
+          "expr": "round(sum(sum_over_time(shepherd:codex:tokens_output:1m{model=~\"$model\"}[$__range])))",
           "queryType": "instant",
           "legendFormat": "Output",
           "refId": "B"
@@ -927,7 +927,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(sum_over_time(shepherd:codex:tokens_cached:1m{model=~\"$model\"}[$__range]))",
+          "expr": "round(sum(sum_over_time(shepherd:codex:tokens_cached:1m{model=~\"$model\"}[$__range])))",
           "queryType": "instant",
           "legendFormat": "Cached",
           "refId": "C"
@@ -938,7 +938,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(sum_over_time(shepherd:codex:tokens_reasoning:1m{model=~\"$model\"}[$__range]))",
+          "expr": "round(sum(sum_over_time(shepherd:codex:tokens_reasoning:1m{model=~\"$model\"}[$__range])))",
           "queryType": "instant",
           "legendFormat": "Reasoning",
           "refId": "D"
@@ -949,7 +949,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(sum_over_time(shepherd:codex:tokens_tool:1m{model=~\"$model\"}[$__range]))",
+          "expr": "round(sum(sum_over_time(shepherd:codex:tokens_tool:1m{model=~\"$model\"}[$__range])))",
           "queryType": "instant",
           "legendFormat": "Tool",
           "refId": "E"
@@ -1021,7 +1021,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(sum_over_time(shepherd:codex:tool_decisions:1m{decision=\"approved\"}[$__range]))",
+          "expr": "round(sum(sum_over_time(shepherd:codex:tool_decisions:1m{decision=\"approved\"}[$__range])))",
           "queryType": "instant",
           "legendFormat": "Approved",
           "refId": "A"
@@ -1032,7 +1032,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(sum_over_time(shepherd:codex:tool_decisions:1m{decision=\"approved_for_session\"}[$__range]))",
+          "expr": "round(sum(sum_over_time(shepherd:codex:tool_decisions:1m{decision=\"approved_for_session\"}[$__range])))",
           "queryType": "instant",
           "legendFormat": "Auto-approved",
           "refId": "B"
@@ -1043,7 +1043,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(sum_over_time(shepherd:codex:tool_decisions:1m{decision=\"denied\"}[$__range]))",
+          "expr": "round(sum(sum_over_time(shepherd:codex:tool_decisions:1m{decision=\"denied\"}[$__range])))",
           "queryType": "instant",
           "legendFormat": "Denied",
           "refId": "C"
@@ -1054,7 +1054,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(sum_over_time(shepherd:codex:tool_decisions:1m{decision=\"abort\"}[$__range]))",
+          "expr": "round(sum(sum_over_time(shepherd:codex:tool_decisions:1m{decision=\"abort\"}[$__range])))",
           "queryType": "instant",
           "legendFormat": "Abort",
           "refId": "D"
@@ -1292,7 +1292,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(sum_over_time(shepherd:codex:tool_results:1m{success=\"true\",model=~\"$model\"}[$__range]))",
+          "expr": "round(sum(sum_over_time(shepherd:codex:tool_results:1m{success=\"true\",model=~\"$model\"}[$__range])))",
           "queryType": "instant",
           "legendFormat": "Success",
           "refId": "A"
@@ -1303,7 +1303,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(sum_over_time(shepherd:codex:tool_results:1m{success=\"false\",model=~\"$model\"}[$__range]))",
+          "expr": "round(sum(sum_over_time(shepherd:codex:tool_results:1m{success=\"false\",model=~\"$model\"}[$__range])))",
           "queryType": "instant",
           "legendFormat": "Errors",
           "refId": "B"
@@ -1714,7 +1714,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(sum_over_time(shepherd:codex:sessions:1m{model=~\"$model\"}[1h]))",
+          "expr": "round(sum(sum_over_time(shepherd:codex:sessions:1m{model=~\"$model\"}[1h])))",
           "queryType": "range",
           "legendFormat": "Conversations",
           "refId": "A"
@@ -2017,7 +2017,7 @@
       },
       "targets": [
         {
-          "expr": "topk(10, sum by (tool_name) (sum_over_time(shepherd:codex:tool_calls_by_tool:1m[$__range])) > 0)",
+          "expr": "round(topk(10, sum by (tool_name) (sum_over_time(shepherd:codex:tool_calls_by_tool:1m[$__range])) > 0))",
           "legendFormat": "{{tool_name}}",
           "refId": "A"
         }

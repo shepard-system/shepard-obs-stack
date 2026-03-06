@@ -41,7 +41,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(max_over_time(shepherd_gemini_cli_session_count_total[$__range]))",
+          "expr": "count(max_over_time(shepherd_gemini_cli_session_count_total[$__range]))",
           "queryType": "instant",
           "legendFormat": "__auto",
           "refId": "A"
@@ -176,7 +176,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_gemini_cli_token_usage_total{type=\"thought\",model=~\"$model\"}[$__range]))",
+          "expr": "round(sum(max_over_time(shepherd_gemini_cli_token_usage_total{type=\"thought\",model=~\"$model\"}[$__range])))",
           "queryType": "instant",
           "legendFormat": "__auto",
           "refId": "A"
@@ -240,7 +240,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_gemini_cli_tool_call_count_total[$__range]))",
+          "expr": "round(sum(max_over_time(shepherd_gemini_cli_tool_call_count_total[$__range])))",
           "queryType": "instant",
           "legendFormat": "__auto",
           "refId": "A"
@@ -304,7 +304,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_gemini_cli_lines_changed_total{}[$__range]))",
+          "expr": "round(sum(max_over_time(shepherd_gemini_cli_lines_changed_total{}[$__range])))",
           "queryType": "instant",
           "legendFormat": "__auto",
           "refId": "A"
@@ -368,7 +368,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_gemini_cli_api_request_count_total{}[$__range]))",
+          "expr": "round(sum(max_over_time(shepherd_gemini_cli_api_request_count_total{}[$__range])))",
           "queryType": "instant",
           "legendFormat": "__auto",
           "refId": "A"
@@ -445,7 +445,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_gemini_cli_token_usage_total{type=\"thought\",model=~\"$model\"}[$__range])) / sum(increase(shepherd_gemini_cli_token_usage_total{model=~\"$model\"}[$__range]))",
+          "expr": "sum(max_over_time(shepherd_gemini_cli_token_usage_total{type=\"thought\",model=~\"$model\"}[$__range])) / sum(max_over_time(shepherd_gemini_cli_token_usage_total{model=~\"$model\"}[$__range]))",
           "queryType": "instant",
           "legendFormat": "__auto",
           "refId": "A"
@@ -516,7 +516,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_gemini_cli_token_usage_total{type=\"input\",model=~\"$model\"}[$__range]))",
+          "expr": "round(sum(max_over_time(shepherd_gemini_cli_token_usage_total{type=\"input\",model=~\"$model\"}[$__range])))",
           "queryType": "instant",
           "legendFormat": "__auto",
           "refId": "A"
@@ -580,7 +580,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_gemini_cli_token_usage_total{type=\"output\",model=~\"$model\"}[$__range]))",
+          "expr": "round(sum(max_over_time(shepherd_gemini_cli_token_usage_total{type=\"output\",model=~\"$model\"}[$__range])))",
           "queryType": "instant",
           "legendFormat": "__auto",
           "refId": "A"
@@ -644,7 +644,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_gemini_cli_token_usage_total{type=\"cache\",model=~\"$model\"}[$__range]))",
+          "expr": "round(sum(max_over_time(shepherd_gemini_cli_token_usage_total{type=\"cache\",model=~\"$model\"}[$__range])))",
           "queryType": "instant",
           "legendFormat": "__auto",
           "refId": "A"
@@ -708,7 +708,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_gemini_cli_token_usage_total{type=\"tool\",model=~\"$model\"}[$__range]))",
+          "expr": "round(sum(max_over_time(shepherd_gemini_cli_token_usage_total{type=\"tool\",model=~\"$model\"}[$__range])))",
           "queryType": "instant",
           "legendFormat": "__auto",
           "refId": "A"
@@ -772,7 +772,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_gemini_cli_token_usage_total{type=\"cache\",model=~\"$model\"}[$__range])) / sum(increase(shepherd_gemini_cli_token_usage_total{model=~\"$model\"}[$__range]))",
+          "expr": "sum(max_over_time(shepherd_gemini_cli_token_usage_total{type=\"cache\",model=~\"$model\"}[$__range])) / sum(max_over_time(shepherd_gemini_cli_token_usage_total{model=~\"$model\"}[$__range]))",
           "queryType": "instant",
           "legendFormat": "__auto",
           "refId": "A"
@@ -949,7 +949,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (model) (increase(shepherd_gemini_cli_token_usage_total{model=~\"$model\",model!=\"\"}[$__range])) > 0",
+          "expr": "round(sum by (model) (max_over_time(shepherd_gemini_cli_token_usage_total{model=~\"$model\",model!=\"\"}[$__range]))) > 0",
           "queryType": "instant",
           "legendFormat": "{{model}}",
           "refId": "A"
@@ -1020,7 +1020,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (type) (increase(shepherd_gemini_cli_token_usage_total{model=~\"$model\"}[$__range])) > 0",
+          "expr": "round(sum by (type) (max_over_time(shepherd_gemini_cli_token_usage_total{model=~\"$model\"}[$__range]))) > 0",
           "queryType": "instant",
           "legendFormat": "{{type}}",
           "refId": "A"
@@ -1091,7 +1091,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (model) (increase(shepherd_gemini_cli_api_request_count_total{status_code!=\"200\",model=~\"$model\",model!=\"\"}[$__range])) / sum by (model) (increase(shepherd_gemini_cli_api_request_count_total{model=~\"$model\",model!=\"\"}[$__range]))",
+          "expr": "sum by (model) (max_over_time(shepherd_gemini_cli_api_request_count_total{status_code!=\"200\",model=~\"$model\",model!=\"\"}[$__range])) / sum by (model) (max_over_time(shepherd_gemini_cli_api_request_count_total{model=~\"$model\",model!=\"\"}[$__range]))",
           "queryType": "instant",
           "legendFormat": "{{model}}",
           "refId": "A"
@@ -1186,7 +1186,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (tool_type) (increase(shepherd_gemini_cli_tool_call_count_total[$__range])) > 0",
+          "expr": "round(sum by (tool_type) (max_over_time(shepherd_gemini_cli_tool_call_count_total[$__range]))) > 0",
           "queryType": "instant",
           "legendFormat": "{{tool_type}}",
           "refId": "A"
@@ -1270,7 +1270,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "topk(10, sum by (function_name) (increase(shepherd_gemini_cli_tool_call_count_total[$__range]))) > 0",
+          "expr": "round(topk(10, sum by (function_name) (max_over_time(shepherd_gemini_cli_tool_call_count_total[$__range])))) > 0",
           "queryType": "instant",
           "legendFormat": "{{function_name}}",
           "refId": "A"
@@ -1341,7 +1341,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_gemini_cli_tool_call_count_total{success=\"true\"}[$__range])) > 0",
+          "expr": "round(sum(max_over_time(shepherd_gemini_cli_tool_call_count_total{success=\"true\"}[$__range]))) > 0",
           "queryType": "instant",
           "legendFormat": "Success",
           "refId": "A"
@@ -1352,7 +1352,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_gemini_cli_tool_call_count_total{success=\"false\"}[$__range])) > 0",
+          "expr": "round(sum(max_over_time(shepherd_gemini_cli_tool_call_count_total{success=\"false\"}[$__range]))) > 0",
           "queryType": "instant",
           "legendFormat": "Errors",
           "refId": "B"
@@ -1527,7 +1527,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_gemini_cli_api_request_count_total{status_code=\"200\"}[$__range])) > 0",
+          "expr": "round(sum(max_over_time(shepherd_gemini_cli_api_request_count_total{status_code=\"200\"}[$__range]))) > 0",
           "queryType": "instant",
           "legendFormat": "Success",
           "refId": "A"
@@ -1538,7 +1538,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_gemini_cli_api_request_count_total{status_code!=\"200\"}[$__range])) > 0",
+          "expr": "round(sum(max_over_time(shepherd_gemini_cli_api_request_count_total{status_code!=\"200\"}[$__range]))) > 0",
           "queryType": "instant",
           "legendFormat": "Errors",
           "refId": "B"
@@ -1655,7 +1655,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "round(sum by (function_name) (increase(shepherd_gemini_cli_tool_call_count_total[$__range])))",
+          "expr": "round(sum by (function_name) (max_over_time(shepherd_gemini_cli_tool_call_count_total[$__range])))",
           "queryType": "instant",
           "legendFormat": "{{function_name}}",
           "refId": "Calls",
@@ -1667,7 +1667,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (function_name) (increase(shepherd_gemini_cli_tool_call_count_total{success=\"true\"}[$__range])) / sum by (function_name) (increase(shepherd_gemini_cli_tool_call_count_total[$__range]))",
+          "expr": "sum by (function_name) (max_over_time(shepherd_gemini_cli_tool_call_count_total{success=\"true\"}[$__range])) / sum by (function_name) (max_over_time(shepherd_gemini_cli_tool_call_count_total[$__range]))",
           "queryType": "instant",
           "legendFormat": "{{function_name}}",
           "refId": "SuccessRate",
@@ -1911,7 +1911,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(max_over_time(shepherd_gemini_cli_model_routing_latency_milliseconds_sum[$__range])) / sum(max_over_time(shepherd_gemini_cli_model_routing_latency_milliseconds_count[$__range]))",
+          "expr": "sum(increase(shepherd_gemini_cli_model_routing_latency_milliseconds_sum[$__range])) / sum(increase(shepherd_gemini_cli_model_routing_latency_milliseconds_count[$__range]))",
           "queryType": "instant",
           "legendFormat": "__auto",
           "refId": "A"
@@ -1994,7 +1994,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (model) (increase(shepherd_gemini_cli_api_request_count_total{model=~\"$model\",model!=\"\"}[$__range]))",
+          "expr": "round(sum by (model) (max_over_time(shepherd_gemini_cli_api_request_count_total{model=~\"$model\",model!=\"\"}[$__range])))",
           "instant": true,
           "format": "table",
           "refId": "Requests"
@@ -2014,7 +2014,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (model) (increase(shepherd_gemini_cli_token_usage_total{type=\"input\",model=~\"$model\",model!=\"\"}[$__range]))",
+          "expr": "round(sum by (model) (max_over_time(shepherd_gemini_cli_token_usage_total{type=\"input\",model=~\"$model\",model!=\"\"}[$__range])))",
           "instant": true,
           "format": "table",
           "refId": "Input"
@@ -2024,7 +2024,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (model) (increase(shepherd_gemini_cli_token_usage_total{type=\"output\",model=~\"$model\",model!=\"\"}[$__range]))",
+          "expr": "round(sum by (model) (max_over_time(shepherd_gemini_cli_token_usage_total{type=\"output\",model=~\"$model\",model!=\"\"}[$__range])))",
           "instant": true,
           "format": "table",
           "refId": "Output"
@@ -2034,7 +2034,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (model) (increase(shepherd_gemini_cli_token_usage_total{type=\"thought\",model=~\"$model\",model!=\"\"}[$__range]))",
+          "expr": "round(sum by (model) (max_over_time(shepherd_gemini_cli_token_usage_total{type=\"thought\",model=~\"$model\",model!=\"\"}[$__range])))",
           "instant": true,
           "format": "table",
           "refId": "Thoughts"
@@ -2044,7 +2044,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (model) (increase(shepherd_gemini_cli_token_usage_total{type=\"cache\",model=~\"$model\",model!=\"\"}[$__range]))",
+          "expr": "round(sum by (model) (max_over_time(shepherd_gemini_cli_token_usage_total{type=\"cache\",model=~\"$model\",model!=\"\"}[$__range])))",
           "instant": true,
           "format": "table",
           "refId": "Cache"

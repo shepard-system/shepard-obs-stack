@@ -88,7 +88,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_events_total{source=~\"$source\",git_repo=~\"$git_repo\"}[$__range]))",
+          "expr": "round(sum(increase(shepherd_events_total{source=~\"$source\",git_repo=~\"$git_repo\"}[$__range])))",
           "queryType": "instant",
           "refId": "A"
         }
@@ -148,7 +148,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (source) (increase(shepherd_events_total{source=~\"$source\",git_repo=~\"$git_repo\"}[$__range]))",
+          "expr": "round(sum by (source) (increase(shepherd_events_total{source=~\"$source\",git_repo=~\"$git_repo\"}[$__range])))",
           "legendFormat": "{{source}}",
           "queryType": "instant",
           "refId": "A"
@@ -267,7 +267,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (event_type) (increase(shepherd_events_total{source=~\"$source\",git_repo=~\"$git_repo\"}[$__range])) > 0",
+          "expr": "round(sum by (event_type) (increase(shepherd_events_total{source=~\"$source\",git_repo=~\"$git_repo\"}[$__range]))) > 0",
           "legendFormat": "{{event_type}}",
           "queryType": "instant",
           "refId": "A"

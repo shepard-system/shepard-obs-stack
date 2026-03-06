@@ -42,7 +42,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_claude_code_cost_usage_USD_total[$__range]))",
+          "expr": "sum(max_over_time(shepherd_claude_code_cost_usage_USD_total[$__range]))",
           "queryType": "instant",
           "refId": "A"
         }
@@ -109,7 +109,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "(sum(increase(shepherd_claude_code_token_usage_tokens_total[$__range])) or vector(0))\n+ (sum(increase(shepherd_gemini_cli_token_usage_total[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_input:1m[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_output:1m[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_cached:1m[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_reasoning:1m[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_tool:1m[$__range])) or vector(0))",
+          "expr": "round((sum(max_over_time(shepherd_claude_code_token_usage_tokens_total[$__range])) or vector(0))\n+ (sum(max_over_time(shepherd_gemini_cli_token_usage_total[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_input:1m[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_output:1m[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_cached:1m[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_reasoning:1m[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_tool:1m[$__range])) or vector(0)))",
           "queryType": "instant",
           "refId": "A"
         }
@@ -169,7 +169,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "(max_over_time(shepherd_claude_code_session_count_total[$__range]) or vector(0))\n+ (max_over_time(shepherd_gemini_cli_session_count_total[$__range]) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:sessions:1m[$__range])) or vector(0))",
+          "expr": "(count(max_over_time(shepherd_claude_code_session_count_total[$__range])) or vector(0))\n+ (count(max_over_time(shepherd_gemini_cli_session_count_total[$__range])) or vector(0))\n+ (round(sum(sum_over_time(shepherd:codex:sessions:1m[$__range]))) or vector(0))",
           "queryType": "instant",
           "refId": "A"
         }
@@ -229,7 +229,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "(sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"input\"}[$__range])) or vector(0))\n+ (sum(increase(shepherd_gemini_cli_token_usage_total{type=\"input\"}[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_input:1m[$__range])) or vector(0))",
+          "expr": "round((sum(max_over_time(shepherd_claude_code_token_usage_tokens_total{type=\"input\"}[$__range])) or vector(0))\n+ (sum(max_over_time(shepherd_gemini_cli_token_usage_total{type=\"input\"}[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_input:1m[$__range])) or vector(0)))",
           "queryType": "instant",
           "refId": "A"
         }
@@ -289,7 +289,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "(sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"output\"}[$__range])) or vector(0))\n+ (sum(increase(shepherd_gemini_cli_token_usage_total{type=\"output\"}[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_output:1m[$__range])) or vector(0))",
+          "expr": "round((sum(max_over_time(shepherd_claude_code_token_usage_tokens_total{type=\"output\"}[$__range])) or vector(0))\n+ (sum(max_over_time(shepherd_gemini_cli_token_usage_total{type=\"output\"}[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_output:1m[$__range])) or vector(0)))",
           "queryType": "instant",
           "refId": "A"
         }
@@ -349,7 +349,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "(\n  (sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"cacheRead\"}[$__range])) or vector(0))\n  + (sum(increase(shepherd_gemini_cli_token_usage_total{type=\"cache\"}[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_cached:1m[$__range])) or vector(0))\n)\n/\n(\n  (sum(increase(shepherd_claude_code_token_usage_tokens_total[$__range])) or vector(0))\n  + (sum(increase(shepherd_gemini_cli_token_usage_total[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_input:1m[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_output:1m[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_cached:1m[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_reasoning:1m[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_tool:1m[$__range])) or vector(0))\n)",
+          "expr": "(\n  (sum(max_over_time(shepherd_claude_code_token_usage_tokens_total{type=\"cacheRead\"}[$__range])) or vector(0))\n  + (sum(max_over_time(shepherd_gemini_cli_token_usage_total{type=\"cache\"}[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_cached:1m[$__range])) or vector(0))\n)\n/\n(\n  (sum(max_over_time(shepherd_claude_code_token_usage_tokens_total[$__range])) or vector(0))\n  + (sum(max_over_time(shepherd_gemini_cli_token_usage_total[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_input:1m[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_output:1m[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_cached:1m[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_reasoning:1m[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_tool:1m[$__range])) or vector(0))\n)",
           "queryType": "instant",
           "refId": "A"
         }
@@ -489,7 +489,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (model) (increase(shepherd_claude_code_cost_usage_USD_total{model!=\"\"}[$__range])) > 0",
+          "expr": "sum by (model) (max_over_time(shepherd_claude_code_cost_usage_USD_total{model!=\"\"}[$__range])) > 0",
           "legendFormat": "{{model}}",
           "queryType": "instant",
           "refId": "A"
@@ -546,7 +546,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "max(max_over_time(shepherd_claude_code_session_count_total[$__range]))",
+          "expr": "count(max_over_time(shepherd_claude_code_session_count_total[$__range]))",
           "legendFormat": "Claude",
           "queryType": "instant",
           "refId": "A"
@@ -557,7 +557,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "max(max_over_time(shepherd_gemini_cli_session_count_total[$__range]))",
+          "expr": "count(max_over_time(shepherd_gemini_cli_session_count_total[$__range]))",
           "legendFormat": "Gemini",
           "queryType": "instant",
           "refId": "B"
@@ -568,7 +568,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(sum_over_time(shepherd:codex:sessions:1m[$__range]))",
+          "expr": "round(sum(sum_over_time(shepherd:codex:sessions:1m[$__range])))",
           "legendFormat": "Codex",
           "queryType": "instant",
           "refId": "C"
@@ -639,7 +639,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_claude_code_token_usage_tokens_total[5m]))",
+          "expr": "round(sum(increase(shepherd_claude_code_token_usage_tokens_total[5m])))",
           "legendFormat": "Claude",
           "queryType": "range",
           "refId": "A",
@@ -651,7 +651,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_gemini_cli_token_usage_total[5m]))",
+          "expr": "round(sum(increase(shepherd_gemini_cli_token_usage_total[5m])))",
           "legendFormat": "Gemini",
           "queryType": "range",
           "refId": "B",
@@ -724,7 +724,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "((sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"input\"}[$__range])) or vector(0))\n+ (sum(increase(shepherd_gemini_cli_token_usage_total{type=\"input\"}[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_input:1m[$__range])) or vector(0))) > 0",
+          "expr": "round(((sum(max_over_time(shepherd_claude_code_token_usage_tokens_total{type=\"input\"}[$__range])) or vector(0))\n+ (sum(max_over_time(shepherd_gemini_cli_token_usage_total{type=\"input\"}[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_input:1m[$__range])) or vector(0)))) > 0",
           "legendFormat": "Input",
           "queryType": "instant",
           "refId": "A"
@@ -735,7 +735,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "((sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"output\"}[$__range])) or vector(0))\n+ (sum(increase(shepherd_gemini_cli_token_usage_total{type=\"output\"}[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_output:1m[$__range])) or vector(0))) > 0",
+          "expr": "round(((sum(max_over_time(shepherd_claude_code_token_usage_tokens_total{type=\"output\"}[$__range])) or vector(0))\n+ (sum(max_over_time(shepherd_gemini_cli_token_usage_total{type=\"output\"}[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_output:1m[$__range])) or vector(0)))) > 0",
           "legendFormat": "Output",
           "queryType": "instant",
           "refId": "B"
@@ -746,7 +746,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "((sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"cacheRead\"}[$__range])) or vector(0))\n+ (sum(increase(shepherd_gemini_cli_token_usage_total{type=\"cache\"}[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_cached:1m[$__range])) or vector(0))) > 0",
+          "expr": "round(((sum(max_over_time(shepherd_claude_code_token_usage_tokens_total{type=\"cacheRead\"}[$__range])) or vector(0))\n+ (sum(max_over_time(shepherd_gemini_cli_token_usage_total{type=\"cache\"}[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_cached:1m[$__range])) or vector(0)))) > 0",
           "legendFormat": "Cache",
           "queryType": "instant",
           "refId": "C"
@@ -757,7 +757,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "((sum(increase(shepherd_gemini_cli_token_usage_total{type=\"thought\"}[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_reasoning:1m[$__range])) or vector(0))) > 0",
+          "expr": "round(((sum(max_over_time(shepherd_gemini_cli_token_usage_total{type=\"thought\"}[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_reasoning:1m[$__range])) or vector(0)))) > 0",
           "legendFormat": "Reasoning",
           "queryType": "instant",
           "refId": "D"
@@ -768,7 +768,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "((sum(increase(shepherd_gemini_cli_token_usage_total{type=\"tool\"}[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_tool:1m[$__range])) or vector(0))) > 0",
+          "expr": "round(((sum(max_over_time(shepherd_gemini_cli_token_usage_total{type=\"tool\"}[$__range])) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:tokens_tool:1m[$__range])) or vector(0)))) > 0",
           "legendFormat": "Tool",
           "queryType": "instant",
           "refId": "E"
@@ -826,7 +826,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"cacheRead\"}[5m]))",
+          "expr": "round(sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"cacheRead\"}[5m])))",
           "legendFormat": "Cache Read",
           "queryType": "range",
           "refId": "A",
@@ -838,7 +838,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"cacheCreation\"}[5m]))",
+          "expr": "round(sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"cacheCreation\"}[5m])))",
           "legendFormat": "Cache Write",
           "queryType": "range",
           "refId": "B",
@@ -944,7 +944,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_gemini_cli_token_usage_total{type=\"thought\"}[5m]))",
+          "expr": "round(sum(increase(shepherd_gemini_cli_token_usage_total{type=\"thought\"}[5m])))",
           "legendFormat": "Gemini (thought)",
           "queryType": "range",
           "refId": "A",
@@ -1049,7 +1049,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "(\n  (sum(increase(shepherd_gemini_cli_token_usage_total{type=\"thought\"}[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_reasoning:1m[$__range])) or vector(0))\n)\n/\n(\n  (sum(increase(shepherd_gemini_cli_token_usage_total{type=\"output\"}[$__range])) or vector(0))\n  + (sum(increase(shepherd_gemini_cli_token_usage_total{type=\"thought\"}[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_output:1m[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_reasoning:1m[$__range])) or vector(0))\n)",
+          "expr": "(\n  (sum(max_over_time(shepherd_gemini_cli_token_usage_total{type=\"thought\"}[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_reasoning:1m[$__range])) or vector(0))\n)\n/\n(\n  (sum(max_over_time(shepherd_gemini_cli_token_usage_total{type=\"output\"}[$__range])) or vector(0))\n  + (sum(max_over_time(shepherd_gemini_cli_token_usage_total{type=\"thought\"}[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_output:1m[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_reasoning:1m[$__range])) or vector(0))\n)",
           "queryType": "instant",
           "refId": "A"
         }

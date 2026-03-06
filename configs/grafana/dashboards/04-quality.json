@@ -41,7 +41,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "(max_over_time(shepherd_claude_code_session_count_total[$__range]) or vector(0))\n+ (max_over_time(shepherd_gemini_cli_session_count_total[$__range]) or vector(0))\n+ (sum(sum_over_time(shepherd:codex:sessions:1m[$__range])) or vector(0))",
+          "expr": "(count(max_over_time(shepherd_claude_code_session_count_total[$__range])) or vector(0))\n+ (count(max_over_time(shepherd_gemini_cli_session_count_total[$__range])) or vector(0))\n+ (round(sum(sum_over_time(shepherd:codex:sessions:1m[$__range]))) or vector(0))",
           "queryType": "instant",
           "refId": "A"
         }
@@ -102,7 +102,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_claude_code_active_time_seconds_total{type=\"cli\"}[$__range]))",
+          "expr": "sum(max_over_time(shepherd_claude_code_active_time_seconds_total{type=\"cli\"}[$__range]))",
           "queryType": "instant",
           "refId": "A"
         }
@@ -162,7 +162,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_claude_code_active_time_seconds_total{type=\"user\"}[$__range]))",
+          "expr": "sum(max_over_time(shepherd_claude_code_active_time_seconds_total{type=\"user\"}[$__range]))",
           "queryType": "instant",
           "refId": "A"
         }
@@ -221,7 +221,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "(\n  (sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"cacheRead\"}[$__range])) or vector(0))\n  + (sum(increase(shepherd_gemini_cli_token_usage_total{type=\"cache\"}[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_cached:1m[$__range])) or vector(0))\n)\n/\n(\n  (sum(increase(shepherd_claude_code_token_usage_tokens_total[$__range])) or vector(0))\n  + (sum(increase(shepherd_gemini_cli_token_usage_total[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_input:1m[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_output:1m[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_cached:1m[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_reasoning:1m[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_tool:1m[$__range])) or vector(0))\n)",
+          "expr": "(\n  (sum(max_over_time(shepherd_claude_code_token_usage_tokens_total{type=\"cacheRead\"}[$__range])) or vector(0))\n  + (sum(max_over_time(shepherd_gemini_cli_token_usage_total{type=\"cache\"}[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_cached:1m[$__range])) or vector(0))\n)\n/\n(\n  (sum(max_over_time(shepherd_claude_code_token_usage_tokens_total[$__range])) or vector(0))\n  + (sum(max_over_time(shepherd_gemini_cli_token_usage_total[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_input:1m[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_output:1m[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_cached:1m[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_reasoning:1m[$__range])) or vector(0))\n  + (sum(sum_over_time(shepherd:codex:tokens_tool:1m[$__range])) or vector(0))\n)",
           "queryType": "instant",
           "refId": "A"
         }
@@ -286,7 +286,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_claude_code_cost_usage_USD_total[$__range])) / (sum(increase(shepherd_claude_code_token_usage_tokens_total{type=\"output\"}[$__range])) / 1000)",
+          "expr": "sum(max_over_time(shepherd_claude_code_cost_usage_USD_total[$__range])) / (sum(max_over_time(shepherd_claude_code_token_usage_tokens_total{type=\"output\"}[$__range])) / 1000)",
           "queryType": "instant",
           "refId": "A"
         }
@@ -620,7 +620,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (type) (increase(shepherd_claude_code_active_time_seconds_total[$__range])) > 0",
+          "expr": "sum by (type) (max_over_time(shepherd_claude_code_active_time_seconds_total[$__range])) > 0",
           "legendFormat": "{{type}}",
           "queryType": "instant",
           "refId": "A"
@@ -679,7 +679,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "max(max_over_time(shepherd_claude_code_session_count_total[$__range]))",
+          "expr": "count(max_over_time(shepherd_claude_code_session_count_total[$__range]))",
           "legendFormat": "Claude",
           "queryType": "instant",
           "refId": "A"
@@ -690,7 +690,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "max(max_over_time(shepherd_gemini_cli_session_count_total[$__range]))",
+          "expr": "count(max_over_time(shepherd_gemini_cli_session_count_total[$__range]))",
           "legendFormat": "Gemini",
           "queryType": "instant",
           "refId": "B"
@@ -701,7 +701,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(sum_over_time(shepherd:codex:sessions:1m[$__range]))",
+          "expr": "round(sum(sum_over_time(shepherd:codex:sessions:1m[$__range])))",
           "legendFormat": "Codex",
           "queryType": "instant",
           "refId": "C"
@@ -760,7 +760,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(increase(shepherd_claude_code_active_time_seconds_total{type=\"cli\"}[$__range]))\n/ sum(increase(shepherd_claude_code_active_time_seconds_total[$__range]))",
+          "expr": "sum(max_over_time(shepherd_claude_code_active_time_seconds_total{type=\"cli\"}[$__range]))\n/ sum(max_over_time(shepherd_claude_code_active_time_seconds_total[$__range]))",
           "queryType": "instant",
           "refId": "A"
         }
