@@ -48,7 +48,7 @@ if [[ -n "$session_id" && -n "$cwd" ]]; then
 
   if [[ -f "$session_file" ]]; then
     # Emit compaction count if any compaction events occurred
-    compaction_count=$(grep -c '"compact_boundary"' "$session_file" 2>/dev/null || echo "0")
+    compaction_count=$(grep -c '"compact_boundary"' "$session_file" 2>/dev/null || true)
     if [[ "$compaction_count" -gt 0 ]]; then
       comp_labels=$(jq -n -c --arg s "claude-code" --arg g "$GIT_REPO" \
         '{source:$s, git_repo:$g}')

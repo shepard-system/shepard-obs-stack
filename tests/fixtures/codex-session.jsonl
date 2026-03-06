@@ -1,0 +1,7 @@
+{"type":"session_meta","timestamp":"2026-03-06T10:00:00.000Z","payload":{"id":"660e8400-e29b-41d4-a716-446655440001","git":{"branch":"main","repository_url":"https://github.com/test/test-repo.git"}}}
+{"type":"turn_context","timestamp":"2026-03-06T10:00:01.000Z","payload":{"model":"gpt-4o"}}
+{"type":"event_msg","timestamp":"2026-03-06T10:00:01.500Z","payload":{"type":"task_started"}}
+{"type":"response_item","timestamp":"2026-03-06T10:00:02.000Z","payload":{"type":"function_call","call_id":"call_01","name":"shell","arguments":"{\"cmd\":\"ls -la\"}"}}
+{"type":"response_item","timestamp":"2026-03-06T10:00:03.000Z","payload":{"type":"function_call_output","call_id":"call_01"}}
+{"type":"event_msg","timestamp":"2026-03-06T10:00:04.000Z","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":500,"output_tokens":200,"cached_input_tokens":50,"reasoning_output_tokens":0,"total_tokens":750}}}}
+{"type":"event_msg","timestamp":"2026-03-06T10:00:05.000Z","payload":{"type":"task_complete"}}

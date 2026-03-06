@@ -1,0 +1,45 @@
+{
+  "sessionId": "770e8400-e29b-41d4-a716-446655440002",
+  "startTime": "2026-03-06T10:00:00.000Z",
+  "lastUpdated": "2026-03-06T10:00:10.000Z",
+  "messages": [
+    {
+      "type": "user",
+      "timestamp": "2026-03-06T10:00:00.000Z",
+      "content": "Read the test file"
+    },
+    {
+      "type": "gemini",
+      "timestamp": "2026-03-06T10:00:05.000Z",
+      "model": "gemini-2.0-flash",
+      "tokens": {
+        "input": 100,
+        "output": 50,
+        "cached": 10,
+        "thoughts": 5,
+        "tool": 0,
+        "total": 165
+      },
+      "toolCalls": [
+        {
+          "name": "read_file",
+          "args": {"file_path": "/tmp/test.txt"},
+          "status": "ok",
+          "timestamp": "2026-03-06T10:00:03.000Z"
+        },
+        {
+          "name": "shell",
+          "args": {"command": "ls -la"},
+          "status": "error",
+          "timestamp": "2026-03-06T10:00:04.000Z"
+        }
+      ],
+      "thoughts": ["Let me read the file first."]
+    },
+    {
+      "type": "user",
+      "timestamp": "2026-03-06T10:00:06.000Z",
+      "content": "Thanks"
+    }
+  ]
+}
