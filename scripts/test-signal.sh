@@ -66,20 +66,34 @@ green "All services ready"
 
 # ── Send test hook metrics ─────────────────────────────────────────
 
-source "${HOOKS_DIR}/lib/metrics.sh"
-
 echo ""
 echo "Sending test hook metrics (OTLP → OTel Collector → Prometheus)..."
 
 set +e
 
-emit_counter "tool_calls" "1" '{"source":"claude-code","tool":"Bash","tool_status":"success","git_repo":"shepard-obs-stack"}'
-emit_counter "tool_calls" "1" '{"source":"claude-code","tool":"Read","tool_status":"success","git_repo":"shepard-obs-stack"}'
-emit_counter "events"     "1" '{"source":"claude-code","event_type":"tool_use","git_repo":"shepard-obs-stack"}'
-emit_counter "events"     "1" '{"source":"claude-code","event_type":"session_end","git_repo":"shepard-obs-stack"}'
+# Send metrics synchronously (not fire-and-forget like hooks do) so we know
+# the data reached the collector before we start waiting for Prometheus.
+send_test_metric() {
+  local name="$1" value="$2" labels_json="$3"
+  local now_ns
+  now_ns="$(date +%s)000000000"
+  local attrs
+  attrs=$(jq -c '[to_entries[] | {key: .key, value: {stringValue: (.value | tostring)}}]' <<< "$labels_json" 2>/dev/null)
+  [[ -z "$attrs" ]] && attrs="[]"
+  local payload
+  payload=$(jq -n -c \
+    --arg name "$name" --argjson value "$value" --arg ts "$now_ns" --argjson attrs "$attrs" \
+    '{resourceMetrics:[{resource:{attributes:[{key:"service.name",value:{stringValue:"shepherd-hooks"}}]},scopeMetrics:[{scope:{name:"shepherd-hooks"},metrics:[{name:$name,sum:{dataPoints:[{asDouble:$value,timeUnixNano:$ts,attributes:$attrs}],aggregationTemporality:1,isMonotonic:true}}]}]}]}')
+  curl -sf -o /dev/null -H "Content-Type: application/json" -XPOST "${OTEL_HTTP_URL}/v1/metrics" -d "$payload"
+}
 
-wait 2>/dev/null || true
-sleep 5  # Wait for delta-to-cumulative conversion + Prometheus scrape
+send_test_metric "tool_calls" "1" '{"source":"claude-code","tool":"Bash","tool_status":"success","git_repo":"shepard-obs-stack"}'
+send_test_metric "tool_calls" "1" '{"source":"claude-code","tool":"Read","tool_status":"success","git_repo":"shepard-obs-stack"}'
+send_test_metric "events"     "1" '{"source":"claude-code","event_type":"tool_use","git_repo":"shepard-obs-stack"}'
+send_test_metric "events"     "1" '{"source":"claude-code","event_type":"session_end","git_repo":"shepard-obs-stack"}'
+
+# Wait for: delta-to-cumulative conversion + Prometheus scrape (15s interval)
+sleep 20
 
 set -e
 
