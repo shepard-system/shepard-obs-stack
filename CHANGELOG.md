@@ -14,14 +14,16 @@ All notable changes to shepard-obs-stack ("The Eye") are documented here.
 
 ### Added
 
-- **Test suite** (107 tests, 4 suites): shell syntax (23), config validation (19),
+- **Test suite** (113 tests, 4 suites): shell syntax (23), config validation (25),
   hook behavior (41), session parsers (24). Run with `bash tests/run-all.sh`.
 - **CI workflow** (`.github/workflows/test.yml`): unit tests + Docker E2E smoke.
-  shellcheck installed in CI for lint coverage.
+  shellcheck and promtool installed in CI for lint and rule validation.
 - **Loki scrape job** in Prometheus (`loki:3100`) for proper health monitoring.
 - **ShepherdServicesDown** alert for OTel Collector Prometheus exporter (port 8889).
 - `SHEPARD_TEST_MODE` env var in `accelerator.sh` — bypasses Rust binary for testing bash path.
 - Test fixtures for all 3 session parsers (`tests/fixtures/`).
+- **promtool validation** in CI — `promtool check rules` on all Prometheus alert files.
+- **Alert regression tests** — rule counts per file + expression guards (LokiDown, ShepherdServicesDown, OTelCollectorDown).
 
 ### Changed
 

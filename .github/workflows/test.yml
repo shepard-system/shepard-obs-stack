@@ -19,6 +19,14 @@ jobs:
           sudo apt-get install -y -qq jq shellcheck
           pip install pyyaml
 
+      - name: Install promtool
+        run: |
+          PROM_VER="3.9.1"
+          curl -sLO "https://github.com/prometheus/prometheus/releases/download/v${PROM_VER}/prometheus-${PROM_VER}.linux-amd64.tar.gz"
+          tar xzf "prometheus-${PROM_VER}.linux-amd64.tar.gz" --strip-components=1 -C /usr/local/bin "prometheus-${PROM_VER}.linux-amd64/promtool"
+          rm "prometheus-${PROM_VER}.linux-amd64.tar.gz"
+          promtool --version
+
       - name: Shell syntax
         run: bash tests/test-shell-syntax.sh
 

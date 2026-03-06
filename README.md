@@ -174,7 +174,7 @@ Alertmanager runs on :9093 with 16 alert rules in three tiers:
 
 | Tier               | Alerts | Examples                                                                                                                              |
 |--------------------|--------|---------------------------------------------------------------------------------------------------------------------------------------|
-| **Infrastructure** | 6      | `OTelCollectorDown`, `TempoDown`, `CollectorHighMemory`, export failures                                                              |
+| **Infrastructure** | 6      | `OTelCollectorDown`, `CollectorHighMemory`, `PrometheusHighMemory`, export failures                                                   |
 | **Pipeline**       | 5      | `LokiDown`, `ShepherdServicesDown`, `TempoDown`, `PrometheusTargetDown`, `LokiRecordingRulesFailing`                                   |
 | **Business logic** | 5      | `HighSessionCost` (>$10/hr), `HighTokenBurn` (>50k tok/min), `HighToolErrorRate` (>10%), `SensitiveFileAccess`, `NoTelemetryReceived` |
 
@@ -265,7 +265,7 @@ shepard-obs-stack/
 
 ## Testing
 
-107 automated tests across 4 suites, plus a Docker-based E2E smoke test:
+113 automated tests across 4 suites, plus a Docker-based E2E smoke test:
 
 ```bash
 bash tests/run-all.sh         # unit tests: syntax, configs, hooks, parsers
@@ -275,7 +275,7 @@ bash tests/run-all.sh --e2e   # + Docker E2E (starts stack, runs test-signal.sh)
 | Suite | Tests | What it checks |
 |-------|-------|----------------|
 | Shell Syntax | 23 | `bash -n` on all scripts, shellcheck (if installed) |
-| Config Validation | 19 | JSON dashboards (jq) + YAML configs (PyYAML) |
+| Config Validation | 25 | JSON dashboards (jq) + YAML configs (PyYAML) + promtool rules + alert regression |
 | Hook Behavior | 41 | PreToolUse guard, PostToolUse metrics, Stop compaction, all Gemini hooks, Codex, install/uninstall |
 | Session Parsers | 24 | Span count, required fields, attributes, error status, trace_id consistency |
 
