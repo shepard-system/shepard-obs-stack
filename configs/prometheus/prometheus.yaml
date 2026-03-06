@@ -38,6 +38,13 @@ scrape_configs:
         labels:
           service: 'shepherd'
 
+  # Scrape Loki metrics
+  - job_name: 'loki'
+    static_configs:
+      - targets: ['loki:3100']
+        labels:
+          service: 'loki'
+
   # Scrape Tempo metrics
   - job_name: 'tempo'
     static_configs:

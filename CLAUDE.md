@@ -256,7 +256,7 @@ Session Traces table uses Tempo trace search. Tool Duration Distribution uses Pr
 configs/
 ├── otel-collector/config.yaml          ← OTLP receivers → deltatocumulative → batch → resource → exporters
 ├── prometheus/
-│   ├── prometheus.yaml                 ← Scrape targets (self, collector:8888, collector:8889, tempo:3200)
+│   ├── prometheus.yaml                 ← Scrape targets (self, collector:8888, collector:8889, loki:3100, tempo:3200)
 │   └── alerts/                         ← infra.yaml, pipeline.yaml, services.yaml
 ├── alertmanager/alertmanager.yaml      ← Route + Telegram/Slack/Discord receivers + inhibit rules
 ├── loki/
@@ -272,15 +272,15 @@ configs/
 
 ## Alerting
 
-Alertmanager on :9093 with 15 alert rules in three tiers.
+Alertmanager on :9093 with 16 alert rules in three tiers.
 Telegram, Slack, and Discord receivers included (commented out — configure in `configs/alertmanager/alertmanager.yaml`).
 
 Alert rule files in `configs/prometheus/alerts/`:
 - **infra.yaml** — `OTelCollectorDown`, `CollectorExportFailed{Spans,Metrics,Logs}`, `CollectorHighMemory`, `PrometheusHighMemory`
-- **pipeline.yaml** — `LokiDown`, `TempoDown`, `PrometheusTargetDown`, `LokiRecordingRulesFailing`
+- **pipeline.yaml** — `LokiDown`, `ShepherdServicesDown`, `TempoDown`, `PrometheusTargetDown`, `LokiRecordingRulesFailing`
 - **services.yaml** — `HighSessionCost` (>$10/hr), `HighTokenBurn` (>50k tok/min), `HighToolErrorRate` (>10%), `SensitiveFileAccess`, `NoTelemetryReceived`
 
-Inhibit rules: `OTelCollectorDown` suppresses all business-logic alerts. `LokiDown` suppresses `LokiRecordingRulesFailing` and `HighTokenBurn`.
+Inhibit rules: `OTelCollectorDown` suppresses `ShepherdServicesDown` + all business-logic alerts. `LokiDown` suppresses `LokiRecordingRulesFailing` and `HighTokenBurn`. `ShepherdServicesDown` suppresses `NoTelemetryReceived`, `HighToolErrorRate`, `HighSessionCost`.
 
 ## Troubleshooting
 

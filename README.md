@@ -170,12 +170,12 @@ Remove with `./hooks/uninstall.sh` or simply delete `hooks/bin/`.
 
 ## Alerting
 
-Alertmanager runs on :9093 with 15 alert rules in three tiers:
+Alertmanager runs on :9093 with 16 alert rules in three tiers:
 
 | Tier               | Alerts | Examples                                                                                                                              |
 |--------------------|--------|---------------------------------------------------------------------------------------------------------------------------------------|
 | **Infrastructure** | 6      | `OTelCollectorDown`, `TempoDown`, `CollectorHighMemory`, export failures                                                              |
-| **Pipeline**       | 4      | `LokiDown`, `PrometheusTargetDown`, `TempoDown`, `LokiRecordingRulesFailing`                                                          |
+| **Pipeline**       | 5      | `LokiDown`, `ShepherdServicesDown`, `TempoDown`, `PrometheusTargetDown`, `LokiRecordingRulesFailing`                                   |
 | **Business logic** | 5      | `HighSessionCost` (>$10/hr), `HighTokenBurn` (>50k tok/min), `HighToolErrorRate` (>10%), `SensitiveFileAccess`, `NoTelemetryReceived` |
 
 Inhibit rules suppress business-logic alerts when infrastructure is down.

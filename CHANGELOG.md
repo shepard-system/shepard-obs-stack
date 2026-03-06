@@ -2,6 +2,48 @@
 
 All notable changes to shepard-obs-stack ("The Eye") are documented here.
 
+## [Unreleased]
+
+### Fixed
+
+- **LokiDown alert was checking OTel Collector, not Loki** — `up{job="shepherd-services"}`
+  monitored the collector exporter (port 8889), not Loki itself. Now uses dedicated
+  `up{job="loki"}` scrape job. Old check renamed to `ShepherdServicesDown`.
+- **Compaction arithmetic error in stop.sh** — `grep -c` returns "0" with exit 1,
+  `|| echo "0"` produced `"0\n0"`, causing `-gt` comparison to fail.
+
+### Added
+
+- **Test suite** (107 tests, 4 suites): shell syntax (23), config validation (19),
+  hook behavior (41), session parsers (24). Run with `bash tests/run-all.sh`.
+- **CI workflow** (`.github/workflows/test.yml`): unit tests + Docker E2E smoke.
+  shellcheck installed in CI for lint coverage.
+- **Loki scrape job** in Prometheus (`loki:3100`) for proper health monitoring.
+- **ShepherdServicesDown** alert for OTel Collector Prometheus exporter (port 8889).
+- `SHEPARD_TEST_MODE` env var in `accelerator.sh` — bypasses Rust binary for testing bash path.
+- Test fixtures for all 3 session parsers (`tests/fixtures/`).
+
+### Changed
+
+- Alert count: 15 → 16 rules (LokiDown split into LokiDown + ShepherdServicesDown).
+- Inhibit rules: `OTelCollectorDown` now also suppresses `ShepherdServicesDown`;
+  `ShepherdServicesDown` suppresses `NoTelemetryReceived`, `HighToolErrorRate`, `HighSessionCost`.
+
+## [1.1.0] — 2026-03-05
+
+### Added
+
+- **Rust accelerator** integration — optional `shepard-hook` binary replaces bash+jq+curl.
+  Install with `./scripts/install-accelerator.sh`. Falls back to bash if not installed.
+- **Gemini Deep Dive** panels: Error Rate by Model, Calls by Tool Type, Tool Stats table.
+- C4 architecture diagrams (C1 system context, C3 hooks components, C5 event schema).
+
+### Fixed
+
+- Gemini Deep Dive dashboard: query labels, model filters, layout, NaN mappings.
+- install-accelerator.sh: BSD sed compatibility, macOS asset name detection.
+- uninstall.sh: accelerator binary cleanup.
+
 ## [1.0.0] — 2026-03-01
 
 Initial public release. Docker-based observability for AI coding assistants

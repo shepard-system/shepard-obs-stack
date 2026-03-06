@@ -86,7 +86,13 @@ inhibit_rules:
     equal: ['cluster']
 
   - source_match:
+      alertname: 'ShepherdServicesDown'
+    target_match_re:
+      alertname: 'NoTelemetryReceived|HighToolErrorRate|HighSessionCost'
+    equal: ['cluster']
+
+  - source_match:
       alertname: 'OTelCollectorDown'
     target_match_re:
-      alertname: 'NoTelemetryReceived|HighToolErrorRate|HighSessionCost|HighTokenBurn'
+      alertname: 'ShepherdServicesDown|NoTelemetryReceived|HighToolErrorRate|HighSessionCost|HighTokenBurn'
     equal: ['cluster']

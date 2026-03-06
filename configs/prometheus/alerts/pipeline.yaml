@@ -6,13 +6,22 @@ groups:
   - name: shepherd-pipeline
     rules:
       - alert: LokiDown
+        expr: up{job="loki"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Loki is down"
+          description: "Loki log aggregation backend has been unreachable for more than 5 minutes. Log queries and Codex recording rules will fail."
+
+      - alert: ShepherdServicesDown
         expr: up{job="shepherd-services"} == 0
         for: 5m
         labels:
           severity: critical
         annotations:
-          summary: "Loki exporter endpoint is down"
-          description: "The Loki metrics endpoint exposed via OTel Collector is unreachable."
+          summary: "OTel Collector Prometheus exporter is down"
+          description: "The OTel Collector metrics exporter (port 8889) is unreachable. Hook metrics and native OTel metrics will not appear in Prometheus."
 
       - alert: TempoDown
         expr: up{job="tempo"} == 0
