@@ -9,7 +9,8 @@
 *.swo
 
 # AI CLI
-.claude/
+.claude/*
+!.claude/skills/
 .gemini/
 
 # Environment

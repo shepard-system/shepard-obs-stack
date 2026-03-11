@@ -4,16 +4,18 @@ All notable changes to shepard-obs-stack ("The Eye") are documented here.
 
 ## [Unreleased]
 
-### Fixed
+### Added
 
+- **Claude Code skills** (6 slash commands): `/obs-status`, `/obs-cost`, `/obs-sessions`,
+  `/obs-tools`, `/obs-alerts`, `/obs-query` — query the obs stack directly from Claude Code
+  without switching to the browser. Covers health checks, cost reports, session summaries,
+  tool usage, active alerts, and free-form PromQL/LogQL queries.
+- **`scripts/obs-api.sh`** — centralized API client for all obs stack services. Auth-ready:
+  supports `SHEPARD_API_TOKEN` (Bearer), `SHEPARD_CA_CERT` (TLS), `SHEPARD_GRAFANA_TOKEN`
+  via environment variables. Defaults to plain HTTP on localhost for single-machine use.
 - **LokiDown alert was checking OTel Collector, not Loki** — `up{job="shepherd-services"}`
   monitored the collector exporter (port 8889), not Loki itself. Now uses dedicated
   `up{job="loki"}` scrape job. Old check renamed to `ShepherdServicesDown`.
-- **Compaction arithmetic error in stop.sh** — `grep -c` returns "0" with exit 1,
-  `|| echo "0"` produced `"0\n0"`, causing `-gt` comparison to fail.
-
-### Added
-
 - **Test suite** (113 tests, 4 suites): shell syntax (23), config validation (25),
   hook behavior (41), session parsers (24). Run with `bash tests/run-all.sh`.
 - **CI workflow** (`.github/workflows/test.yml`): unit tests + Docker E2E smoke.
@@ -25,11 +27,18 @@ All notable changes to shepard-obs-stack ("The Eye") are documented here.
 - **promtool validation** in CI — `promtool check rules` on all Prometheus alert files.
 - **Alert regression tests** — rule counts per file + expression guards (LokiDown, ShepherdServicesDown, OTelCollectorDown).
 
+### Fixed
+
+- **LokiDown alert** — split from collector exporter check into dedicated Loki scrape job.
+- **Compaction arithmetic error in stop.sh** — `grep -c` returns "0" with exit 1,
+  `|| echo "0"` produced `"0\n0"`, causing `-gt` comparison to fail.
+
 ### Changed
 
 - Alert count: 15 → 16 rules (LokiDown split into LokiDown + ShepherdServicesDown).
 - Inhibit rules: `OTelCollectorDown` now also suppresses `ShepherdServicesDown`;
   `ShepherdServicesDown` suppresses `NoTelemetryReceived`, `HighToolErrorRate`, `HighSessionCost`.
+- `.gitignore`: un-ignore `.claude/skills/` for tracking slash-command skills in the repo.
 
 ## [1.1.0] — 2026-03-05
 
