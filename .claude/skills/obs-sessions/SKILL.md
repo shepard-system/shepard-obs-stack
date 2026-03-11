@@ -9,22 +9,22 @@ disable-model-invocation: false
 ## Live Data
 
 ### Claude Sessions (recent, from Tempo span-metrics)
-!`./scripts/obs-api.sh prom '/api/v1/query' --data-urlencode 'query=sort_desc(sum by (session_id, model) (traces_spanmetrics_calls_total{span_name="claude.session"}))' 2>&1 | jq -r '.data.result[:20] | .[] | "\(.metric.session_id)\t\(.metric.model)\t\(.value[1])"' 2>/dev/null || echo "No Claude sessions in span-metrics"`
+!`./scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[:20] | .[] | "\(.metric.session_id)\t\(.metric.model)\t\(.value[1])"' --data-urlencode 'query=sort_desc(sum by (session_id, model) (traces_spanmetrics_calls_total{span_name="claude.session"}))' || echo "No Claude sessions in span-metrics"`
 
 ### Gemini Sessions (recent)
-!`./scripts/obs-api.sh prom '/api/v1/query' --data-urlencode 'query=sort_desc(sum by (session_id, model) (traces_spanmetrics_calls_total{span_name="gemini.session"}))' 2>&1 | jq -r '.data.result[:20] | .[] | "\(.metric.session_id)\t\(.metric.model)\t\(.value[1])"' 2>/dev/null || echo "No Gemini sessions"`
+!`./scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[:20] | .[] | "\(.metric.session_id)\t\(.metric.model)\t\(.value[1])"' --data-urlencode 'query=sort_desc(sum by (session_id, model) (traces_spanmetrics_calls_total{span_name="gemini.session"}))' || echo "No Gemini sessions"`
 
 ### Codex Sessions (recent)
-!`./scripts/obs-api.sh prom '/api/v1/query' --data-urlencode 'query=sort_desc(sum by (session_id, model) (traces_spanmetrics_calls_total{span_name="codex.session"}))' 2>&1 | jq -r '.data.result[:20] | .[] | "\(.metric.session_id)\t\(.metric.model)\t\(.value[1])"' 2>/dev/null || echo "No Codex sessions"`
+!`./scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[:20] | .[] | "\(.metric.session_id)\t\(.metric.model)\t\(.value[1])"' --data-urlencode 'query=sort_desc(sum by (session_id, model) (traces_spanmetrics_calls_total{span_name="codex.session"}))' || echo "No Codex sessions"`
 
 ### Session Details (Tempo traces — last 10 Claude sessions)
-!`./scripts/obs-api.sh tempo '/api/search?q=%7Bspan%3Aname%3D%22claude.session%22%7D&limit=10' 2>&1 | jq -r '.traces[:10][] | "\(.traceID)\t\(.rootServiceName)\t\(.durationMs)ms\t\(.startTimeUnixNano | tonumber / 1e9 | todate)"' 2>/dev/null || echo "No traces in Tempo"`
+!`./scripts/obs-api.sh tempo '/api/search?q=%7Bspan%3Aname%3D%22claude.session%22%7D&limit=10' --raw --jq '.traces[:10][] | "\(.traceID)\t\(.rootServiceName)\t\(.durationMs)ms\t\(.startTimeUnixNano | tonumber / 1e9 | todate)"' || echo "No traces in Tempo"`
 
 ### Tool Count per Session (top 10 sessions by tools)
-!`./scripts/obs-api.sh prom '/api/v1/query' --data-urlencode 'query=topk(10, sum by (session_id) (traces_spanmetrics_calls_total{span_name=~"claude.tool.*"}))' 2>&1 | jq -r '.data.result[] | "\(.metric.session_id)\ttools: \(.value[1])"' 2>/dev/null || echo "No tool span-metrics"`
+!`./scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[] | "\(.metric.session_id)\ttools: \(.value[1])"' --data-urlencode 'query=topk(10, sum by (session_id) (traces_spanmetrics_calls_total{span_name=~"claude.tool.*"}))' || echo "No tool span-metrics"`
 
 ### Claude Cost per Session (native OTel)
-!`./scripts/obs-api.sh prom '/api/v1/query' --data-urlencode 'query=sort_desc(max by (session_id) (shepherd_claude_code_cost_usage_USD_total))' 2>&1 | jq -r '.data.result[:10] | .[] | "\(.metric.session_id)\t$\(.value[1])"' 2>/dev/null || echo "No per-session cost data"`
+!`./scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[:10] | .[] | "\(.metric.session_id)\t$\(.value[1])"' --data-urlencode 'query=sort_desc(max by (session_id) (shepherd_claude_code_cost_usage_USD_total))' || echo "No per-session cost data"`
 
 ## Instructions
 

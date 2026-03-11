@@ -9,32 +9,32 @@ disable-model-invocation: false
 ## Service Health
 
 ### Grafana
-!`./scripts/obs-api.sh grafana /api/health 2>&1 || echo "DOWN"`
+!`./scripts/obs-api.sh grafana /api/health || echo "DOWN"`
 
 ### Loki
-!`./scripts/obs-api.sh loki /ready 2>&1 || echo "DOWN"`
+!`./scripts/obs-api.sh loki /ready || echo "DOWN"`
 
 ### Prometheus
-!`./scripts/obs-api.sh prom /-/healthy 2>&1 || echo "DOWN"`
+!`./scripts/obs-api.sh prom /-/healthy || echo "DOWN"`
 
 ### Alertmanager
-!`./scripts/obs-api.sh am /-/healthy 2>&1 || echo "DOWN"`
+!`./scripts/obs-api.sh am /-/healthy || echo "DOWN"`
 
 ### Tempo
-!`./scripts/obs-api.sh tempo /ready 2>&1 || echo "DOWN"`
+!`./scripts/obs-api.sh tempo /ready || echo "DOWN"`
 
 ### OTel Collector
-!`./scripts/obs-api.sh collector /metrics --max-time 3 2>&1 | head -1 || echo "DOWN"`
+!`./scripts/obs-api.sh collector /metrics --jq 'empty' || echo "DOWN"`
 
 ## Prometheus Targets
-!`./scripts/obs-api.sh prom /api/v1/targets 2>&1 | jq -r '.data.activeTargets[] | "\(.labels.job)\t\(.health)\t\(.lastScrape | split("T")[0:2] | join("T"))"' 2>/dev/null || echo "Cannot reach Prometheus"`
+!`./scripts/obs-api.sh prom /api/v1/targets --raw --jq '.data.activeTargets[] | "\(.labels.job)\t\(.health)\t\(.lastScrape)"' || echo "Cannot reach Prometheus"`
 
 ## Active Alerts
-!`./scripts/obs-api.sh am /api/v2/alerts 2>&1 | jq -r 'if length == 0 then "No active alerts" else .[] | "[\(.labels.severity // "?")] \(.labels.alertname): \(.annotations.summary // .annotations.description // "no description")" end' 2>/dev/null || echo "Cannot reach Alertmanager"`
+!`./scripts/obs-api.sh am /api/v2/alerts --raw --jq 'if length == 0 then "No active alerts" else .[] | "[\(.labels.severity // "?")] \(.labels.alertname): \(.annotations.summary // .annotations.description // "no description")" end' || echo "Cannot reach Alertmanager"`
 
 ## Last Telemetry
-!`./scripts/obs-api.sh prom '/api/v1/query?query=max(shepherd_events_total)' 2>&1 | jq -r '.data.result[0] | "Last event value: \(.value[1]) at \(.value[0] | todate)"' 2>/dev/null || echo "No hook metrics found"`
-!`./scripts/obs-api.sh prom '/api/v1/query?query=max(shepherd_claude_code_cost_usage_USD_total)' 2>&1 | jq -r '.data.result[0] | "Last Claude cost value: \(.value[1]) at \(.value[0] | todate)"' 2>/dev/null || echo "No Claude native metrics"`
+!`./scripts/obs-api.sh prom '/api/v1/query?query=max(shepherd_events_total)' --raw --jq '.data.result[0] | "Last event value: \(.value[1]) at \(.value[0] | todate)"' || echo "No hook metrics found"`
+!`./scripts/obs-api.sh prom '/api/v1/query?query=max(shepherd_claude_code_cost_usage_USD_total)' --raw --jq '.data.result[0] | "Last Claude cost value: \(.value[1]) at \(.value[0] | todate)"' || echo "No Claude native metrics"`
 
 ## Instructions
 

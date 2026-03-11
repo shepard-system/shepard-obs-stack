@@ -13,6 +13,25 @@ Execute a PromQL (Prometheus) or LogQL (Loki) query and interpret results.
 - **LogQL**: starts with `{` (stream selector) — route to Loki
 - **PromQL**: everything else — route to Prometheus
 
+## How to execute
+
+Use `scripts/obs-api.sh` with `--jq` and `--raw` to query and format results in a single command (no pipes needed):
+
+**PromQL instant query:**
+```bash
+./scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[] | "\(.metric) \(.value[1])"' --data-urlencode "query=<EXPR>"
+```
+
+**PromQL range query** (for time series):
+```bash
+./scripts/obs-api.sh prom /api/v1/query_range --raw --jq '.data.result[] | "\(.metric) \(.values | length) points"' --data-urlencode "query=<EXPR>" --data-urlencode "start=$(date -v-1H +%s)" --data-urlencode "end=$(date +%s)" --data-urlencode "step=60"
+```
+
+**LogQL query:**
+```bash
+./scripts/obs-api.sh loki /loki/api/v1/query_range --raw --jq '.data.result[].values[][] ' --data-urlencode "query=<EXPR>" --data-urlencode "limit=20"
+```
+
 ## Query Examples (for reference)
 
 ### PromQL
@@ -36,12 +55,8 @@ Execute a PromQL (Prometheus) or LogQL (Loki) query and interpret results.
 1. Take the user's query from the skill argument (everything after `/obs-query`).
 2. If no query provided, show the examples above and ask what they'd like to query.
 3. Detect query type (LogQL vs PromQL).
-4. Execute:
-   - **PromQL instant**: `./scripts/obs-api.sh prom /api/v1/query --data-urlencode "query=<EXPR>"`
-   - **PromQL range** (if query contains explicit range like `[5m]` in outer expression or user asks for time series):
-     `./scripts/obs-api.sh prom /api/v1/query_range --data-urlencode "query=<EXPR>" --data-urlencode "start=$(date -v-1H +%s)" --data-urlencode "end=$(date +%s)" --data-urlencode "step=60"`
-   - **LogQL**: `./scripts/obs-api.sh loki /loki/api/v1/query_range --data-urlencode "query=<EXPR>" --data-urlencode "limit=20"`
-5. Parse the JSON response with `jq` and format results:
+4. Execute using `./scripts/obs-api.sh` with appropriate `--jq` filter.
+5. Parse the JSON response and format results:
    - For instant vectors: table of metric labels + value
    - For range vectors: note the time range and summarize
    - For log streams: show log lines with timestamps

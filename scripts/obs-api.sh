@@ -2,12 +2,16 @@
 # scripts/obs-api.sh — centralized API client for the obs stack
 #
 # Usage:
-#   obs-api.sh <service> <path> [extra-curl-args...]
-#   obs-api.sh prometheus /api/v1/query --data-urlencode 'query=up'
+#   obs-api.sh <service> <path> [--jq <filter>] [extra-curl-args...]
+#   obs-api.sh prom /api/v1/query --jq '.data.result[]' --data-urlencode 'query=up'
 #   obs-api.sh loki /ready
-#   obs-api.sh alertmanager /api/v2/alerts
+#   obs-api.sh am /api/v2/alerts --jq '.[].labels.alertname'
 #
-# Services: prometheus, loki, tempo, grafana, alertmanager, collector
+# Services: prometheus (prom), loki, tempo, grafana, alertmanager (am), collector (otel)
+#
+# Options:
+#   --jq <filter>    Pipe output through jq with the given filter
+#   --raw            Pass -r to jq (raw output, no quotes). Only with --jq.
 #
 # Auth-ready: set SHEPARD_API_TOKEN for Bearer auth, SHEPARD_CA_CERT for TLS.
 # All env vars have sensible localhost defaults for single-machine use.
@@ -62,7 +66,7 @@ auth_args() {
 
 # ── Main ────────────────────────────────────────────────────────────
 if [[ $# -lt 2 ]]; then
-  echo "Usage: obs-api.sh <service> <path> [extra-curl-args...]" >&2
+  echo "Usage: obs-api.sh <service> <path> [--jq <filter>] [--raw] [extra-curl-args...]" >&2
   echo "Services: prometheus, loki, tempo, grafana, alertmanager, collector" >&2
   exit 1
 fi
@@ -71,6 +75,28 @@ SERVICE="$1"
 shift
 API_PATH="$1"
 shift
+
+# Parse --jq and --raw from remaining args
+JQ_FILTER=""
+JQ_RAW=false
+EXTRA_ARGS=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --jq)
+      JQ_FILTER="$2"
+      shift 2
+      ;;
+    --raw)
+      JQ_RAW=true
+      shift
+      ;;
+    *)
+      EXTRA_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
 
 BASE_URL=$(resolve_url "$SERVICE") || exit 1
 
@@ -83,7 +109,15 @@ while IFS= read -r arg; do
 done < <(auth_args "$SERVICE")
 
 # Add extra args from caller
-CURL_ARGS+=("$@")
+CURL_ARGS+=("${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"}")
 
 # Execute
-curl "${CURL_ARGS[@]}" "${BASE_URL}${API_PATH}"
+if [[ -n "$JQ_FILTER" ]]; then
+  JQ_ARGS=()
+  if $JQ_RAW; then
+    JQ_ARGS+=(-r)
+  fi
+  curl "${CURL_ARGS[@]}" "${BASE_URL}${API_PATH}" 2>/dev/null | jq "${JQ_ARGS[@]}" "$JQ_FILTER" 2>/dev/null
+else
+  curl "${CURL_ARGS[@]}" "${BASE_URL}${API_PATH}"
+fi

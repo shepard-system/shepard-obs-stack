@@ -9,19 +9,19 @@ disable-model-invocation: false
 ## Live Data
 
 ### Active Alerts
-!`./scripts/obs-api.sh am /api/v2/alerts 2>&1 | jq -r 'if length == 0 then "No active alerts" else .[] | "[\(.status.state)] \(.labels.severity // "unknown") | \(.labels.alertname) | since \(.startsAt) | \(.annotations.summary // .annotations.description // "no description")" end' 2>/dev/null || echo "Cannot reach Alertmanager"`
+!`./scripts/obs-api.sh am /api/v2/alerts --raw --jq 'if length == 0 then "No active alerts" else .[] | "[\(.status.state)] \(.labels.severity // "unknown") | \(.labels.alertname) | since \(.startsAt) | \(.annotations.summary // .annotations.description // "no description")" end' || echo "Cannot reach Alertmanager"`
 
 ### Alert Groups
-!`./scripts/obs-api.sh am /api/v2/alerts/groups 2>&1 | jq -r '.[] | select(.alerts | length > 0) | "Group: \(.labels | to_entries | map("\(.key)=\(.value)") | join(", ")) — \(.alerts | length) alert(s)"' 2>/dev/null || echo "No alert groups"`
+!`./scripts/obs-api.sh am /api/v2/alerts/groups --raw --jq '.[] | select(.alerts | length > 0) | "Group: \(.labels | to_entries | map("\(.key)=\(.value)") | join(", ")) — \(.alerts | length) alert(s)"' || echo "No alert groups"`
 
 ### Silences
-!`./scripts/obs-api.sh am /api/v2/silences 2>&1 | jq -r '.[] | select(.status.state == "active") | "Silence: \(.matchers | map("\(.name)\(.isRegex | if . then "=~" else "=" end)\(.value)") | join(", ")) until \(.endsAt)"' 2>/dev/null || echo "No active silences"`
+!`./scripts/obs-api.sh am /api/v2/silences --raw --jq '.[] | select(.status.state == "active") | "Silence: \(.matchers | map("\(.name)\(.isRegex | if . then "=~" else "=" end)\(.value)") | join(", ")) until \(.endsAt)"' || echo "No active silences"`
 
 ### Prometheus Alert Rules (firing/pending)
-!`./scripts/obs-api.sh prom /api/v1/rules 2>&1 | jq -r '.data.groups[].rules[] | select(.state == "firing" or .state == "pending") | "[\(.state)] \(.name) — \(.annotations.summary // .labels.severity // "")"' 2>/dev/null || echo "All rules inactive"`
+!`./scripts/obs-api.sh prom /api/v1/rules --raw --jq '.data.groups[].rules[] | select(.state == "firing" or .state == "pending") | "[\(.state)] \(.name) — \(.annotations.summary // .labels.severity // "")"' || echo "All rules inactive"`
 
 ### Alert Rule Summary
-!`./scripts/obs-api.sh prom /api/v1/rules 2>&1 | jq -r '.data.groups[].rules | length' 2>/dev/null | awk '{s+=$1} END {print "Total alert rules: " s}' || echo "Cannot count rules"`
+!`./scripts/obs-api.sh prom /api/v1/rules --raw --jq '[.data.groups[].rules | length] | add' || echo "Cannot count rules"`
 
 ## Resolution Hints
 

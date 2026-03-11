@@ -13,25 +13,25 @@ Mapping: `today` → `[TIME_TO_NOW]`, `yesterday` → offset query, `week` → `
 ## Live Data
 
 ### Claude Code Cost (24h, by model)
-!`./scripts/obs-api.sh prom '/api/v1/query' --data-urlencode 'query=sort_desc(sum by (model) (max_over_time(shepherd_claude_code_cost_usage_USD_total{model!=""}[24h])))' 2>&1 | jq -r '.data.result[] | "\(.metric.model)\t$\(.value[1])"' 2>/dev/null || echo "No cost data"`
+!`./scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[] | "\(.metric.model)\t$\(.value[1])"' --data-urlencode 'query=sort_desc(sum by (model) (max_over_time(shepherd_claude_code_cost_usage_USD_total{model!=""}[24h])))' || echo "No cost data"`
 
 ### Claude Code Cost Total (24h)
-!`./scripts/obs-api.sh prom '/api/v1/query' --data-urlencode 'query=sum(max_over_time(shepherd_claude_code_cost_usage_USD_total[24h]))' 2>&1 | jq -r '.data.result[0].value[1] // "0"' 2>/dev/null || echo "0"`
+!`./scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[0].value[1] // "0"' --data-urlencode 'query=sum(max_over_time(shepherd_claude_code_cost_usage_USD_total[24h]))' || echo "0"`
 
 ### Token Usage — Claude (24h, by type)
-!`./scripts/obs-api.sh prom '/api/v1/query' --data-urlencode 'query=sort_desc(sum by (type) (max_over_time(shepherd_claude_code_token_usage_tokens_total{type!=""}[24h])))' 2>&1 | jq -r '.data.result[] | "\(.metric.type)\t\(.value[1])"' 2>/dev/null || echo "No token data"`
+!`./scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[] | "\(.metric.type)\t\(.value[1])"' --data-urlencode 'query=sort_desc(sum by (type) (max_over_time(shepherd_claude_code_token_usage_tokens_total{type!=""}[24h])))' || echo "No token data"`
 
 ### Token Usage — Gemini (24h, by type)
-!`./scripts/obs-api.sh prom '/api/v1/query' --data-urlencode 'query=sort_desc(sum by (type) (max_over_time(shepherd_gemini_cli_token_usage_total{type!=""}[24h])))' 2>&1 | jq -r '.data.result[] | "\(.metric.type)\t\(.value[1])"' 2>/dev/null || echo "No Gemini token data"`
+!`./scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[] | "\(.metric.type)\t\(.value[1])"' --data-urlencode 'query=sort_desc(sum by (type) (max_over_time(shepherd_gemini_cli_token_usage_total{type!=""}[24h])))' || echo "No Gemini token data"`
 
 ### Token Usage — Codex (24h)
-!`./scripts/obs-api.sh prom '/api/v1/query' --data-urlencode 'query=sum(sum_over_time(shepherd:codex:tokens_input:1m[24h]))' 2>&1 | jq -r '"input\t" + (.data.result[0].value[1] // "0")' 2>/dev/null || echo "No Codex data"`
-!`./scripts/obs-api.sh prom '/api/v1/query' --data-urlencode 'query=sum(sum_over_time(shepherd:codex:tokens_output:1m[24h]))' 2>&1 | jq -r '"output\t" + (.data.result[0].value[1] // "0")' 2>/dev/null || echo "No Codex data"`
+!`./scripts/obs-api.sh prom /api/v1/query --raw --jq '"input\t" + (.data.result[0].value[1] // "0")' --data-urlencode 'query=sum(sum_over_time(shepherd:codex:tokens_input:1m[24h]))' || echo "No Codex data"`
+!`./scripts/obs-api.sh prom /api/v1/query --raw --jq '"output\t" + (.data.result[0].value[1] // "0")' --data-urlencode 'query=sum(sum_over_time(shepherd:codex:tokens_output:1m[24h]))' || echo "No Codex data"`
 
 ### Sessions Count (24h)
-!`./scripts/obs-api.sh prom '/api/v1/query' --data-urlencode 'query=count(max_over_time(shepherd_claude_code_session_count_total[24h]))' 2>&1 | jq -r '"Claude: " + (.data.result[0].value[1] // "0")' 2>/dev/null || echo "Claude: 0"`
-!`./scripts/obs-api.sh prom '/api/v1/query' --data-urlencode 'query=count(max_over_time(shepherd_gemini_cli_session_count_total[24h]))' 2>&1 | jq -r '"Gemini: " + (.data.result[0].value[1] // "0")' 2>/dev/null || echo "Gemini: 0"`
-!`./scripts/obs-api.sh prom '/api/v1/query' --data-urlencode 'query=sum(sum_over_time(shepherd:codex:sessions:1m[24h]))' 2>&1 | jq -r '"Codex: " + (.data.result[0].value[1] // "0")' 2>/dev/null || echo "Codex: 0"`
+!`./scripts/obs-api.sh prom /api/v1/query --raw --jq '"Claude: " + (.data.result[0].value[1] // "0")' --data-urlencode 'query=count(max_over_time(shepherd_claude_code_session_count_total[24h]))' || echo "Claude: 0"`
+!`./scripts/obs-api.sh prom /api/v1/query --raw --jq '"Gemini: " + (.data.result[0].value[1] // "0")' --data-urlencode 'query=count(max_over_time(shepherd_gemini_cli_session_count_total[24h]))' || echo "Gemini: 0"`
+!`./scripts/obs-api.sh prom /api/v1/query --raw --jq '"Codex: " + (.data.result[0].value[1] // "0")' --data-urlencode 'query=sum(sum_over_time(shepherd:codex:sessions:1m[24h]))' || echo "Codex: 0"`
 
 ## Instructions
 
