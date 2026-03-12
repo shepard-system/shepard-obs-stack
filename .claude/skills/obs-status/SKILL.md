@@ -6,41 +6,57 @@ disable-model-invocation: false
 
 # Obs Stack Status
 
-## Service Health
+Check health of all 6 obs stack services, scrape targets, alerts, and last telemetry.
 
-### Grafana
-!`./scripts/obs-api.sh grafana /api/health || echo "DOWN"`
+## Queries to run
 
-### Loki
-!`./scripts/obs-api.sh loki /ready || echo "DOWN"`
+Use `scripts/obs-api.sh` to query each service. Run independent checks in parallel.
 
-### Prometheus
-!`./scripts/obs-api.sh prom /-/healthy || echo "DOWN"`
+### Step 1: Service health (run all in parallel)
 
-### Alertmanager
-!`./scripts/obs-api.sh am /-/healthy || echo "DOWN"`
+```bash
+scripts/obs-api.sh grafana /api/health
+scripts/obs-api.sh loki /ready
+scripts/obs-api.sh prom /-/healthy
+scripts/obs-api.sh am /-/healthy
+scripts/obs-api.sh tempo /ready
+```
 
-### Tempo
-!`./scripts/obs-api.sh tempo /ready || echo "DOWN"`
+If a command fails or returns empty, the service is down.
 
-### OTel Collector
-!`./scripts/obs-api.sh collector /metrics --jq 'empty' || echo "DOWN"`
+### Step 2: Prometheus scrape targets
 
-## Prometheus Targets
-!`./scripts/obs-api.sh prom /api/v1/targets --raw --jq '.data.activeTargets[] | "\(.labels.job)\t\(.health)\t\(.lastScrape)"' || echo "Cannot reach Prometheus"`
+```bash
+scripts/obs-api.sh prom /api/v1/targets --raw --jq '.data.activeTargets[] | "\(.labels.job)\t\(.health)"'
+```
 
-## Active Alerts
-!`./scripts/obs-api.sh am /api/v2/alerts --raw --jq 'if length == 0 then "No active alerts" else .[] | "[\(.labels.severity // "?")] \(.labels.alertname): \(.annotations.summary // .annotations.description // "no description")" end' || echo "Cannot reach Alertmanager"`
+### Step 3: Active alerts
 
-## Last Telemetry
-!`./scripts/obs-api.sh prom '/api/v1/query?query=max(shepherd_events_total)' --raw --jq '.data.result[0] | "Last event value: \(.value[1]) at \(.value[0] | todate)"' || echo "No hook metrics found"`
-!`./scripts/obs-api.sh prom '/api/v1/query?query=max(shepherd_claude_code_cost_usage_USD_total)' --raw --jq '.data.result[0] | "Last Claude cost value: \(.value[1]) at \(.value[0] | todate)"' || echo "No Claude native metrics"`
+```bash
+scripts/obs-api.sh am /api/v2/alerts --raw --jq 'if length == 0 then "No active alerts" else .[] | "\(.labels.alertname)\t\(.labels.severity // "?")" end'
+```
 
-## Instructions
+### Step 4: Last telemetry received
 
-Format the data above as a concise health report:
+```bash
+scripts/obs-api.sh prom '/api/v1/query?query=max(shepherd_events_total)' --raw --jq '.data.result[0].value'
+scripts/obs-api.sh prom '/api/v1/query?query=max(shepherd_claude_code_cost_usage_USD_total)' --raw --jq '.data.result[0].value'
+```
+
+## Output columns
+
+| Column | Source |
+|--------|--------|
+| Service | service name |
+| Port | 3000, 3100, 9090, 9093, 3200, 4317/4318 |
+| Status | UP if healthy response, DOWN if empty/error |
+
+For output format options (table/csv/json), read `.claude/skills/obs-shared/assets/output-formats.md`.
+
+## Presentation
+
 1. Service status table (name | port | status)
-2. Prometheus scrape targets (job | health | last scrape)
-3. Active alerts (if any) with severity
-4. Last telemetry timestamps — how long ago
-5. If any service is DOWN, suggest: `docker compose up -d` or check logs with `docker compose logs <service>`
+2. Scrape targets (job | health)
+3. Active alerts with severity (if any)
+4. Last telemetry — how long ago
+5. If any service is DOWN: suggest `docker compose up -d` or `docker compose logs <service> --tail=20`

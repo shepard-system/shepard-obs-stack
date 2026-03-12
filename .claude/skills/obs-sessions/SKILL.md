@@ -6,33 +6,50 @@ disable-model-invocation: false
 
 # Obs Sessions
 
-## Live Data
+Recent sessions across all providers with model, tools, cost, and duration.
 
-### Claude Sessions (recent, from Tempo span-metrics)
-!`./scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[:20] | .[] | "\(.metric.session_id)\t\(.metric.model)\t\(.value[1])"' --data-urlencode 'query=sort_desc(sum by (session_id, model) (traces_spanmetrics_calls_total{span_name="claude.session"}))' || echo "No Claude sessions in span-metrics"`
+## Queries to run
 
-### Gemini Sessions (recent)
-!`./scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[:20] | .[] | "\(.metric.session_id)\t\(.metric.model)\t\(.value[1])"' --data-urlencode 'query=sort_desc(sum by (session_id, model) (traces_spanmetrics_calls_total{span_name="gemini.session"}))' || echo "No Gemini sessions"`
+Use `scripts/obs-api.sh`. Run independent queries in parallel.
 
-### Codex Sessions (recent)
-!`./scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[:20] | .[] | "\(.metric.session_id)\t\(.metric.model)\t\(.value[1])"' --data-urlencode 'query=sort_desc(sum by (session_id, model) (traces_spanmetrics_calls_total{span_name="codex.session"}))' || echo "No Codex sessions"`
+### Claude sessions (from native OTel cost metrics — has session_id + model)
 
-### Session Details (Tempo traces — last 10 Claude sessions)
-!`./scripts/obs-api.sh tempo '/api/search?q=%7Bspan%3Aname%3D%22claude.session%22%7D&limit=10' --raw --jq '.traces[:10][] | "\(.traceID)\t\(.rootServiceName)\t\(.durationMs)ms\t\(.startTimeUnixNano | tonumber / 1e9 | todate)"' || echo "No traces in Tempo"`
+```bash
+scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[:20] | .[] | "\(.metric.session_id)\t\(.metric.model)\t\(.value[1])"' --data-urlencode 'query=sort_desc(max by (session_id, model) (shepherd_claude_code_cost_usage_USD_total))'
+```
 
-### Tool Count per Session (top 10 sessions by tools)
-!`./scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[] | "\(.metric.session_id)\ttools: \(.value[1])"' --data-urlencode 'query=topk(10, sum by (session_id) (traces_spanmetrics_calls_total{span_name=~"claude.tool.*"}))' || echo "No tool span-metrics"`
+### Tempo traces (all providers — has traceID, service, duration)
 
-### Claude Cost per Session (native OTel)
-!`./scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[:10] | .[] | "\(.metric.session_id)\t$\(.value[1])"' --data-urlencode 'query=sort_desc(max by (session_id) (shepherd_claude_code_cost_usage_USD_total))' || echo "No per-session cost data"`
+```bash
+scripts/obs-api.sh tempo '/api/search?q=%7Bspan%3Aname%3D%22claude.session%22%7D&limit=10' --raw --jq '.traces[:10][] | "\(.traceID)\t\(.rootServiceName)\t\(.durationMs)ms"'
+scripts/obs-api.sh tempo '/api/search?q=%7Bspan%3Aname%3D%22gemini.session%22%7D&limit=10' --raw --jq '.traces[:10][] | "\(.traceID)\t\(.rootServiceName)\t\(.durationMs)ms"'
+scripts/obs-api.sh tempo '/api/search?q=%7Bspan%3Aname%3D%22codex.session%22%7D&limit=10' --raw --jq '.traces[:10][] | "\(.traceID)\t\(.rootServiceName)\t\(.durationMs)ms"'
+```
 
-## Instructions
+### Session count per provider
 
-1. Combine the data above into a session table:
-   - Columns: Provider | Session (short ID) | Model | Duration | Tools | Cost
-   - Sort by most recent first
-   - Truncate session IDs to first 8 chars for readability
-2. Highlight sessions with high cost (>$1), many tools (>50), or errors.
-3. If Tempo has trace data, mention that the user can view full traces in Grafana Session Timeline dashboard.
-4. If no sessions found: "No sessions recorded. Use a CLI with hooks installed, then check `/obs-status`."
-5. Maximum 20 sessions in the table.
+```bash
+scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[0].value[1] // "0"' --data-urlencode 'query=count(max_over_time(shepherd_claude_code_session_count_total[24h]))'
+scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[0].value[1] // "0"' --data-urlencode 'query=count(max_over_time(shepherd_gemini_cli_session_count_total[24h]))'
+scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[0].value[1] // "0"' --data-urlencode 'query=sum(sum_over_time(shepherd:codex:sessions:1m[24h]))'
+```
+
+## Output columns
+
+| Column | Source |
+|--------|--------|
+| Provider | claude/gemini/codex (from Tempo service name) |
+| Session | first 8 chars of session_id or traceID |
+| Model | from Claude cost metrics (others: from Tempo trace attributes if available) |
+| Duration | from Tempo trace |
+| Cost | Claude native OTel (others: `—`) |
+
+For output format options (table/csv/json), read `.claude/skills/obs-shared/assets/output-formats.md`.
+
+## Presentation
+
+1. Session table sorted by most recent, max 20 rows
+2. Truncate session IDs to first 8 chars
+3. Highlight sessions with high cost (>$1), many tools (>50), or errors
+4. Mention Grafana Session Timeline dashboard for full trace view
+5. If no sessions: "No sessions recorded. Use a CLI with hooks installed, then check `/obs-status`."

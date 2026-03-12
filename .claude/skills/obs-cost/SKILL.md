@@ -6,41 +6,73 @@ disable-model-invocation: false
 
 # Obs Cost Report
 
-## Args
-The user may provide a time range argument. Default: last 24h.
-Mapping: `today` → `[TIME_TO_NOW]`, `yesterday` → offset query, `week` → `[7d]`, `24h`/default → `[24h]`.
+Cost and token usage breakdown by provider and model.
 
-## Live Data
+## Arguments
 
-### Claude Code Cost (24h, by model)
-!`./scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[] | "\(.metric.model)\t$\(.value[1])"' --data-urlencode 'query=sort_desc(sum by (model) (max_over_time(shepherd_claude_code_cost_usage_USD_total{model!=""}[24h])))' || echo "No cost data"`
+User may specify a time range. Default: `24h`.
+Mapping: `today` → `24h`, `yesterday` → offset query, `week` → `7d`.
+Replace `[24h]` in queries below with the appropriate range.
 
-### Claude Code Cost Total (24h)
-!`./scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[0].value[1] // "0"' --data-urlencode 'query=sum(max_over_time(shepherd_claude_code_cost_usage_USD_total[24h]))' || echo "0"`
+## Queries to run
 
-### Token Usage — Claude (24h, by type)
-!`./scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[] | "\(.metric.type)\t\(.value[1])"' --data-urlencode 'query=sort_desc(sum by (type) (max_over_time(shepherd_claude_code_token_usage_tokens_total{type!=""}[24h])))' || echo "No token data"`
+Use `scripts/obs-api.sh` for all queries. Run independent queries in parallel.
 
-### Token Usage — Gemini (24h, by type)
-!`./scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[] | "\(.metric.type)\t\(.value[1])"' --data-urlencode 'query=sort_desc(sum by (type) (max_over_time(shepherd_gemini_cli_token_usage_total{type!=""}[24h])))' || echo "No Gemini token data"`
+### Claude cost by model
 
-### Token Usage — Codex (24h)
-!`./scripts/obs-api.sh prom /api/v1/query --raw --jq '"input\t" + (.data.result[0].value[1] // "0")' --data-urlencode 'query=sum(sum_over_time(shepherd:codex:tokens_input:1m[24h]))' || echo "No Codex data"`
-!`./scripts/obs-api.sh prom /api/v1/query --raw --jq '"output\t" + (.data.result[0].value[1] // "0")' --data-urlencode 'query=sum(sum_over_time(shepherd:codex:tokens_output:1m[24h]))' || echo "No Codex data"`
+```bash
+scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[] | select(.metric.model != "") | "\(.metric.model)\t\(.value[1])"' --data-urlencode 'query=sort_desc(sum by (model) (max_over_time(shepherd_claude_code_cost_usage_USD_total[24h])))'
+```
 
-### Sessions Count (24h)
-!`./scripts/obs-api.sh prom /api/v1/query --raw --jq '"Claude: " + (.data.result[0].value[1] // "0")' --data-urlencode 'query=count(max_over_time(shepherd_claude_code_session_count_total[24h]))' || echo "Claude: 0"`
-!`./scripts/obs-api.sh prom /api/v1/query --raw --jq '"Gemini: " + (.data.result[0].value[1] // "0")' --data-urlencode 'query=count(max_over_time(shepherd_gemini_cli_session_count_total[24h]))' || echo "Gemini: 0"`
-!`./scripts/obs-api.sh prom /api/v1/query --raw --jq '"Codex: " + (.data.result[0].value[1] // "0")' --data-urlencode 'query=sum(sum_over_time(shepherd:codex:sessions:1m[24h]))' || echo "Codex: 0"`
+### Claude cost total
 
-## Instructions
+```bash
+scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[0].value[1] // "0"' --data-urlencode 'query=sum(max_over_time(shepherd_claude_code_cost_usage_USD_total[24h]))'
+```
 
-1. If the user specified a time range, note it — but the queries above use 24h. Mention if adjustment is needed and offer to re-query.
-2. Format as a cost report:
-   - **Total cost** (sum across providers)
-   - **Cost by model** table
-   - **Token breakdown** per provider (input/output/cache)
-   - **Session count** per provider
-3. Calculate cost-per-session and tokens-per-dollar where meaningful.
-4. If all values are 0: "No activity in the last 24h. Stack may not be receiving telemetry — try `/obs-status`."
-5. Note: Gemini and Codex don't emit cost metrics natively. Only Claude has dollar amounts.
+### Claude tokens by type
+
+```bash
+scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[] | select(.metric.type != "") | "\(.metric.type)\t\(.value[1])"' --data-urlencode 'query=sort_desc(sum by (type) (max_over_time(shepherd_claude_code_token_usage_tokens_total[24h])))'
+```
+
+### Gemini tokens by type
+
+```bash
+scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[] | select(.metric.type != "") | "\(.metric.type)\t\(.value[1])"' --data-urlencode 'query=sort_desc(sum by (type) (max_over_time(shepherd_gemini_cli_token_usage_total[24h])))'
+```
+
+### Codex tokens
+
+```bash
+scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[0].value[1] // "0"' --data-urlencode 'query=sum(sum_over_time(shepherd:codex:tokens_input:1m[24h]))'
+scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[0].value[1] // "0"' --data-urlencode 'query=sum(sum_over_time(shepherd:codex:tokens_output:1m[24h]))'
+```
+
+### Session count per provider
+
+```bash
+scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[0].value[1] // "0"' --data-urlencode 'query=count(max_over_time(shepherd_claude_code_session_count_total[24h]))'
+scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[0].value[1] // "0"' --data-urlencode 'query=count(max_over_time(shepherd_gemini_cli_session_count_total[24h]))'
+scripts/obs-api.sh prom /api/v1/query --raw --jq '.data.result[0].value[1] // "0"' --data-urlencode 'query=sum(sum_over_time(shepherd:codex:sessions:1m[24h]))'
+```
+
+## Output columns
+
+| Section | Columns |
+|---------|---------|
+| Cost by model | Model \| Cost ($) |
+| Tokens | Provider \| Type \| Count |
+| Sessions | Provider \| Count |
+
+For output format options (table/csv/json), read `.claude/skills/obs-shared/assets/output-formats.md`.
+
+## Presentation
+
+1. **Total cost** (sum across providers)
+2. **Cost by model** table
+3. **Token breakdown** per provider (input/output/cache)
+4. **Session count** per provider
+5. Calculate cost-per-session and tokens-per-dollar where meaningful
+6. If all values are 0: "No activity in the last 24h. Stack may not be receiving telemetry — try `/obs-status`."
+7. Note: only Claude emits cost metrics. Gemini and Codex show tokens only.
