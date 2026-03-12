@@ -130,6 +130,34 @@ if $session_id == null then empty else
   {ts: .timestamp, trigger: (.compactMetadata.trigger // "auto"), preTokens: (.compactMetadata.preTokens // 0)}
 ]) as $compactions |
 
+# --- Context breakdown (character counts for token estimation) ---
+
+# Tool output: sum content lengths from tool_result entries
+([$all[] | select(.type == "user") |
+  .message.content // [] |
+  if type == "array" then .[] else empty end |
+  select(.type == "tool_result") |
+  .content // "" |
+  if type == "string" then length
+  elif type == "array" then [.[] | .text // "" | length] | add // 0
+  else 0 end
+] | add // 0) as $tool_output_chars |
+
+# User prompts: string content from human messages (excludes compaction summaries)
+([$all[] | select(.type == "user" and (.isCompactSummary | not)) |
+  .message.content // "" |
+  if type == "string" then length else 0 end
+] | add // 0) as $user_prompt_chars |
+
+# Compact summaries: user entries with isCompactSummary = true
+([$all[] | select(.type == "user" and .isCompactSummary == true) |
+  .message.content // "" |
+  if type == "string" then length else 0 end
+] | add // 0) as $compact_summary_chars |
+
+# Compaction pre-tokens total
+($compactions | map(.preTokens) | add // 0) as $compaction_pre_tokens |
+
 # --- Build lookups ---
 
 # tool_use_id → {end_ts, is_error}
@@ -198,7 +226,14 @@ if $session_id == null then empty else
     "turn.count": ($turn_count | tostring),
     "compaction.count": ($compactions | length | tostring),
     "thinking.block_count": ($thinking_count | tostring),
-    "stop_reason": $stop_reason} +
+    "stop_reason": $stop_reason,
+    "context.tool_output_chars": ($tool_output_chars | tostring),
+    "context.tool_output_tokens_est": (($tool_output_chars / 4 | floor) | tostring),
+    "context.user_prompt_chars": ($user_prompt_chars | tostring),
+    "context.user_prompt_tokens_est": (($user_prompt_chars / 4 | floor) | tostring),
+    "context.compact_summary_chars": ($compact_summary_chars | tostring),
+    "context.compact_summary_tokens_est": (($compact_summary_chars / 4 | floor) | tostring),
+    "context.compaction_pre_tokens": ($compaction_pre_tokens | tostring)} +
    (if $interruption_count > 0 then
      {"has_interruption": "true", "interruption.count": ($interruption_count | tostring)}
    else {} end)

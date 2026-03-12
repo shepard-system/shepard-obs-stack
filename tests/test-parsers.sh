@@ -80,6 +80,28 @@ if [[ "$comp_trigger" == "auto" ]]; then pass "compaction span trigger = auto"; 
 trace_ids=$(echo "$CLAUDE_OUTPUT" | jq -r '.trace_id' | sort -u | wc -l | tr -d ' ')
 if [[ "$trace_ids" -eq 1 ]]; then pass "all spans share same trace_id"; else fail "trace_id consistency" "$trace_ids unique trace_ids"; fi
 
+# Context breakdown attributes
+tool_output_chars=$(echo "$root" | jq -r '.attributes["context.tool_output_chars"]')
+if [[ "$tool_output_chars" == "64" ]]; then pass "context.tool_output_chars = 64"; else fail "context.tool_output_chars" "got $tool_output_chars"; fi
+
+tool_output_est=$(echo "$root" | jq -r '.attributes["context.tool_output_tokens_est"]')
+if [[ "$tool_output_est" == "16" ]]; then pass "context.tool_output_tokens_est = 16"; else fail "context.tool_output_tokens_est" "got $tool_output_est"; fi
+
+user_prompt_chars=$(echo "$root" | jq -r '.attributes["context.user_prompt_chars"]')
+if [[ "$user_prompt_chars" == "18" ]]; then pass "context.user_prompt_chars = 18"; else fail "context.user_prompt_chars" "got $user_prompt_chars"; fi
+
+user_prompt_est=$(echo "$root" | jq -r '.attributes["context.user_prompt_tokens_est"]')
+if [[ "$user_prompt_est" == "4" ]]; then pass "context.user_prompt_tokens_est = 4"; else fail "context.user_prompt_tokens_est" "got $user_prompt_est"; fi
+
+compact_summary_chars=$(echo "$root" | jq -r '.attributes["context.compact_summary_chars"]')
+if [[ "$compact_summary_chars" == "58" ]]; then pass "context.compact_summary_chars = 58"; else fail "context.compact_summary_chars" "got $compact_summary_chars"; fi
+
+compact_summary_est=$(echo "$root" | jq -r '.attributes["context.compact_summary_tokens_est"]')
+if [[ "$compact_summary_est" == "14" ]]; then pass "context.compact_summary_tokens_est = 14"; else fail "context.compact_summary_tokens_est" "got $compact_summary_est"; fi
+
+compaction_pre_tokens=$(echo "$root" | jq -r '.attributes["context.compaction_pre_tokens"]')
+if [[ "$compaction_pre_tokens" == "50000" ]]; then pass "context.compaction_pre_tokens = 50000"; else fail "context.compaction_pre_tokens" "got $compaction_pre_tokens"; fi
+
 # ========================================================
 echo ""
 echo "Codex session parser"

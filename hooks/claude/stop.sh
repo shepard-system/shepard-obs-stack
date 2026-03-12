@@ -55,10 +55,39 @@ if [[ -n "$session_id" && -n "$cwd" ]]; then
       emit_counter "compaction_events" "$compaction_count" "$comp_labels"
     fi
 
-    # Parse session log and emit traces — fully detached from parent pipes
+    # Parse session log, emit context metrics + traces — fully detached
     (
-      bash "${SCRIPT_DIR}/../lib/session-parser.sh" "$session_file" \
-        | emit_spans "claude-code-session"
+      parser_output=$(bash "${SCRIPT_DIR}/../lib/session-parser.sh" "$session_file")
+      [[ -z "$parser_output" ]] && exit 0
+
+      # Extract context breakdown from root span (first line) — single jq call
+      context_data=$(echo "$parser_output" | head -1 | jq -r '[
+        .attributes["context.tool_output_chars"] // "0",
+        .attributes["context.user_prompt_chars"] // "0",
+        .attributes["context.compact_summary_chars"] // "0",
+        .attributes["context.compaction_pre_tokens"] // "0"
+      ] | join("\t")')
+      IFS=$'\t' read -r tool_chars user_chars summary_chars pre_tokens <<< "$context_data"
+
+      # Emit context char metrics (by type) — only if > 0
+      for pair in "tool_output:$tool_chars" "user_prompt:$user_chars" "compact_summary:$summary_chars"; do
+        type="${pair%%:*}"; val="${pair#*:}"
+        if [[ "$val" -gt 0 ]] 2>/dev/null; then
+          labels=$(jq -n -c --arg s "claude-code" --arg t "$type" --arg g "$GIT_REPO" \
+            '{source:$s, type:$t, git_repo:$g}')
+          emit_counter "context_chars" "$val" "$labels"
+        fi
+      done
+
+      # Emit compaction pre-tokens metric
+      if [[ "$pre_tokens" -gt 0 ]] 2>/dev/null; then
+        labels=$(jq -n -c --arg s "claude-code" --arg g "$GIT_REPO" \
+          '{source:$s, git_repo:$g}')
+        emit_counter "context_compaction_pre_tokens" "$pre_tokens" "$labels"
+      fi
+
+      # Emit traces to Tempo
+      echo "$parser_output" | emit_spans "claude-code-session"
     ) </dev/null >/dev/null 2>&1 &
     disown
   fi
