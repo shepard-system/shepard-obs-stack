@@ -88,10 +88,10 @@ tool_output_est=$(echo "$root" | jq -r '.attributes["context.tool_output_tokens_
 if [[ "$tool_output_est" == "16" ]]; then pass "context.tool_output_tokens_est = 16"; else fail "context.tool_output_tokens_est" "got $tool_output_est"; fi
 
 user_prompt_chars=$(echo "$root" | jq -r '.attributes["context.user_prompt_chars"]')
-if [[ "$user_prompt_chars" == "18" ]]; then pass "context.user_prompt_chars = 18"; else fail "context.user_prompt_chars" "got $user_prompt_chars"; fi
+if [[ "$user_prompt_chars" == "38" ]]; then pass "context.user_prompt_chars = 38"; else fail "context.user_prompt_chars" "got $user_prompt_chars"; fi
 
 user_prompt_est=$(echo "$root" | jq -r '.attributes["context.user_prompt_tokens_est"]')
-if [[ "$user_prompt_est" == "4" ]]; then pass "context.user_prompt_tokens_est = 4"; else fail "context.user_prompt_tokens_est" "got $user_prompt_est"; fi
+if [[ "$user_prompt_est" == "9" ]]; then pass "context.user_prompt_tokens_est = 9"; else fail "context.user_prompt_tokens_est" "got $user_prompt_est"; fi
 
 compact_summary_chars=$(echo "$root" | jq -r '.attributes["context.compact_summary_chars"]')
 if [[ "$compact_summary_chars" == "58" ]]; then pass "context.compact_summary_chars = 58"; else fail "context.compact_summary_chars" "got $compact_summary_chars"; fi
@@ -101,6 +101,30 @@ if [[ "$compact_summary_est" == "14" ]]; then pass "context.compact_summary_toke
 
 compaction_pre_tokens=$(echo "$root" | jq -r '.attributes["context.compaction_pre_tokens"]')
 if [[ "$compaction_pre_tokens" == "50000" ]]; then pass "context.compaction_pre_tokens = 50000"; else fail "context.compaction_pre_tokens" "got $compaction_pre_tokens"; fi
+
+# Per-turn spans (gated by SHEPARD_DETAILED_TRACES=1)
+CLAUDE_DETAILED=$(SHEPARD_DETAILED_TRACES=1 bash "$REPO_ROOT/hooks/lib/session-parser.sh" "$FIXTURES/claude-session.jsonl" 2>/dev/null)
+
+detail_count=$(echo "$CLAUDE_DETAILED" | wc -l | tr -d ' ')
+if [[ "$detail_count" -eq 7 ]]; then pass "detailed spans = 7 (5 base + 2 turns)"; else fail "detailed span count" "expected 7, got $detail_count"; fi
+
+turn0=$(echo "$CLAUDE_DETAILED" | jq -s '[.[] | select(.name == "claude.turn" and .attributes["turn.index"] == "0")][0]')
+turn0_input=$(echo "$turn0" | jq -r '.attributes["turn.input_tokens"]')
+if [[ "$turn0_input" == "450" ]]; then pass "turn 0 input_tokens = 450"; else fail "turn 0 input_tokens" "got $turn0_input"; fi
+
+turn0_tools=$(echo "$turn0" | jq -r '.attributes["turn.tool_count"]')
+if [[ "$turn0_tools" == "2" ]]; then pass "turn 0 tool_count = 2"; else fail "turn 0 tool_count" "got $turn0_tools"; fi
+
+turn1=$(echo "$CLAUDE_DETAILED" | jq -s '[.[] | select(.name == "claude.turn" and .attributes["turn.index"] == "1")][0]')
+turn1_input=$(echo "$turn1" | jq -r '.attributes["turn.input_tokens"]')
+if [[ "$turn1_input" == "50" ]]; then pass "turn 1 input_tokens = 50"; else fail "turn 1 input_tokens" "got $turn1_input"; fi
+
+turn1_tools=$(echo "$turn1" | jq -r '.attributes["turn.tool_count"]')
+if [[ "$turn1_tools" == "0" ]]; then pass "turn 1 tool_count = 0"; else fail "turn 1 tool_count" "got $turn1_tools"; fi
+
+turn_parent=$(echo "$turn0" | jq -r '.parent_span_id')
+root_sid=$(echo "$CLAUDE_OUTPUT" | jq -s -r '.[0].span_id')
+if [[ "$turn_parent" == "$root_sid" ]]; then pass "turn spans parent = root span"; else fail "turn parent" "got $turn_parent, expected $root_sid"; fi
 
 # ========================================================
 echo ""

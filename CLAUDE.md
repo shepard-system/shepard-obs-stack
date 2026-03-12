@@ -344,6 +344,7 @@ Each provider has its own parser, all producing the same unified span schema.
 | `claude.mcp.*`            | MCP calls          | —                  | —            |
 | `claude.agent.*`          | sub-agents         | —                  | —            |
 | `{provider}.compaction`   | context compaction | context compaction | —            |
+| `claude.turn`             | per-turn breakdown | —                  | —            |
 
 **Session meta marker span:** Each parser emits a zero-duration `{provider}.session.meta` child span (span_id=0x02, parent=root). 
 This was originally needed because Tempo's local-blocks processor does not index root spans. 
@@ -359,6 +360,11 @@ Provider-specific: `tokens.cache_create` (Claude), `thinking.block_count` (Claud
 `context.tool_output_chars`, `context.tool_output_tokens_est`, `context.user_prompt_chars`, `context.user_prompt_tokens_est`,
 `context.compact_summary_chars`, `context.compact_summary_tokens_est`, `context.compaction_pre_tokens`
 Character counts are exact; token estimates use `chars / 4` approximation. Thinking content is encrypted in JSONL and cannot be measured.
+
+**Per-turn span attributes (Claude only, gated by `SHEPARD_DETAILED_TRACES=1`):**
+`turn.index`, `turn.input_tokens`, `turn.output_tokens`, `turn.cache_read_tokens`, `turn.cache_create_tokens`, `turn.tool_count`
+Uses fixed span name `claude.turn` (not `claude.turn.N`) to avoid span-metrics cardinality explosion.
+Span_id offset: 40016+. Compaction summaries (`isCompactSummary`) are not counted as turn boundaries.
 
 **Tool span attributes:** `tool.name`, `tool.is_error` (Claude, Gemini only — not Codex), `tool.input.file_path`, `tool.input.command`, `tool.input.pattern`
 
@@ -379,7 +385,7 @@ Character counts are exact; token estimates use `chars / 4` approximation. Think
 ## Testing
 
 ```bash
-bash tests/run-all.sh         # 121 unit tests (syntax, configs, hooks, parsers)
+bash tests/run-all.sh         # 127 unit tests (syntax, configs, hooks, parsers)
 bash tests/run-all.sh --e2e   # + Docker E2E smoke (starts stack, runs test-signal.sh)
 ```
 
@@ -387,7 +393,7 @@ bash tests/run-all.sh --e2e   # + Docker E2E smoke (starts stack, runs test-sign
 - **test-shell-syntax.sh** — `bash -n` on all 23 scripts + shellcheck (if installed)
 - **test-config-validate.sh** — 8 JSON dashboards (jq) + 11 YAML configs (PyYAML/yq) + promtool check rules (if installed) + 6 alert regression tests (rule counts + expression guards)
 - **test-hooks.sh** — 41 behavioral tests with mock curl/git. Covers all hooks (Claude, Gemini, Codex) + install/uninstall. Uses `SHEPARD_TEST_MODE=1` to bypass Rust accelerator and test bash code path.
-- **test-parsers.sh** — 31 tests against fixtures in `tests/fixtures/`. Verifies span count, required fields, attributes, error status, trace_id consistency, context breakdown.
+- **test-parsers.sh** — 37 tests against fixtures in `tests/fixtures/`. Verifies span count, required fields, attributes, error status, trace_id consistency, context breakdown, per-turn spans.
 
 CI: `.github/workflows/test.yml` runs unit tests on every push/PR, then E2E smoke with Docker Compose. CI installs promtool for Prometheus rule validation.
 

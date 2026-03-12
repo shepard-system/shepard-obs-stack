@@ -294,7 +294,64 @@ if $session_id == null then empty else
    name: "claude.compaction",
    start_ns: ($c.ts | ts_to_ns), end_ns: ($c.ts | ts_to_ns),
    status: 0,
-   attributes: {"compaction.trigger": $c.trigger, "compaction.pre_tokens": ($c.preTokens | tostring)}})
+   attributes: {"compaction.trigger": $c.trigger, "compaction.pre_tokens": ($c.preTokens | tostring)}}),
+
+# 6. Per-turn spans (span_id offset: 40016) — gated by SHEPARD_DETAILED_TRACES=1
+# Each turn = human user message → all assistant/tool exchanges until next human message.
+# Uses fixed span name "claude.turn" with turn.index attribute (avoids span-metrics cardinality explosion).
+(if ($ENV.SHEPARD_DETAILED_TRACES // "") == "1" then
+  # Segment entries into turns using reduce
+  (reduce ($all | to_entries[]) as $e (
+    {turns: [], current: null};
+    if $e.value.type == "user" and
+       ($e.value.isCompactSummary | not) and
+       ($e.value.message.content // "" | type == "string") then
+      # New turn boundary
+      if .current != null then
+        {turns: (.turns + [.current]),
+         current: {ts: $e.value.timestamp, entries: [$e.value]}}
+      else
+        {turns: .turns,
+         current: {ts: $e.value.timestamp, entries: [$e.value]}}
+      end
+    elif .current != null then
+      .current.entries += [$e.value]
+    else . end
+  ) | if .current != null then .turns + [.current] else .turns end) as $turns |
+
+  ($turns | to_entries[] |
+    .key as $tidx | .value as $turn |
+    # Dedup assistant entries within this turn
+    ([$turn.entries[] | select(.type == "assistant")] |
+      group_by(.message.id // .uuid) | [.[] | .[-1]]) as $ta |
+    # Token aggregation
+    ($ta | map(.message.usage // empty) | {
+      input: (map(.input_tokens // 0) | add // 0),
+      output: (map(.output_tokens // 0) | add // 0),
+      cache_read: (map(.cache_read_input_tokens // 0) | add // 0),
+      cache_create: (map(.cache_creation_input_tokens // 0) | add // 0)
+    }) as $tt |
+    # Tool count within this turn
+    ([$ta[] | .message.content // [] |
+      if type == "array" then .[] else empty end |
+      select(.type == "tool_use")] | length) as $tc |
+    # Turn end = next turn start or session end
+    (if $tidx + 1 < ($turns | length) then $turns[$tidx + 1].ts
+     else $t_end end) as $t_finish |
+    {trace_id: $trace_id, span_id: (($tidx + 40016) | pad16),
+     parent_span_id: $root_sid,
+     name: "claude.turn",
+     start_ns: ($turn.ts | ts_to_ns), end_ns: ($t_finish | ts_to_ns),
+     status: 0,
+     attributes: {
+       "turn.index": ($tidx | tostring),
+       "turn.input_tokens": ($tt.input | tostring),
+       "turn.output_tokens": ($tt.output | tostring),
+       "turn.cache_read_tokens": ($tt.cache_read | tostring),
+       "turn.cache_create_tokens": ($tt.cache_create | tostring),
+       "turn.tool_count": ($tc | tostring)
+     }})
+else empty end)
 
 end
 '

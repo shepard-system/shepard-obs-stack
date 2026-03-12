@@ -2045,7 +2045,7 @@
             "fixedColor": "semi-dark-blue",
             "mode": "fixed"
           },
-          "unit": "decbytes",
+          "unit": "short",
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -2056,7 +2056,7 @@
               }
             ]
           },
-          "decimals": 1,
+          "decimals": 0,
           "noValue": "–"
         },
         "overrides": []
@@ -2109,7 +2109,7 @@
             "fixedColor": "semi-dark-green",
             "mode": "fixed"
           },
-          "unit": "decbytes",
+          "unit": "short",
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -2120,7 +2120,7 @@
               }
             ]
           },
-          "decimals": 1,
+          "decimals": 0,
           "noValue": "–"
         },
         "overrides": []
@@ -2173,7 +2173,7 @@
             "fixedColor": "semi-dark-yellow",
             "mode": "fixed"
           },
-          "unit": "decbytes",
+          "unit": "short",
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -2184,7 +2184,7 @@
               }
             ]
           },
-          "decimals": 1,
+          "decimals": 0,
           "noValue": "–"
         },
         "overrides": []
@@ -2300,7 +2300,7 @@
           "color": {
             "mode": "palette-classic"
           },
-          "unit": "decbytes",
+          "unit": "short",
           "custom": {
             "drawStyle": "bars",
             "lineInterpolation": "linear",
