@@ -1870,8 +1870,8 @@
       "interval": "1m"
     },
     {
-      "id": 600,
-      "title": "Native Logs",
+      "id": 700,
+      "title": "Context Breakdown",
       "type": "row",
       "collapsed": false,
       "gridPos": {
@@ -1883,130 +1883,6 @@
       "panels": []
     },
     {
-      "id": 25,
-      "title": "Tool Decisions",
-      "type": "logs",
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 0,
-        "y": 46
-      },
-      "datasource": {
-        "type": "loki",
-        "uid": "loki"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "loki",
-            "uid": "loki"
-          },
-          "editorMode": "code",
-          "expr": "{service_name=\"claude-code\"} |= \"claude_code.tool_decision\"",
-          "queryType": "range",
-          "refId": "A"
-        }
-      ],
-      "options": {
-        "showTime": true,
-        "showLabels": false,
-        "showCommonLabels": false,
-        "wrapLogMessage": true,
-        "prettifyLogMessage": true,
-        "enableLogDetails": true,
-        "sortOrder": "Descending",
-        "dedupStrategy": "none"
-      }
-    },
-    {
-      "id": 26,
-      "title": "API Requests",
-      "type": "logs",
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 8,
-        "y": 46
-      },
-      "datasource": {
-        "type": "loki",
-        "uid": "loki"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "loki",
-            "uid": "loki"
-          },
-          "editorMode": "code",
-          "expr": "{service_name=\"claude-code\"} |= \"claude_code.api_request\"",
-          "queryType": "range",
-          "refId": "A"
-        }
-      ],
-      "options": {
-        "showTime": true,
-        "showLabels": false,
-        "showCommonLabels": false,
-        "wrapLogMessage": true,
-        "prettifyLogMessage": true,
-        "enableLogDetails": true,
-        "sortOrder": "Descending",
-        "dedupStrategy": "none"
-      }
-    },
-    {
-      "id": 27,
-      "title": "User Prompts",
-      "type": "logs",
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 16,
-        "y": 46
-      },
-      "datasource": {
-        "type": "loki",
-        "uid": "loki"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "loki",
-            "uid": "loki"
-          },
-          "editorMode": "code",
-          "expr": "{service_name=\"claude-code\"} |= \"claude_code.user_prompt\"",
-          "queryType": "range",
-          "refId": "A"
-        }
-      ],
-      "options": {
-        "showTime": true,
-        "showLabels": false,
-        "showCommonLabels": false,
-        "wrapLogMessage": true,
-        "prettifyLogMessage": true,
-        "enableLogDetails": true,
-        "sortOrder": "Descending",
-        "dedupStrategy": "none"
-      }
-    },
-    {
-      "id": 700,
-      "title": "Context Breakdown",
-      "type": "row",
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 54
-      },
-      "panels": []
-    },
-    {
       "id": 28,
       "title": "Context Composition",
       "type": "piechart",
@@ -2014,7 +1890,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 55
+        "y": 46
       },
       "datasource": {
         "type": "prometheus",
@@ -2144,7 +2020,7 @@
         "h": 4,
         "w": 4,
         "x": 8,
-        "y": 55
+        "y": 46
       },
       "datasource": {
         "type": "prometheus",
@@ -2181,7 +2057,7 @@
             ]
           },
           "decimals": 1,
-          "noValue": "\u2013"
+          "noValue": "–"
         },
         "overrides": []
       },
@@ -2208,7 +2084,7 @@
         "h": 4,
         "w": 4,
         "x": 12,
-        "y": 55
+        "y": 46
       },
       "datasource": {
         "type": "prometheus",
@@ -2245,7 +2121,7 @@
             ]
           },
           "decimals": 1,
-          "noValue": "\u2013"
+          "noValue": "–"
         },
         "overrides": []
       },
@@ -2272,7 +2148,7 @@
         "h": 4,
         "w": 4,
         "x": 16,
-        "y": 55
+        "y": 46
       },
       "datasource": {
         "type": "prometheus",
@@ -2309,7 +2185,7 @@
             ]
           },
           "decimals": 1,
-          "noValue": "\u2013"
+          "noValue": "–"
         },
         "overrides": []
       },
@@ -2336,7 +2212,7 @@
         "h": 4,
         "w": 4,
         "x": 20,
-        "y": 55
+        "y": 46
       },
       "datasource": {
         "type": "prometheus",
@@ -2373,7 +2249,7 @@
             ]
           },
           "decimals": 0,
-          "noValue": "\u2013"
+          "noValue": "–"
         },
         "overrides": []
       },
@@ -2400,7 +2276,7 @@
         "h": 8,
         "w": 16,
         "x": 8,
-        "y": 59
+        "y": 50
       },
       "datasource": {
         "type": "prometheus",
@@ -2543,6 +2419,130 @@
         }
       },
       "interval": "5m"
+    },
+    {
+      "id": 600,
+      "title": "Native Logs",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 58
+      },
+      "panels": []
+    },
+    {
+      "id": 25,
+      "title": "Tool Decisions",
+      "type": "logs",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 59
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "{service_name=\"claude-code\"} |= \"claude_code.tool_decision\"",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none"
+      }
+    },
+    {
+      "id": 26,
+      "title": "API Requests",
+      "type": "logs",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 59
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "{service_name=\"claude-code\"} |= \"claude_code.api_request\"",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none"
+      }
+    },
+    {
+      "id": 27,
+      "title": "User Prompts",
+      "type": "logs",
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 59
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "editorMode": "code",
+          "expr": "{service_name=\"claude-code\"} |= \"claude_code.user_prompt\"",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none"
+      }
     }
   ],
   "templating": {
