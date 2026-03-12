@@ -47,6 +47,7 @@ This fixes that.
 - [Dashboards](#dashboards)
 - [How It Works](#how-it-works)
 - [Hook Setup](#hook-setup)
+- [Claude Code Skills](#claude-code-skills)
 - [Rust Accelerator](#rust-accelerator-optional)
 - [Alerting](#alerting)
 - [Services](#services)
@@ -62,6 +63,7 @@ This fixes that.
 - **Eight Grafana dashboards** auto-provisioned: cost, tools, operations, quality, per-provider deep dives, and session timeline
 - **Minimal dependencies** — Docker, plus `bash`, `curl`, and `jq` on the host for hooks and tests. No Python, no Node, no cloud accounts
 - **Optional [Rust accelerator](https://github.com/shepard-system/shepard-hooks-rs)** — drop-in `shepard-hook` binary replaces bash+jq+curl. Hooks auto-detect it; falls back to bash if absent
+- **Six Claude Code [skills](#claude-code-skills)** — `/obs-status`, `/obs-cost`, `/obs-sessions`, `/obs-tools`, `/obs-alerts`, `/obs-query` — query the stack without leaving your terminal
 - **Works offline** — everything runs on localhost, your data stays on your machine
 
 ## Quick Start
@@ -153,6 +155,30 @@ The installer auto-detects installed CLIs and merges hook configuration into the
 | Codex CLI   | `agent-turn-complete`                                 | logs                    |
 | Gemini CLI  | `AfterTool`, `AfterAgent`, `AfterModel`, `SessionEnd` | metrics + logs + traces |
 
+## Claude Code Skills
+
+Six slash-command skills for querying the obs stack directly from Claude Code — no browser needed.
+
+| Skill | What it does |
+|-------|-------------|
+| `/obs-status` | Stack health: service status, scrape targets, last telemetry, active alerts |
+| `/obs-cost` | Cost report by provider and model (supports `today`, `yesterday`, `week`, `24h`) |
+| `/obs-sessions` | Recent sessions with model, duration, tool count, cost |
+| `/obs-tools` | Top tools, error rates, usage by provider and repo |
+| `/obs-alerts` | Active alerts with severity and resolution hints |
+| `/obs-query` | Free-form PromQL or LogQL — run any query inline |
+
+Skills are installed automatically when you clone the repo (they live in `.claude/skills/`). All API calls go through `scripts/obs-api.sh` — a centralized helper that's ready for auth and TLS when you need it:
+
+```bash
+# Default: plain HTTP to localhost (single-machine, no auth)
+./scripts/obs-api.sh prometheus /api/v1/query --data-urlencode 'query=up'
+
+# With auth (set env vars when hardening or going multi-machine)
+SHEPARD_API_TOKEN=secret ./scripts/obs-api.sh prometheus /api/v1/query ...
+SHEPARD_CA_CERT=/path/to/ca.pem ./scripts/obs-api.sh loki /ready
+```
+
 ## Rust Accelerator (optional)
 
 All hooks work out of the box with bash + jq + curl. For faster execution, you can optionally install the [Rust accelerator](https://github.com/shepard-system/shepard-hooks-rs) — a single static binary that replaces the entire bash pipeline:
@@ -233,6 +259,13 @@ Native Telegram, Slack, and Discord receivers are included — uncomment and con
 shepard-obs-stack/
 ├── docker-compose.yaml
 ├── .env.example
+├── .claude/skills/            # Claude Code slash-command skills
+│   ├── obs-status/            # /obs-status — stack health
+│   ├── obs-cost/              # /obs-cost — cost report
+│   ├── obs-sessions/          # /obs-sessions — session summary
+│   ├── obs-tools/             # /obs-tools — tool usage
+│   ├── obs-alerts/            # /obs-alerts — active alerts
+│   └── obs-query/             # /obs-query — free-form PromQL/LogQL
 ├── hooks/
 │   ├── bin/                   # Rust accelerator binary (gitignored, downloaded)
 │   ├── lib/                   # shared: accelerator, git context, OTLP metrics + traces, sensitive file detection, session parser
@@ -244,6 +277,7 @@ shepard-obs-stack/
 ├── scripts/
 │   ├── init.sh                # bootstrap
 │   ├── install-accelerator.sh # download Rust accelerator to hooks/bin/
+│   ├── obs-api.sh             # centralized API client (auth-ready)
 │   ├── test-signal.sh         # pipeline verification (11 checks)
 │   └── render-c4.sh           # render PlantUML → SVG
 ├── tests/
