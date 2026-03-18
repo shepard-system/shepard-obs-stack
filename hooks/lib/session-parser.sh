@@ -130,6 +130,34 @@ if $session_id == null then empty else
   {ts: .timestamp, trigger: (.compactMetadata.trigger // "auto"), preTokens: (.compactMetadata.preTokens // 0)}
 ]) as $compactions |
 
+# --- Context breakdown (character counts for token estimation) ---
+
+# Tool output: sum content lengths from tool_result entries
+([$all[] | select(.type == "user") |
+  .message.content // [] |
+  if type == "array" then .[] else empty end |
+  select(.type == "tool_result") |
+  .content // "" |
+  if type == "string" then length
+  elif type == "array" then [.[] | .text // "" | length] | add // 0
+  else 0 end
+] | add // 0) as $tool_output_chars |
+
+# User prompts: string content from human messages (excludes compaction summaries)
+([$all[] | select(.type == "user" and (.isCompactSummary | not)) |
+  .message.content // "" |
+  if type == "string" then length else 0 end
+] | add // 0) as $user_prompt_chars |
+
+# Compact summaries: user entries with isCompactSummary = true
+([$all[] | select(.type == "user" and .isCompactSummary == true) |
+  .message.content // "" |
+  if type == "string" then length else 0 end
+] | add // 0) as $compact_summary_chars |
+
+# Compaction pre-tokens total
+($compactions | map(.preTokens) | add // 0) as $compaction_pre_tokens |
+
 # --- Build lookups ---
 
 # tool_use_id → {end_ts, is_error}
@@ -198,7 +226,14 @@ if $session_id == null then empty else
     "turn.count": ($turn_count | tostring),
     "compaction.count": ($compactions | length | tostring),
     "thinking.block_count": ($thinking_count | tostring),
-    "stop_reason": $stop_reason} +
+    "stop_reason": $stop_reason,
+    "context.tool_output_chars": ($tool_output_chars | tostring),
+    "context.tool_output_tokens_est": (($tool_output_chars / 4 | floor) | tostring),
+    "context.user_prompt_chars": ($user_prompt_chars | tostring),
+    "context.user_prompt_tokens_est": (($user_prompt_chars / 4 | floor) | tostring),
+    "context.compact_summary_chars": ($compact_summary_chars | tostring),
+    "context.compact_summary_tokens_est": (($compact_summary_chars / 4 | floor) | tostring),
+    "context.compaction_pre_tokens": ($compaction_pre_tokens | tostring)} +
    (if $interruption_count > 0 then
      {"has_interruption": "true", "interruption.count": ($interruption_count | tostring)}
    else {} end)
@@ -259,7 +294,64 @@ if $session_id == null then empty else
    name: "claude.compaction",
    start_ns: ($c.ts | ts_to_ns), end_ns: ($c.ts | ts_to_ns),
    status: 0,
-   attributes: {"compaction.trigger": $c.trigger, "compaction.pre_tokens": ($c.preTokens | tostring)}})
+   attributes: {"compaction.trigger": $c.trigger, "compaction.pre_tokens": ($c.preTokens | tostring)}}),
+
+# 6. Per-turn spans (span_id offset: 40016) — gated by SHEPARD_DETAILED_TRACES=1
+# Each turn = human user message → all assistant/tool exchanges until next human message.
+# Uses fixed span name "claude.turn" with turn.index attribute (avoids span-metrics cardinality explosion).
+(if ($ENV.SHEPARD_DETAILED_TRACES // "") == "1" then
+  # Segment entries into turns using reduce
+  (reduce ($all | to_entries[]) as $e (
+    {turns: [], current: null};
+    if $e.value.type == "user" and
+       ($e.value.isCompactSummary | not) and
+       ($e.value.message.content // "" | type == "string") then
+      # New turn boundary
+      if .current != null then
+        {turns: (.turns + [.current]),
+         current: {ts: $e.value.timestamp, entries: [$e.value]}}
+      else
+        {turns: .turns,
+         current: {ts: $e.value.timestamp, entries: [$e.value]}}
+      end
+    elif .current != null then
+      .current.entries += [$e.value]
+    else . end
+  ) | if .current != null then .turns + [.current] else .turns end) as $turns |
+
+  ($turns | to_entries[] |
+    .key as $tidx | .value as $turn |
+    # Dedup assistant entries within this turn
+    ([$turn.entries[] | select(.type == "assistant")] |
+      group_by(.message.id // .uuid) | [.[] | .[-1]]) as $ta |
+    # Token aggregation
+    ($ta | map(.message.usage // empty) | {
+      input: (map(.input_tokens // 0) | add // 0),
+      output: (map(.output_tokens // 0) | add // 0),
+      cache_read: (map(.cache_read_input_tokens // 0) | add // 0),
+      cache_create: (map(.cache_creation_input_tokens // 0) | add // 0)
+    }) as $tt |
+    # Tool count within this turn
+    ([$ta[] | .message.content // [] |
+      if type == "array" then .[] else empty end |
+      select(.type == "tool_use")] | length) as $tc |
+    # Turn end = next turn start or session end
+    (if $tidx + 1 < ($turns | length) then $turns[$tidx + 1].ts
+     else $t_end end) as $t_finish |
+    {trace_id: $trace_id, span_id: (($tidx + 40016) | pad16),
+     parent_span_id: $root_sid,
+     name: "claude.turn",
+     start_ns: ($turn.ts | ts_to_ns), end_ns: ($t_finish | ts_to_ns),
+     status: 0,
+     attributes: {
+       "turn.index": ($tidx | tostring),
+       "turn.input_tokens": ($tt.input | tostring),
+       "turn.output_tokens": ($tt.output | tostring),
+       "turn.cache_read_tokens": ($tt.cache_read | tostring),
+       "turn.cache_create_tokens": ($tt.cache_create | tostring),
+       "turn.tool_count": ($tc | tostring)
+     }})
+else empty end)
 
 end
 '
