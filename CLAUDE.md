@@ -259,7 +259,7 @@ Session Traces table uses Tempo trace search. Tool Duration Distribution uses Pr
 
 ## Claude Code Skills
 
-Six slash-command skills in `.claude/skills/` for querying the stack from the conversation:
+Seven slash-command skills in `.claude/skills/` for querying the stack from the conversation:
 
 | Skill | Purpose | `disable-model-invocation` |
 |-------|---------|---------------------------|
@@ -268,6 +268,7 @@ Six slash-command skills in `.claude/skills/` for querying the stack from the co
 | `/obs-sessions` | Recent sessions from span-metrics + Tempo traces | false |
 | `/obs-tools` | Top tools, error rates, by provider/repo | false |
 | `/obs-alerts` | Active Alertmanager alerts + resolution hints | false |
+| `/obs-compare` | Side-by-side provider comparison (sessions, cost, tokens, tools) | false |
 | `/obs-query` | Free-form PromQL/LogQL execution | false |
 
 All skills use `scripts/obs-api.sh` — centralized API client with env var overrides for auth/TLS:
