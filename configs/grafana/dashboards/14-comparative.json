@@ -1,0 +1,765 @@
+{
+  "uid": "shepherd-comparative",
+  "id": null,
+  "title": "Shepherd / 09 Comparative",
+  "description": "Side-by-side comparison of Claude Code, Gemini CLI, and Codex: sessions, cost, tokens, tools, and quality.\n\nRequires: at least one provider session with hooks installed.\nCost metrics: Claude Code only.",
+  "editable": true,
+  "refresh": "1m",
+  "weekStart": "monday",
+  "timezone": "browser",
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "tags": [
+    "shepherd",
+    "comparative"
+  ],
+  "version": 1,
+  "schemaVersion": 39,
+  "graphTooltip": 1,
+  "links": [],
+  "timepicker": {},
+  "annotations": {
+    "list": []
+  },
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": ".*",
+          "value": ".*"
+        },
+        "name": "git_repo",
+        "label": "Git Repo",
+        "type": "textbox",
+        "query": ".*",
+        "description": "Filter by git repo name (regex). Applies to hook metrics only. Use .* for all."
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 100,
+      "title": "Overview",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "panels": []
+    },
+    {
+      "id": 1,
+      "title": "Sessions by Provider",
+      "description": "Count of distinct sessions per provider",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "count(max_over_time(shepherd_claude_code_session_count_total[$__range]))",
+          "legendFormat": "Claude",
+          "queryType": "instant",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "count(max_over_time(shepherd_gemini_cli_session_count_total[$__range]))",
+          "legendFormat": "Gemini",
+          "queryType": "instant",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "round(sum(sum_over_time(shepherd:codex:sessions:1m[$__range]))) > 0",
+          "legendFormat": "Codex",
+          "queryType": "instant",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed" },
+          "decimals": 0,
+          "noValue": "–"
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Claude" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#8B5CF6" } }] },
+          { "matcher": { "id": "byName", "options": "Gemini" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#10B981" } }] },
+          { "matcher": { "id": "byName", "options": "Codex" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#F59E0B" } }] }
+        ]
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "legend": { "displayMode": "list", "placement": "bottom", "values": ["value", "percent"] },
+        "pieType": "donut",
+        "tooltip": { "mode": "single" }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Cost by Provider",
+      "description": "Claude Code only — other providers don't emit cost metrics",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum(max_over_time(shepherd_claude_code_cost_usage_USD_total[$__range])) > 0",
+          "legendFormat": "Claude",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed" },
+          "unit": "currencyUSD",
+          "decimals": 2,
+          "noValue": "–"
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Claude" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#8B5CF6" } }] },
+          { "matcher": { "id": "byName", "options": "Gemini" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#10B981" } }] },
+          { "matcher": { "id": "byName", "options": "Codex" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#F59E0B" } }] }
+        ]
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "legend": { "displayMode": "list", "placement": "bottom", "values": ["value", "percent"] },
+        "pieType": "donut",
+        "tooltip": { "mode": "single" }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Tokens by Provider",
+      "description": "Total tokens (all types) per provider",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "round(sum(max_over_time(shepherd_claude_code_token_usage_tokens_total[$__range]))) > 0",
+          "legendFormat": "Claude",
+          "queryType": "instant",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "round(sum(max_over_time(shepherd_gemini_cli_token_usage_total[$__range]))) > 0",
+          "legendFormat": "Gemini",
+          "queryType": "instant",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "round(sum(sum_over_time({__name__=~\"shepherd:codex:tokens_.+:1m\"}[$__range]))) > 0",
+          "legendFormat": "Codex",
+          "queryType": "instant",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed" },
+          "decimals": 0,
+          "noValue": "–"
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Claude" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#8B5CF6" } }] },
+          { "matcher": { "id": "byName", "options": "Gemini" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#10B981" } }] },
+          { "matcher": { "id": "byName", "options": "Codex" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#F59E0B" } }] }
+        ]
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "legend": { "displayMode": "list", "placement": "bottom", "values": ["value", "percent"] },
+        "pieType": "donut",
+        "tooltip": { "mode": "single" }
+      }
+    },
+
+    {
+      "id": 200,
+      "title": "Token Breakdown",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
+      "panels": []
+    },
+    {
+      "id": 4,
+      "title": "Input Tokens",
+      "description": "Input tokens by provider",
+      "type": "bargauge",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 10 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "round(sum(max_over_time(shepherd_claude_code_token_usage_tokens_total{type=\"input\"}[$__range])))",
+          "legendFormat": "Claude",
+          "queryType": "instant",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "round(sum(max_over_time(shepherd_gemini_cli_token_usage_total{type=\"input\"}[$__range])))",
+          "legendFormat": "Gemini",
+          "queryType": "instant",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "round(sum(sum_over_time(shepherd:codex:tokens_input:1m[$__range])))",
+          "legendFormat": "Codex",
+          "queryType": "instant",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed" },
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "–"
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Claude" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#8B5CF6" } }] },
+          { "matcher": { "id": "byName", "options": "Gemini" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#10B981" } }] },
+          { "matcher": { "id": "byName", "options": "Codex" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#F59E0B" } }] }
+        ]
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "minVizWidth": 8,
+        "minVizHeight": 16
+      }
+    },
+    {
+      "id": 5,
+      "title": "Output Tokens",
+      "description": "Output tokens by provider",
+      "type": "bargauge",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 10 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "round(sum(max_over_time(shepherd_claude_code_token_usage_tokens_total{type=\"output\"}[$__range])))",
+          "legendFormat": "Claude",
+          "queryType": "instant",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "round(sum(max_over_time(shepherd_gemini_cli_token_usage_total{type=\"output\"}[$__range])))",
+          "legendFormat": "Gemini",
+          "queryType": "instant",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "round(sum(sum_over_time(shepherd:codex:tokens_output:1m[$__range])))",
+          "legendFormat": "Codex",
+          "queryType": "instant",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed" },
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "–"
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Claude" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#8B5CF6" } }] },
+          { "matcher": { "id": "byName", "options": "Gemini" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#10B981" } }] },
+          { "matcher": { "id": "byName", "options": "Codex" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#F59E0B" } }] }
+        ]
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "minVizWidth": 8,
+        "minVizHeight": 16
+      }
+    },
+    {
+      "id": 6,
+      "title": "Cache Efficiency",
+      "description": "Cache read ratio: cache_read / (input + cache_read). Higher = more tokens served from cache.",
+      "type": "bargauge",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 10 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum(max_over_time(shepherd_claude_code_token_usage_tokens_total{type=\"cacheRead\"}[$__range])) / clamp_min(sum(max_over_time(shepherd_claude_code_token_usage_tokens_total{type=\"input\"}[$__range])) + sum(max_over_time(shepherd_claude_code_token_usage_tokens_total{type=\"cacheRead\"}[$__range])), 1)",
+          "legendFormat": "Claude",
+          "queryType": "instant",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum(max_over_time(shepherd_gemini_cli_token_usage_total{type=\"cache\"}[$__range])) / clamp_min(sum(max_over_time(shepherd_gemini_cli_token_usage_total{type=\"input\"}[$__range])) + sum(max_over_time(shepherd_gemini_cli_token_usage_total{type=\"cache\"}[$__range])), 1)",
+          "legendFormat": "Gemini",
+          "queryType": "instant",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "sum(sum_over_time(shepherd:codex:tokens_cached:1m[$__range])) / clamp_min(sum(sum_over_time(shepherd:codex:tokens_input:1m[$__range])) + sum(sum_over_time(shepherd:codex:tokens_cached:1m[$__range])), 1)",
+          "legendFormat": "Codex",
+          "queryType": "instant",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed" },
+          "unit": "percentunit",
+          "decimals": 1,
+          "min": 0,
+          "max": 1,
+          "noValue": "–"
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Claude" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#8B5CF6" } }] },
+          { "matcher": { "id": "byName", "options": "Gemini" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#10B981" } }] },
+          { "matcher": { "id": "byName", "options": "Codex" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#F59E0B" } }] }
+        ]
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "minVizWidth": 8,
+        "minVizHeight": 16
+      }
+    },
+
+    {
+      "id": 300,
+      "title": "Tools",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
+      "panels": []
+    },
+    {
+      "id": 7,
+      "title": "Tool Calls by Provider",
+      "description": "Total tool calls from hooks",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 19 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "round(sum(increase(shepherd_tool_calls_total{source=\"claude\",git_repo=~\"$git_repo\"}[$__range]))) > 0",
+          "legendFormat": "Claude",
+          "queryType": "instant",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "round(sum(increase(shepherd_tool_calls_total{source=\"gemini\",git_repo=~\"$git_repo\"}[$__range]))) > 0",
+          "legendFormat": "Gemini",
+          "queryType": "instant",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "round(sum(increase(shepherd_tool_calls_total{source=\"codex\",git_repo=~\"$git_repo\"}[$__range]))) > 0",
+          "legendFormat": "Codex",
+          "queryType": "instant",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed" },
+          "decimals": 0,
+          "noValue": "–"
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Claude" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#8B5CF6" } }] },
+          { "matcher": { "id": "byName", "options": "Gemini" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#10B981" } }] },
+          { "matcher": { "id": "byName", "options": "Codex" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#F59E0B" } }] }
+        ]
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "legend": { "displayMode": "list", "placement": "bottom", "values": ["value", "percent"] },
+        "pieType": "donut",
+        "tooltip": { "mode": "single" }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Tool Errors",
+      "description": "Tool calls with error status by provider",
+      "type": "bargauge",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 19 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "round(sum(increase(shepherd_tool_calls_total{source=\"claude\",tool_status=\"error\",git_repo=~\"$git_repo\"}[$__range])))",
+          "legendFormat": "Claude",
+          "queryType": "instant",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "round(sum(increase(shepherd_tool_calls_total{source=\"gemini\",tool_status=\"error\",git_repo=~\"$git_repo\"}[$__range])))",
+          "legendFormat": "Gemini",
+          "queryType": "instant",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "round(sum(increase(shepherd_tool_calls_total{source=\"codex\",tool_status=\"error\",git_repo=~\"$git_repo\"}[$__range])))",
+          "legendFormat": "Codex",
+          "queryType": "instant",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed" },
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "–"
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Claude" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#8B5CF6" } }] },
+          { "matcher": { "id": "byName", "options": "Gemini" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#10B981" } }] },
+          { "matcher": { "id": "byName", "options": "Codex" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#F59E0B" } }] }
+        ]
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "minVizWidth": 8,
+        "minVizHeight": 16
+      }
+    },
+    {
+      "id": 9,
+      "title": "Top 10 Tools",
+      "description": "Most-called tools across all providers",
+      "type": "bargauge",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 19 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "round(topk(10, sum by (tool) (increase(shepherd_tool_calls_total{git_repo=~\"$git_repo\"}[$__range])) > 0))",
+          "legendFormat": "{{tool}}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "–"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": [], "fields": "", "values": true },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "minVizWidth": 8,
+        "minVizHeight": 16
+      },
+      "transformations": [
+        {
+          "id": "reduce",
+          "options": { "reducers": ["lastNotNull"], "includeTimeField": false }
+        },
+        {
+          "id": "sortBy",
+          "options": { "fields": {}, "sort": [{ "field": "Last *", "desc": true }] }
+        }
+      ]
+    },
+
+    {
+      "id": 400,
+      "title": "Activity",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 27 },
+      "panels": []
+    },
+    {
+      "id": 10,
+      "title": "Tool Calls Over Time",
+      "description": "Tool call activity by provider",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 28 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "round(sum(increase(shepherd_tool_calls_total{source=\"claude\",git_repo=~\"$git_repo\"}[$__rate_interval])))",
+          "legendFormat": "Claude",
+          "queryType": "range",
+          "refId": "A",
+          "interval": "1m"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "round(sum(increase(shepherd_tool_calls_total{source=\"gemini\",git_repo=~\"$git_repo\"}[$__rate_interval])))",
+          "legendFormat": "Gemini",
+          "queryType": "range",
+          "refId": "B",
+          "interval": "1m"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "round(sum(increase(shepherd_tool_calls_total{source=\"codex\",git_repo=~\"$git_repo\"}[$__rate_interval])))",
+          "legendFormat": "Codex",
+          "queryType": "range",
+          "refId": "C",
+          "interval": "1m"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed" },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 0,
+            "showPoints": "never",
+            "stacking": { "mode": "normal", "group": "A" },
+            "gradientMode": "scheme"
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Claude" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#8B5CF6" } }] },
+          { "matcher": { "id": "byName", "options": "Gemini" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#10B981" } }] },
+          { "matcher": { "id": "byName", "options": "Codex" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#F59E0B" } }] }
+        ]
+      },
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["sum"] }
+      }
+    },
+    {
+      "id": 11,
+      "title": "Top Repos",
+      "description": "Most active repositories by event count",
+      "type": "bargauge",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 28 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "round(topk(5, sum by (git_repo) (increase(shepherd_events_total{git_repo=~\"$git_repo\"}[$__range])) > 0))",
+          "legendFormat": "{{git_repo}}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "short",
+          "decimals": 0,
+          "noValue": "–"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": [], "fields": "", "values": true },
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "minVizWidth": 8,
+        "minVizHeight": 16
+      },
+      "transformations": [
+        {
+          "id": "reduce",
+          "options": { "reducers": ["lastNotNull"], "includeTimeField": false }
+        },
+        {
+          "id": "sortBy",
+          "options": { "fields": {}, "sort": [{ "field": "Last *", "desc": true }] }
+        }
+      ]
+    },
+
+    {
+      "id": 500,
+      "title": "Quality",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 36 },
+      "panels": []
+    },
+    {
+      "id": 12,
+      "title": "Sensitive File Access",
+      "description": "Detected access to sensitive files (.env, credentials, keys)",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 37 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "round(sum(increase(shepherd_sensitive_file_access_total{git_repo=~\"$git_repo\"}[$__range])))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 5 }
+            ]
+          },
+          "noValue": "–"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 13,
+      "title": "Compaction Events",
+      "description": "Context compaction events (Claude Code only)",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 37 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "round(sum(increase(shepherd_compaction_events_total{git_repo=~\"$git_repo\"}[$__range])))",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 5 },
+              { "color": "orange", "value": 10 }
+            ]
+          },
+          "noValue": "–"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 14,
+      "title": "Events by Type",
+      "description": "Hook event distribution: tool_use, session_end, turn_end, model_call",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 37 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "editorMode": "code",
+          "expr": "round(sum by (event_type) (increase(shepherd_events_total{git_repo=~\"$git_repo\"}[$__range])) > 0)",
+          "legendFormat": "{{event_type}}",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "decimals": 0,
+          "noValue": "–"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "legend": { "displayMode": "list", "placement": "bottom", "values": ["value", "percent"] },
+        "pieType": "donut",
+        "tooltip": { "mode": "single" }
+      }
+    }
+  ]
+}
