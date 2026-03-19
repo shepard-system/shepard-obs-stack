@@ -4,40 +4,52 @@ All notable changes to shepard-obs-stack ("The Eye") are documented here.
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [1.3.0] — 2026-03-19
+
+### Added
+
+- **Comparative dashboard** (9th): side-by-side provider comparison with 5 rows, 14 panels —
+  sessions, cost, tokens, cache efficiency, tool calls, errors, top repos, quality stats.
+  Consistent provider color coding: Claude (purple), Gemini (green), Codex (amber).
+  Template variable `$git_repo` for filtering hook metrics.
+- **`/obs-compare` skill** — provider comparison from the CLI: sessions, cost, tokens,
+  tool calls, errors, top repos in one report.
+
+## [1.2.0] — 2026-03-19
+
 ### Added
 
 - **Claude Code skills** (6 slash commands): `/obs-status`, `/obs-cost`, `/obs-sessions`,
   `/obs-tools`, `/obs-alerts`, `/obs-query` — query the obs stack directly from Claude Code
-  without switching to the browser. Covers health checks, cost reports, session summaries,
-  tool usage, active alerts, and free-form PromQL/LogQL queries.
+  without switching to the browser.
 - **`scripts/obs-api.sh`** — centralized API client for all obs stack services. Auth-ready:
-  supports `SHEPARD_API_TOKEN` (Bearer), `SHEPARD_CA_CERT` (TLS), `SHEPARD_GRAFANA_TOKEN`
-  via environment variables. Defaults to plain HTTP on localhost for single-machine use.
-- **LokiDown alert was checking OTel Collector, not Loki** — `up{job="shepherd-services"}`
-  monitored the collector exporter (port 8889), not Loki itself. Now uses dedicated
-  `up{job="loki"}` scrape job. Old check renamed to `ShepherdServicesDown`.
-- **Test suite** (113 tests, 4 suites): shell syntax (23), config validation (25),
-  hook behavior (41), session parsers (24). Run with `bash tests/run-all.sh`.
+  supports `SHEPARD_API_TOKEN` (Bearer), `SHEPARD_CA_CERT` (TLS), `SHEPARD_GRAFANA_TOKEN`.
+- **Per-session context breakdown** — session parser enriched with `context.*` attributes:
+  character counts and token estimates for tool output, user prompts, compact summaries.
+  Context Breakdown row added to Claude Deep Dive dashboard.
+- **Per-turn spans** — `claude.turn` spans gated by `SHEPARD_DETAILED_TRACES=1` with
+  per-turn token breakdown (input, output, cache read, cache create, tool count).
+- **Hook metrics**: `shepherd_context_chars_total`, `shepherd_context_compaction_pre_tokens_total`.
+- **Test suite** (128 tests, 4 suites): shell syntax (24), config validation (26),
+  hook behavior (41), session parsers (37). Run with `bash tests/run-all.sh`.
 - **CI workflow** (`.github/workflows/test.yml`): unit tests + Docker E2E smoke.
-  shellcheck and promtool installed in CI for lint and rule validation.
 - **Loki scrape job** in Prometheus (`loki:3100`) for proper health monitoring.
 - **ShepherdServicesDown** alert for OTel Collector Prometheus exporter (port 8889).
-- `SHEPARD_TEST_MODE` env var in `accelerator.sh` — bypasses Rust binary for testing bash path.
-- Test fixtures for all 3 session parsers (`tests/fixtures/`).
-- **promtool validation** in CI — `promtool check rules` on all Prometheus alert files.
-- **Alert regression tests** — rule counts per file + expression guards (LokiDown, ShepherdServicesDown, OTelCollectorDown).
+- **Alert regression tests** — rule counts per file + expression guards.
 
 ### Fixed
 
 - **LokiDown alert** — split from collector exporter check into dedicated Loki scrape job.
-- **Compaction arithmetic error in stop.sh** — `grep -c` returns "0" with exit 1,
-  `|| echo "0"` produced `"0\n0"`, causing `-gt` comparison to fail.
+- **All dashboard PromQL** — fixed for per-session native OTel metrics (`max_over_time`
+  instead of `increase`, `round()` on all integer counters).
+- **Compaction arithmetic error in stop.sh**.
 
 ### Changed
 
 - Alert count: 15 → 16 rules (LokiDown split into LokiDown + ShepherdServicesDown).
-- Inhibit rules: `OTelCollectorDown` now also suppresses `ShepherdServicesDown`;
-  `ShepherdServicesDown` suppresses `NoTelemetryReceived`, `HighToolErrorRate`, `HighSessionCost`.
+- Dashboard count: 8 → 9.
 - `.gitignore`: un-ignore `.claude/skills/` for tracking slash-command skills in the repo.
 
 ## [1.1.0] — 2026-03-05

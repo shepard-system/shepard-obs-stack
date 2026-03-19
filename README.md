@@ -58,12 +58,12 @@ This fixes that.
 
 ## Highlights
 
-- **One command** to start: `./scripts/init.sh` — 6 services, 8 dashboards, under a minute
+- **One command** to start: `./scripts/init.sh` — 6 services, 9 dashboards, under a minute
 - **Three CLIs supported**: Claude Code, Codex, Gemini CLI — hooks + native OpenTelemetry
-- **Eight Grafana dashboards** auto-provisioned: cost, tools, operations, quality, per-provider deep dives, and session timeline
+- **Nine Grafana dashboards** auto-provisioned: cost, tools, operations, quality, per-provider deep dives, session timeline, and side-by-side provider comparison
 - **Minimal dependencies** — Docker, plus `bash`, `curl`, and `jq` on the host for hooks and tests. No Python, no Node, no cloud accounts
 - **Optional [Rust accelerator](https://github.com/shepard-system/shepard-hooks-rs)** — drop-in `shepard-hook` binary replaces bash+jq+curl. Hooks auto-detect it; falls back to bash if absent
-- **Six Claude Code [skills](#claude-code-skills)** — `/obs-status`, `/obs-cost`, `/obs-sessions`, `/obs-tools`, `/obs-alerts`, `/obs-query` — query the stack without leaving your terminal
+- **Seven Claude Code [skills](#claude-code-skills)** — `/obs-status`, `/obs-cost`, `/obs-sessions`, `/obs-tools`, `/obs-alerts`, `/obs-compare`, `/obs-query` — query the stack without leaving your terminal
 - **Works offline** — everything runs on localhost, your data stays on your machine
 
 ## Quick Start
@@ -102,16 +102,17 @@ Open [localhost:3000](http://localhost:3000) (admin / shepherd). Use your CLI as
 | **Codex**       | Sessions, API latency percentiles, reasoning tokens     |
 | **Gemini CLI**  | Token breakdown, latency heatmap, tool call routing     |
 
-### Session Timeline
+### Session Timeline & Comparative
 
 | Dashboard            | What you see                                                                               |
 |----------------------|--------------------------------------------------------------------------------------------|
 | **Session Timeline** | Synthetic traces from all 3 CLI session logs — tool call waterfall, MCP timing, sub-agents |
+| **Comparative**      | Side-by-side provider comparison: sessions, cost, tokens, tools, errors, top repos         |
 
 Click any Trace ID to open the full waterfall in Grafana Explore → Tempo.
 
-Dashboard template variables: **Tools** and **Operations** support `$source` and `$git_repo` filtering. 
-**Deep Dive** dashboards use `$model`. **Session Timeline** uses `$provider`. **Cost** and **Quality** show aggregated data without filters.
+Dashboard template variables: **Tools** and **Operations** support `$source` and `$git_repo` filtering.
+**Deep Dive** dashboards use `$model`. **Session Timeline** uses `$provider`. **Comparative** uses `$git_repo`. **Cost** and **Quality** show aggregated data without filters.
 
 ## How It Works
 
@@ -157,7 +158,7 @@ The installer auto-detects installed CLIs and merges hook configuration into the
 
 ## Claude Code Skills
 
-Six slash-command skills for querying the obs stack directly from Claude Code — no browser needed.
+Seven slash-command skills for querying the obs stack directly from Claude Code — no browser needed.
 
 | Skill | What it does |
 |-------|-------------|
@@ -166,6 +167,7 @@ Six slash-command skills for querying the obs stack directly from Claude Code �
 | `/obs-sessions` | Recent sessions with model, duration, tool count, cost |
 | `/obs-tools` | Top tools, error rates, usage by provider and repo |
 | `/obs-alerts` | Active alerts with severity and resolution hints |
+| `/obs-compare` | Side-by-side provider comparison: sessions, cost, tokens, tools, errors |
 | `/obs-query` | Free-form PromQL or LogQL — run any query inline |
 
 Skills are installed automatically when you clone the repo (they live in `.claude/skills/`). All API calls go through `scripts/obs-api.sh` — a centralized helper that's ready for auth and TLS when you need it:
@@ -285,7 +287,7 @@ shepard-obs-stack/
 │   ├── test-shell-syntax.sh   # bash -n + shellcheck
 │   ├── test-config-validate.sh # JSON + YAML validation
 │   ├── test-hooks.sh          # behavioral tests (41 tests)
-│   ├── test-parsers.sh        # session parser tests (24 tests)
+│   ├── test-parsers.sh        # session parser tests (37 tests)
 │   └── fixtures/              # minimal session logs (Claude, Codex, Gemini)
 ├── configs/
 │   ├── otel-collector/        # receivers → processors → exporters
@@ -293,7 +295,7 @@ shepard-obs-stack/
 │   ├── alertmanager/          # routing, Telegram/Slack/Discord receivers
 │   ├── loki/                  # storage + 15 recording rules
 │   ├── tempo/                 # trace storage, 7d retention
-│   └── grafana/               # provisioning + 8 dashboard JSONs
+│   └── grafana/               # provisioning + 9 dashboard JSONs
 └── docs/c4/                   # architecture diagrams
 ```
 
@@ -309,7 +311,7 @@ bash tests/run-all.sh --e2e   # + Docker E2E (starts stack, runs test-signal.sh)
 | Suite | Tests | What it checks |
 |-------|-------|----------------|
 | Shell Syntax | 23 | `bash -n` on all scripts, shellcheck (if installed) |
-| Config Validation | 25 | JSON dashboards (jq) + YAML configs (PyYAML) + promtool rules + alert regression |
+| Config Validation | 26 | JSON dashboards (jq) + YAML configs (PyYAML) + promtool rules + alert regression |
 | Hook Behavior | 41 | PreToolUse guard, PostToolUse metrics, Stop compaction, all Gemini hooks, Codex, install/uninstall |
 | Session Parsers | 24 | Span count, required fields, attributes, error status, trace_id consistency |
 
