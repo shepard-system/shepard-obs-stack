@@ -6,6 +6,14 @@ All notable changes to shepard-obs-stack ("The Eye") are documented here.
 
 _Nothing yet._
 
+## [1.3.1] — 2026-03-23
+
+### Fixed
+
+- **README**: corrected test counts (113 → 128), session parser suite (24 → 37),
+  shell syntax suite (23 → 24). Added `/obs-compare` skill to project structure.
+- **Rust accelerator**: updated version reference to v0.4.0 (context breakdown parity with bash).
+
 ## [1.3.0] — 2026-03-19
 
 ### Added

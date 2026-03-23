@@ -187,7 +187,7 @@ All hooks work out of the box with bash + jq + curl. For faster execution, you c
 
 ```bash
 ./scripts/install-accelerator.sh           # latest release → hooks/bin/ (no sudo)
-./scripts/install-accelerator.sh v0.1.0    # specific version
+./scripts/install-accelerator.sh v0.4.0    # specific version
 ```
 
 The installer downloads a pre-built binary from [GitHub Releases](https://github.com/shepard-system/shepard-hooks-rs/releases) (linux/macOS, x64/arm64) and verifies it against the `SHA256SUMS` file published with each release. The binary is placed in `hooks/bin/` (gitignored, project-local).
@@ -267,6 +267,7 @@ shepard-obs-stack/
 │   ├── obs-sessions/          # /obs-sessions — session summary
 │   ├── obs-tools/             # /obs-tools — tool usage
 │   ├── obs-alerts/            # /obs-alerts — active alerts
+│   ├── obs-compare/           # /obs-compare — provider comparison
 │   └── obs-query/             # /obs-query — free-form PromQL/LogQL
 ├── hooks/
 │   ├── bin/                   # Rust accelerator binary (gitignored, downloaded)
@@ -301,7 +302,7 @@ shepard-obs-stack/
 
 ## Testing
 
-113 automated tests across 4 suites, plus a Docker-based E2E smoke test:
+128 automated tests across 4 suites, plus a Docker-based E2E smoke test:
 
 ```bash
 bash tests/run-all.sh         # unit tests: syntax, configs, hooks, parsers
@@ -310,10 +311,10 @@ bash tests/run-all.sh --e2e   # + Docker E2E (starts stack, runs test-signal.sh)
 
 | Suite | Tests | What it checks |
 |-------|-------|----------------|
-| Shell Syntax | 23 | `bash -n` on all scripts, shellcheck (if installed) |
+| Shell Syntax | 24 | `bash -n` on all scripts, shellcheck (if installed) |
 | Config Validation | 26 | JSON dashboards (jq) + YAML configs (PyYAML) + promtool rules + alert regression |
 | Hook Behavior | 41 | PreToolUse guard, PostToolUse metrics, Stop compaction, all Gemini hooks, Codex, install/uninstall |
-| Session Parsers | 24 | Span count, required fields, attributes, error status, trace_id consistency |
+| Session Parsers | 37 | Span count, required fields, attributes, error status, trace_id consistency, context breakdown, per-turn spans |
 
 CI runs automatically on push/PR via [GitHub Actions](.github/workflows/test.yml).
 
