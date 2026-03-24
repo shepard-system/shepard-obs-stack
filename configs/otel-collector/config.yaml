@@ -18,8 +18,10 @@ processors:
     send_batch_size: 1000
 
   # Convert DELTA sums (from hooks) to cumulative counters for Prometheus
+  # Long staleness: session-level metrics (context_chars, compaction) only emit
+  # at session end and must persist between sessions for increase() to work.
   deltatocumulative:
-    max_stale: 10m
+    max_stale: 168h
 
   # Add deployment environment attribute
   resource:
@@ -33,6 +35,9 @@ exporters:
   prometheus:
     endpoint: "0.0.0.0:8889"
     namespace: shepherd
+    # Session-level metrics (context_chars, compaction) only emit at session end.
+    # Default 5m expiration drops them before next session. 168h = 7 days.
+    metric_expiration: 168h
 
   # Logs → Loki
   otlphttp/loki:
